@@ -14,6 +14,10 @@ const mapTicketToCamelCase = (ticket) => ({
     updatedAt: ticket.UpdatedAt,
     screenshotUrl: ticket.ScreenshotUrl,
     screenshotFileName: ticket.ScreenshotFileName,
+    // New fields
+    createdBy: ticket.CreatedBy,
+    employeeId: ticket.EmployeeId,
+    extensionNumber: ticket.ExtensionNumber,
 });
 
 exports.getAllTickets = async (req, res) => {
@@ -28,42 +32,57 @@ exports.getAllTickets = async (req, res) => {
 };
 
 exports.createTicket = async (req, res) => {
-  const { title, description, status, priority, category, subCategory, reporterId, assigneeId, screenshotUrl, screenshotFileName } = req.body;
-  
+  const {
+    title, description, status, priority, category, subCategory,
+    reporterId, assigneeId, screenshotUrl, screenshotFileName,
+    createdBy, employeeId, extensionNumber,
+  } = req.body;
+
   const pool = await poolPromise;
   const transaction = new sql.Transaction(pool);
-  
+
   try {
     await transaction.begin();
     const ticketRequest = new sql.Request(transaction);
 
     const result = await ticketRequest
-      .input('title', sql.NVarChar, title)
-      .input('description', sql.NVarChar, description)
-      .input('status', sql.NVarChar, status)
-      .input('priority', sql.NVarChar, priority)
-      .input('category', sql.NVarChar, category)
-      .input('subCategory', sql.NVarChar, subCategory)
-      .input('reporterId', sql.Int, reporterId)
-      .input('assigneeId', sql.Int, assigneeId)
-      .input('screenshotUrl', sql.NVarChar, screenshotUrl)
-      .input('screenshotFileName', sql.NVarChar, screenshotFileName)
+      .input('title',           sql.NVarChar, title)
+      .input('description',     sql.NVarChar, description)
+      .input('status',          sql.NVarChar, status)
+      .input('priority',        sql.NVarChar, priority)
+      .input('category',        sql.NVarChar, category)
+      .input('subCategory',     sql.NVarChar, subCategory)
+      .input('reporterId',      sql.Int,      reporterId)
+      .input('assigneeId',      sql.Int,      assigneeId || null)
+      .input('screenshotUrl',   sql.NVarChar, screenshotUrl   || null)
+      .input('screenshotFileName', sql.NVarChar, screenshotFileName || null)
+      .input('createdBy',       sql.NVarChar, createdBy       || null)
+      .input('employeeId',      sql.NVarChar, employeeId      || null)
+      .input('extensionNumber', sql.NVarChar, extensionNumber || null)
       .query(`
-        INSERT INTO Tickets (Title, Description, Status, Priority, Category, SubCategory, ReporterId, AssigneeId, ScreenshotUrl, ScreenshotFileName) 
+        INSERT INTO Tickets (
+          Title, Description, Status, Priority, Category, SubCategory,
+          ReporterId, AssigneeId, ScreenshotUrl, ScreenshotFileName,
+          CreatedBy, EmployeeId, ExtensionNumber
+        )
         OUTPUT INSERTED.*
-        VALUES (@title, @description, @status, @priority, @category, @subCategory, @reporterId, @assigneeId, @screenshotUrl, @screenshotFileName)
+        VALUES (
+          @title, @description, @status, @priority, @category, @subCategory,
+          @reporterId, @assigneeId, @screenshotUrl, @screenshotFileName,
+          @createdBy, @employeeId, @extensionNumber
+        )
       `);
-    
+
     const newTicket = result.recordset[0];
 
-    // Create notification for assignee if there is one
+    // Notify the assignee if one was set
     if (newTicket.AssigneeId) {
-        const notificationRequest = new sql.Request(transaction);
-        await notificationRequest
-            .input('userId', sql.Int, newTicket.AssigneeId)
-            .input('ticketId', sql.Int, newTicket.Id)
-            .input('message', sql.NVarChar, `You have been assigned to ticket #${newTicket.Id}: "${newTicket.Title}"`)
-            .query('INSERT INTO Notifications (UserId, TicketId, Message) VALUES (@userId, @ticketId, @message)');
+      const notificationRequest = new sql.Request(transaction);
+      await notificationRequest
+        .input('userId',  sql.Int,     newTicket.AssigneeId)
+        .input('ticketId', sql.Int,    newTicket.Id)
+        .input('message', sql.NVarChar, `You have been assigned to ticket #${newTicket.Id}: "${newTicket.Title}"`)
+        .query('INSERT INTO Notifications (UserId, TicketId, Message) VALUES (@userId, @ticketId, @message)');
     }
 
     await transaction.commit();
@@ -77,19 +96,23 @@ exports.createTicket = async (req, res) => {
 
 exports.updateTicket = async (req, res) => {
   const ticketId = parseInt(req.params.id, 10);
-  const { title, description, status, priority, category, subCategory, assigneeId, screenshotUrl, screenshotFileName } = req.body;
-  
+  const {
+    title, description, status, priority, category, subCategory,
+    assigneeId, screenshotUrl, screenshotFileName,
+    createdBy, employeeId, extensionNumber,
+  } = req.body;
+
   const pool = await poolPromise;
   const transaction = new sql.Transaction(pool);
 
   try {
     await transaction.begin();
 
-    // Get the state of the ticket before updating
+    // Fetch old ticket state for change-detection notifications
     const oldTicketRequest = new sql.Request(transaction);
     const oldTicketResult = await oldTicketRequest
-        .input('id', sql.Int, ticketId)
-        .query('SELECT * FROM Tickets WHERE Id = @id');
+      .input('id', sql.Int, ticketId)
+      .query('SELECT * FROM Tickets WHERE Id = @id');
     const oldTicket = oldTicketResult.recordset[0];
 
     if (!oldTicket) {
@@ -99,58 +122,63 @@ exports.updateTicket = async (req, res) => {
 
     const updateRequest = new sql.Request(transaction);
     const result = await updateRequest
-      .input('id', sql.Int, ticketId)
-      .input('title', sql.NVarChar, title)
-      .input('description', sql.NVarChar, description)
-      .input('status', sql.NVarChar, status)
-      .input('priority', sql.NVarChar, priority)
-      .input('category', sql.NVarChar, category)
-      .input('subCategory', sql.NVarChar, subCategory)
-      .input('assigneeId', sql.Int, assigneeId)
-      .input('screenshotUrl', sql.NVarChar, screenshotUrl)
-      .input('screenshotFileName', sql.NVarChar, screenshotFileName)
+      .input('id',              sql.Int,      ticketId)
+      .input('title',           sql.NVarChar, title)
+      .input('description',     sql.NVarChar, description)
+      .input('status',          sql.NVarChar, status)
+      .input('priority',        sql.NVarChar, priority)
+      .input('category',        sql.NVarChar, category)
+      .input('subCategory',     sql.NVarChar, subCategory)
+      .input('assigneeId',      sql.Int,      assigneeId || null)
+      .input('screenshotUrl',   sql.NVarChar, screenshotUrl   || null)
+      .input('screenshotFileName', sql.NVarChar, screenshotFileName || null)
+      .input('createdBy',       sql.NVarChar, createdBy       || null)
+      .input('employeeId',      sql.NVarChar, employeeId      || null)
+      .input('extensionNumber', sql.NVarChar, extensionNumber || null)
       .query(`
-        UPDATE Tickets 
-        SET 
-          Title = @title, 
-          Description = @description, 
-          Status = @status, 
-          Priority = @priority, 
-          Category = @category,
-          SubCategory = @subCategory,
-          AssigneeId = @assigneeId, 
-          ScreenshotUrl = @screenshotUrl,
+        UPDATE Tickets
+        SET
+          Title           = @title,
+          Description     = @description,
+          Status          = @status,
+          Priority        = @priority,
+          Category        = @category,
+          SubCategory     = @subCategory,
+          AssigneeId      = @assigneeId,
+          ScreenshotUrl   = @screenshotUrl,
           ScreenshotFileName = @screenshotFileName,
-          UpdatedAt = GETDATE()
+          CreatedBy       = @createdBy,
+          EmployeeId      = @employeeId,
+          ExtensionNumber = @extensionNumber,
+          UpdatedAt       = GETDATE()
         OUTPUT INSERTED.*
         WHERE Id = @id
       `);
 
     const updatedTicket = result.recordset[0];
 
-    // 1. Check if assignee changed and notify the new assignee
+    // 1. Notify new assignee if assignee changed
     if (updatedTicket.AssigneeId && oldTicket.AssigneeId !== updatedTicket.AssigneeId) {
-        const notificationRequest = new sql.Request(transaction);
-        await notificationRequest
-            .input('userId', sql.Int, updatedTicket.AssigneeId)
-            .input('ticketId', sql.Int, updatedTicket.Id)
-            .input('message', sql.NVarChar, `You have been assigned to ticket #${updatedTicket.Id}: "${updatedTicket.Title}"`)
-            .query('INSERT INTO Notifications (UserId, TicketId, Message) VALUES (@userId, @ticketId, @message)');
+      const notificationRequest = new sql.Request(transaction);
+      await notificationRequest
+        .input('userId',  sql.Int,      updatedTicket.AssigneeId)
+        .input('ticketId', sql.Int,     updatedTicket.Id)
+        .input('message', sql.NVarChar, `You have been assigned to ticket #${updatedTicket.Id}: "${updatedTicket.Title}"`)
+        .query('INSERT INTO Notifications (UserId, TicketId, Message) VALUES (@userId, @ticketId, @message)');
     }
 
-    // 2. Check if status changed and notify the reporter
+    // 2. Notify reporter if status changed
     if (oldTicket.Status !== updatedTicket.Status) {
-        const notificationRequest = new sql.Request(transaction);
-        await notificationRequest
-            .input('userId', sql.Int, updatedTicket.ReporterId)
-            .input('ticketId', sql.Int, updatedTicket.Id)
-            .input('message', sql.NVarChar, `Status of ticket #${updatedTicket.Id} was updated to "${updatedTicket.Status}"`)
-            .query('INSERT INTO Notifications (UserId, TicketId, Message) VALUES (@userId, @ticketId, @message)');
+      const notificationRequest = new sql.Request(transaction);
+      await notificationRequest
+        .input('userId',  sql.Int,      updatedTicket.ReporterId)
+        .input('ticketId', sql.Int,     updatedTicket.Id)
+        .input('message', sql.NVarChar, `Status of ticket #${updatedTicket.Id} was updated to "${updatedTicket.Status}"`)
+        .query('INSERT INTO Notifications (UserId, TicketId, Message) VALUES (@userId, @ticketId, @message)');
     }
 
     await transaction.commit();
     res.status(200).json(mapTicketToCamelCase(updatedTicket));
-    
   } catch (err) {
     await transaction.rollback();
     console.error('Database update error:', err);

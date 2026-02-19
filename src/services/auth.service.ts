@@ -21,6 +21,7 @@ export class AuthService {
   readonly isAdmin = computed(() => this.currentUserRole()?.name === 'Admin');
   readonly isManager = computed(() => this.currentUserRole()?.name === 'Manager');
   readonly isEmployee = computed(() => this.currentUserRole()?.name === 'Employee');
+  readonly isSupport = computed(() => this.currentUserRole()?.name === 'Support Agent');
 
   constructor(
     private apiService: ApiService,

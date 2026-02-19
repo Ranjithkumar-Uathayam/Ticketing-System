@@ -37,6 +37,10 @@ export interface Ticket {
   updatedAt: string;
   screenshotUrl?: string;
   screenshotFileName?: string;
+  // New fields
+  createdBy?: string;
+  employeeId?: string;
+  extensionNumber?: string;
 }
 
 export interface Notification {

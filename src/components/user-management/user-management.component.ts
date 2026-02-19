@@ -15,32 +15,34 @@ export class UserManagementComponent {
   users;
   roles;
   loading = signal(false);
-  
+  apiLoading;
+
   activeTab = signal<'users' | 'roles'>('users');
-  
+
   isUserModalOpen = signal(false);
   isRoleModalOpen = signal(false);
-  
+
   editingRole = signal<Role | null>(null);
 
   availableScreens: AppScreen[] = ['Dashboard', 'Tickets', 'User Management', 'Reports'];
 
+  // contactEmail removed from the form
   newUserForm = new FormGroup({
-    name: new FormControl('', Validators.required),
+    name:     new FormControl('', Validators.required),
     username: new FormControl('', Validators.required),
-    contactEmail: new FormControl('', [Validators.required, Validators.email]),
     password: new FormControl('', [Validators.required, Validators.minLength(8)]),
-    roleId: new FormControl<number | null>(null, Validators.required),
+    roleId:   new FormControl<number | null>(null, Validators.required),
   });
-  
+
   roleForm = new FormGroup({
-    name: new FormControl('', Validators.required),
-    permissions: new FormArray(this.availableScreens.map(() => new FormControl(false)))
+    name:        new FormControl('', Validators.required),
+    permissions: new FormArray(this.availableScreens.map(() => new FormControl(false))),
   });
 
   constructor(private apiService: ApiService) {
     this.users = this.apiService.users;
     this.roles = this.apiService.roles;
+    this.apiLoading = this.apiService.loading;
   }
 
   getRoleById(id: number) {
@@ -51,7 +53,7 @@ export class UserManagementComponent {
   selectTab(tab: 'users' | 'roles' | EventTarget | null) {
     const value = (typeof tab === 'string') ? tab : (tab as HTMLSelectElement)?.value;
     if (value === 'users' || value === 'roles') {
-       this.activeTab.set(value);
+      this.activeTab.set(value);
     }
   }
 
@@ -88,10 +90,10 @@ export class UserManagementComponent {
   openRoleModal(role: Role | null = null) {
     this.editingRole.set(role);
     this.roleForm.reset();
-    
+
     const permissionsArray = this.roleForm.get('permissions') as FormArray;
     permissionsArray.clear();
-    
+
     if (role) {
       this.roleForm.patchValue({ name: role.name });
       this.availableScreens.forEach(screen => {
@@ -118,7 +120,7 @@ export class UserManagementComponent {
     );
 
     const roleData = {
-      name: this.roleForm.value.name!,
+      name:        this.roleForm.value.name!,
       permissions: selectedPermissions,
     };
 
@@ -130,10 +132,10 @@ export class UserManagementComponent {
         await this.apiService.createRole(roleData);
       }
       this.closeRoleModal();
-    } catch(error) {
-       console.error('Failed to save role', error);
+    } catch (error) {
+      console.error('Failed to save role', error);
     } finally {
-       this.loading.set(false);
+      this.loading.set(false);
     }
   }
 }
