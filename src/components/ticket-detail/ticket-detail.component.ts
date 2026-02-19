@@ -90,7 +90,9 @@ export class TicketDetailComponent implements OnInit {
     this.isEmployee = computed(() => this.authService.isEmployee());
 
     this.canEditAssignee = computed(() => {
-      return this.authService.isAdmin();
+        return this.authService.isAdmin() || 
+        this.authService.isManager() || 
+        this.authService.isSupport();
     });
 
     this.isSupportView = computed(() => {
