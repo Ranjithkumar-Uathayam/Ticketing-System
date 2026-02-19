@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { User, Role, AppScreen } from '../../models';
-import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-user-management',
@@ -26,6 +26,9 @@ export class UserManagementComponent {
 
   availableScreens: AppScreen[] = ['Dashboard', 'Tickets', 'User Management', 'Reports'];
 
+  // Tracks which permissions are checked — simple boolean array, no FormArray
+  selectedPermissions = signal<boolean[]>([false, false, false, false]);
+
   // contactEmail removed from the form
   newUserForm = new FormGroup({
     name:     new FormControl('', Validators.required),
@@ -35,8 +38,7 @@ export class UserManagementComponent {
   });
 
   roleForm = new FormGroup({
-    name:        new FormControl('', Validators.required),
-    permissions: new FormArray(this.availableScreens.map(() => new FormControl(false))),
+    name: new FormControl('', Validators.required),
   });
 
   constructor(private apiService: ApiService) {
@@ -91,19 +93,23 @@ export class UserManagementComponent {
     this.editingRole.set(role);
     this.roleForm.reset();
 
-    const permissionsArray = this.roleForm.get('permissions') as FormArray;
-    permissionsArray.clear();
-
     if (role) {
       this.roleForm.patchValue({ name: role.name });
-      this.availableScreens.forEach(screen => {
-        permissionsArray.push(new FormControl(role.permissions.includes(screen)));
-      });
+      // Pre-check boxes based on existing role permissions
+      this.selectedPermissions.set(
+        this.availableScreens.map(screen => role.permissions.includes(screen))
+      );
     } else {
-      this.availableScreens.forEach(() => permissionsArray.push(new FormControl(false)));
+      this.selectedPermissions.set(this.availableScreens.map(() => false));
     }
 
     this.isRoleModalOpen.set(true);
+  }
+
+  togglePermission(index: number, checked: boolean) {
+    const current = [...this.selectedPermissions()];
+    current[index] = checked;
+    this.selectedPermissions.set(current);
   }
 
   closeRoleModal() {
@@ -115,13 +121,14 @@ export class UserManagementComponent {
     if (this.roleForm.invalid) return;
     this.loading.set(true);
 
-    const selectedPermissions = this.availableScreens.filter(
-      (_, i) => this.roleForm.value.permissions?.[i]
+    // Build permissions list from the simple boolean signal array
+    const checkedPermissions = this.availableScreens.filter(
+      (_, i) => this.selectedPermissions()[i] === true
     );
 
     const roleData = {
-      name:        this.roleForm.value.name!,
-      permissions: selectedPermissions,
+      name:        this.roleForm.getRawValue().name!,
+      permissions: checkedPermissions,
     };
 
     try {
