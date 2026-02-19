@@ -19,10 +19,19 @@ export class AuthService {
     return this.apiService.getRoleById(user.roleId) ?? null;
   });
 
-  readonly isAdmin = computed(() => this.currentUserRole()?.name === 'Admin');
-  readonly isManager = computed(() => this.currentUserRole()?.name === 'Manager');
-  readonly isEmployee = computed(() => this.currentUserRole()?.name === 'Employee');
-  readonly isSupport = computed(() => this.currentUserRole()?.name === 'Support Agent');
+    readonly isAdmin = computed(() =>
+        ['Admin', 'Hardware Admin', 'Software Admin'].includes(this.currentUserRole()?.name ?? '')
+    );
+    readonly isManager = computed(() => this.currentUserRole()?.name === 'Manager');
+    readonly isEmployee = computed(() => this.currentUserRole()?.name === 'Employee');
+    readonly isSupport = computed(() => this.currentUserRole()?.name === 'Support Agent');
+    readonly isHardwareAdmin = computed(() => this.currentUserRole()?.name === 'Hardware Admin');
+    readonly isSoftwareAdmin = computed(() => this.currentUserRole()?.name === 'Software Admin');
+    readonly adminCategory = computed<'Hardware' | 'Software' | null>(() => {
+    if (this.isHardwareAdmin()) return 'Hardware';
+    if (this.isSoftwareAdmin()) return 'Software';
+    return null; // null = full Admin, sees all
+    });
 
   constructor(
     private apiService: ApiService,

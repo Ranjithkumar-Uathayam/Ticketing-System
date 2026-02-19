@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { RouterLink } from '@angular/router';
 import { Ticket, TicketPriority, TicketStatus, User } from '../../models';
+import { AuthService } from '../../services/auth.service';
 
 declare var Chart: any; // Using Chart.js from CDN
 
@@ -107,8 +108,15 @@ export class DashboardComponent implements OnDestroy {
 
   private injector = inject(Injector);
 
-  constructor(private apiService: ApiService) {
-    this.tickets = this.apiService.tickets;
+  constructor(private apiService: ApiService, private authService: AuthService) {
+     const adminCategory = this.authService.adminCategory;
+  
+    this.tickets = computed(() => {
+        const cat = adminCategory();
+        const all = this.apiService.tickets();
+        return cat ? all.filter(t => t.category === cat) : all;
+    });
+
     this.users = this.apiService.users;
     this.loading = this.apiService.loading;
 

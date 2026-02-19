@@ -1,8 +1,9 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { TicketPriority, TicketStatus, User } from '../../models';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-ticket-list',
@@ -31,8 +32,13 @@ export class TicketListComponent {
     'Reopened': 'bg-cyan-100 text-cyan-800',
   };
 
-  constructor(private apiService: ApiService, private router: Router) {
-    this.tickets = this.apiService.tickets;
+  constructor(private apiService: ApiService, private authService: AuthService, private router: Router) {
+    const adminCategory = this.authService.adminCategory;
+    this.tickets = computed(() => {
+        const cat = adminCategory();
+        const all = this.apiService.tickets();
+        return cat ? all.filter(t => t.category === cat) : all;
+    });
     this.users = this.apiService.users;
     this.loading = this.apiService.loading;
   }

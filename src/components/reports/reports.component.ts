@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { Ticket, TicketStatus, TicketPriority, User } from '../../models';
+import { AuthService } from '../../services/auth.service';
 
 declare var Chart: any;
 
@@ -81,8 +82,14 @@ export class ReportsComponent implements OnDestroy {
   
   private injector = inject(Injector);
 
-  constructor(private apiService: ApiService) {
-    this.tickets = this.apiService.tickets;
+  constructor(private apiService: ApiService, private authService: AuthService) {
+    const adminCategory = this.authService.adminCategory;
+    this.tickets = computed(() => {
+        const cat = adminCategory();
+        const all = this.apiService.tickets();
+        return cat ? all.filter(t => t.category === cat) : all;
+    });
+
     this.users = this.apiService.users;
     this.loading = this.apiService.loading;
 
