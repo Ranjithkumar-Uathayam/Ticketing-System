@@ -4,7 +4,8 @@ import { firstValueFrom } from 'rxjs';
 import { Ticket, User, Role } from '../models';
 
 // In a real app, move this to an environment file
-const API_URL = 'http://localhost:3001/api';
+// const API_URL = 'http://localhost:3001/api';
+const API_URL = "https://vms.uathayam.in:4300/TICKETING-API/api"
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
