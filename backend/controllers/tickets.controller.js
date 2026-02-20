@@ -8,13 +8,13 @@ const mapTicketToCamelCase = (ticket) => ({
     priority: ticket.Priority,
     category: ticket.Category,
     subCategory: ticket.SubCategory,
+    division: ticket.Division,           // ← ADD THIS
     reporterId: ticket.ReporterId,
     assigneeId: ticket.AssigneeId,
     createdAt: ticket.CreatedAt,
     updatedAt: ticket.UpdatedAt,
     screenshotUrl: ticket.ScreenshotUrl,
     screenshotFileName: ticket.ScreenshotFileName,
-    // New fields
     createdBy: ticket.CreatedBy,
     employeeId: ticket.EmployeeId,
     extensionNumber: ticket.ExtensionNumber,
@@ -33,7 +33,7 @@ exports.getAllTickets = async (req, res) => {
 
 exports.createTicket = async (req, res) => {
   const {
-    title, description, status, priority, category, subCategory,
+    title, description, status, priority, category, subCategory, division,
     reporterId, assigneeId, screenshotUrl, screenshotFileName,
     createdBy, employeeId, extensionNumber,
   } = req.body;
@@ -58,16 +58,17 @@ exports.createTicket = async (req, res) => {
       .input('screenshotFileName', sql.NVarChar, screenshotFileName || null)
       .input('createdBy',       sql.NVarChar, createdBy       || null)
       .input('employeeId',      sql.NVarChar, employeeId      || null)
-      .input('extensionNumber', sql.NVarChar, extensionNumber || null)
+       .input('extensionNumber', sql.NVarChar, extensionNumber || null)
+      .input('division',        sql.NVarChar, division        || null)   
       .query(`
         INSERT INTO Tickets (
-          Title, Description, Status, Priority, Category, SubCategory,
+          Title, Description, Status, Priority, Category, SubCategory, Division,
           ReporterId, AssigneeId, ScreenshotUrl, ScreenshotFileName,
           CreatedBy, EmployeeId, ExtensionNumber
         )
         OUTPUT INSERTED.*
         VALUES (
-          @title, @description, @status, @priority, @category, @subCategory,
+          @title, @description, @status, @priority, @category, @subCategory, @division,
           @reporterId, @assigneeId, @screenshotUrl, @screenshotFileName,
           @createdBy, @employeeId, @extensionNumber
         )
@@ -96,12 +97,11 @@ exports.createTicket = async (req, res) => {
 
 exports.updateTicket = async (req, res) => {
   const ticketId = parseInt(req.params.id, 10);
-  const {
-    title, description, status, priority, category, subCategory,
+    const {
+    title, description, status, priority, category, subCategory, division,
     assigneeId, screenshotUrl, screenshotFileName,
     createdBy, employeeId, extensionNumber,
   } = req.body;
-
   const pool = await poolPromise;
   const transaction = new sql.Transaction(pool);
 
@@ -135,6 +135,7 @@ exports.updateTicket = async (req, res) => {
       .input('createdBy',       sql.NVarChar, createdBy       || null)
       .input('employeeId',      sql.NVarChar, employeeId      || null)
       .input('extensionNumber', sql.NVarChar, extensionNumber || null)
+      .input('division',        sql.NVarChar, division        || null)   
       .query(`
         UPDATE Tickets
         SET
@@ -144,6 +145,7 @@ exports.updateTicket = async (req, res) => {
           Priority        = @priority,
           Category        = @category,
           SubCategory     = @subCategory,
+          Division        = @division,                                   
           AssigneeId      = @assigneeId,
           ScreenshotUrl   = @screenshotUrl,
           ScreenshotFileName = @screenshotFileName,

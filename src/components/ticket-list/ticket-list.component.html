@@ -47,10 +47,15 @@
             <thead class="bg-gray-50">
               <tr>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reporter</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Emp. ID / Ext.</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignee</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
                 <th scope="col" class="relative px-6 py-3">
                   <span class="sr-only">View</span>
@@ -60,14 +65,53 @@
             <tbody class="bg-white divide-y divide-gray-200">
               @for (ticket of tickets(); track ticket.id) {
                 <tr class="hover:bg-gray-50 transition-colors duration-150">
+
+                  <!-- Title -->
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">{{ ticket.title }}</div>
                     <div class="text-sm text-gray-500">#{{ ticket.id }}</div>
                   </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{ ticket.category }}</div>
-                    <div class="text-sm text-gray-500">{{ ticket.subCategory }}</div>
+
+                  <!-- Description -->
+                  <td class="px-6 py-4 max-w-xs">
+                    <div class="text-sm text-gray-700 truncate max-w-[200px]" [title]="ticket.description">
+                      {{ ticket.description || '—' }}
+                    </div>
                   </td>
+
+                  <!-- Category -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">{{ ticket.category || '—' }}</div>
+                    <div class="text-sm text-gray-500">{{ ticket.subCategory || '' }}</div>
+                  </td>
+
+                  <!-- Division -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-700">{{ ticket.division || '—' }}</div>
+                  </td>
+
+                  <!-- Reporter (Created By) -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    @if (getReporter(ticket.reporterId); as reporter) {
+                      <div class="text-sm font-medium text-gray-900">{{ reporter.name }}</div>
+                    } @else if (ticket.createdBy) {
+                      <div class="text-sm font-medium text-gray-900">{{ ticket.createdBy }}</div>
+                    } @else {
+                      <div class="text-sm text-gray-500">—</div>
+                    }
+                  </td>
+
+                  <!-- Employee ID / Extension -->
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    @if (ticket.employeeId || ticket.extensionNumber) {
+                      <div class="text-sm text-gray-700">{{ ticket.employeeId || '—' }}</div>
+                      <div class="text-xs text-gray-500">Ext: {{ ticket.extensionNumber || '—' }}</div>
+                    } @else {
+                      <div class="text-sm text-gray-500">—</div>
+                    }
+                  </td>
+
+                  <!-- Assignee -->
                   <td class="px-6 py-4 whitespace-nowrap">
                     @if (getAssignee(ticket.assigneeId); as assignee) {
                       <div>
@@ -78,26 +122,39 @@
                       <div class="text-sm text-gray-500">Unassigned</div>
                     }
                   </td>
+
+                  <!-- Status -->
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [class]="getStatusClass(ticket.status)">
                       {{ ticket.status }}
                     </span>
                   </td>
+
+                  <!-- Priority -->
                   <td class="px-6 py-4 whitespace-nowrap">
                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [class]="getPriorityClass(ticket.priority)">
                       {{ ticket.priority }}
                     </span>
                   </td>
+
+                  <!-- Created At -->
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ ticket.createdAt | date:'short' }}
+                  </td>
+
+                  <!-- Last Updated -->
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ ticket.updatedAt | date:'short' }}
                   </td>
+
+                  <!-- View Link -->
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <a [routerLink]="['/tickets', ticket.id]" class="text-blue-600 hover:text-blue-900">View</a>
                   </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="text-center py-10 text-gray-500">No tickets found.</td>
+                  <td colspan="12" class="text-center py-10 text-gray-500">No tickets found.</td>
                 </tr>
               }
             </tbody>
@@ -118,19 +175,54 @@
           </div>
           <a [routerLink]="['/tickets', ticket.id]" class="text-blue-600 font-semibold text-sm">View</a>
         </div>
+
+        @if (ticket.description) {
+          <p class="mt-2 text-sm text-gray-600 line-clamp-2">{{ ticket.description }}</p>
+        }
+
         <div class="mt-2">
           <p class="text-xs text-gray-600 font-medium">{{ticket.category}} > {{ticket.subCategory}}</p>
-        </div>
-        <div class="mt-4 border-t pt-4">
-          @if(getAssignee(ticket.assigneeId); as assignee) {
-            <div>
-              <p class="text-sm font-medium text-gray-700">{{assignee.name}}</p>
-              <p class="text-xs text-gray-500">Assignee</p>
-            </div>
-          } @else {
-            <p class="text-sm text-gray-500">Unassigned</p>
+          @if (ticket.division) {
+            <p class="text-xs text-gray-500 mt-1">Division: {{ticket.division}}</p>
           }
         </div>
+
+        <div class="mt-4 border-t pt-4 space-y-2">
+          <!-- Reporter -->
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 font-medium">Reporter:</span>
+            <span class="text-gray-700">
+              {{ getReporter(ticket.reporterId)?.name ?? ticket.createdBy ?? '—' }}
+            </span>
+          </div>
+
+          <!-- Employee ID -->
+          @if (ticket.employeeId) {
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500 font-medium">Emp. ID:</span>
+              <span class="text-gray-700">{{ ticket.employeeId }}</span>
+            </div>
+          }
+
+          <!-- Extension -->
+          @if (ticket.extensionNumber) {
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500 font-medium">Extension:</span>
+              <span class="text-gray-700">{{ ticket.extensionNumber }}</span>
+            </div>
+          }
+
+          <!-- Assignee -->
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500 font-medium">Assignee:</span>
+            @if(getAssignee(ticket.assigneeId); as assignee) {
+              <span class="text-gray-700">{{assignee.name}}</span>
+            } @else {
+              <span class="text-gray-400">Unassigned</span>
+            }
+          </div>
+        </div>
+
         <div class="mt-4 flex justify-between items-center">
             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [class]="getStatusClass(ticket.status)">
               {{ ticket.status }}
@@ -139,8 +231,9 @@
               {{ ticket.priority }}
             </span>
         </div>
-        <div class="mt-2 text-xs text-gray-400 text-right">
-          Last updated: {{ ticket.updatedAt | date:'shortDate' }}
+        <div class="mt-2 flex justify-between text-xs text-gray-400">
+          <span>Created: {{ ticket.createdAt | date:'shortDate' }}</span>
+          <span>Updated: {{ ticket.updatedAt | date:'shortDate' }}</span>
         </div>
       </div>
     } @empty {
