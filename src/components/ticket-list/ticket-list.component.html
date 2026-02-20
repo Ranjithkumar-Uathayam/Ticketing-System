@@ -3,15 +3,13 @@
   <div class="flex justify-end mb-4">
     <div class="h-10 w-40 bg-gray-200 rounded-md animate-pulse"></div>
   </div>
-  <!-- Desktop Skeleton -->
   <div class="hidden md:block bg-white shadow rounded-lg p-4 animate-pulse">
-      <div class="space-y-4">
-          @for (_ of [1, 2, 3, 4, 5]; track $index) {
-              <div class="h-12 bg-gray-200 rounded"></div>
-          }
-      </div>
+    <div class="space-y-4">
+      @for (_ of [1, 2, 3, 4, 5]; track $index) {
+        <div class="h-12 bg-gray-200 rounded"></div>
+      }
+    </div>
   </div>
-   <!-- Mobile Skeleton -->
   <div class="md:hidden space-y-4">
     @for(_ of [1, 2, 3]; track $index) {
       <div class="bg-white shadow rounded-lg p-4 animate-pulse">
@@ -33,9 +31,10 @@
 } @else {
 <div class="animate-fade-in">
   <div class="flex justify-end mb-4">
-      <button (click)="createNewTicket()" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-          Create New Ticket
-      </button>
+    <button (click)="createNewTicket()" type="button"
+      class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+      Create New Ticket
+    </button>
   </div>
 
   <!-- Desktop Table View -->
@@ -46,20 +45,18 @@
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reporter</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Emp. ID / Ext.</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignee</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
-                <th scope="col" class="relative px-6 py-3">
-                  <span class="sr-only">View</span>
-                </th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reporter</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Emp. ID / Ext.</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assignee</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                <th scope="col" class="relative px-4 py-3"><span class="sr-only">View</span></th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -67,90 +64,85 @@
                 <tr class="hover:bg-gray-50 transition-colors duration-150">
 
                   <!-- Title -->
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{ ticket.title }}</div>
-                    <div class="text-sm text-gray-500">#{{ ticket.id }}</div>
+                  <td class="px-4 py-4 whitespace-nowrap">
+                    <div class="text-sm font-medium text-gray-900">{{ ticket.title || '—' }}</div>
+                    <div class="text-xs text-gray-500">#{{ ticket.id }}</div>
                   </td>
 
                   <!-- Description -->
-                  <td class="px-6 py-4 max-w-xs">
-                    <div class="text-sm text-gray-700 truncate max-w-[200px]" [title]="ticket.description">
+                  <td class="px-4 py-4 max-w-[180px]">
+                    <div class="text-sm text-gray-700 truncate" [title]="ticket.description || ''">
                       {{ ticket.description || '—' }}
                     </div>
                   </td>
 
                   <!-- Category -->
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-4 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">{{ ticket.category || '—' }}</div>
-                    <div class="text-sm text-gray-500">{{ ticket.subCategory || '' }}</div>
-                  </td>
-
-                  <!-- Division -->
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm text-gray-700">{{ ticket.division || '—' }}</div>
-                  </td>
-
-                  <!-- Reporter (Created By) -->
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    @if (getReporter(ticket.reporterId); as reporter) {
-                      <div class="text-sm font-medium text-gray-900">{{ reporter.name }}</div>
-                    } @else if (ticket.createdBy) {
-                      <div class="text-sm font-medium text-gray-900">{{ ticket.createdBy }}</div>
-                    } @else {
-                      <div class="text-sm text-gray-500">—</div>
+                    @if (ticket.subCategory) {
+                      <div class="text-xs text-gray-500">{{ ticket.subCategory }}</div>
                     }
                   </td>
 
+                  <!-- Division -->
+                  <td class="px-4 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-700">{{ ticket.division || '—' }}</div>
+                  </td>
+
+                  <!-- Reporter -->
+                  <td class="px-4 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">
+                      {{ getReporter(ticket.reporterId)?.name || ticket.createdBy || '—' }}
+                    </div>
+                  </td>
+
                   <!-- Employee ID / Extension -->
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    @if (ticket.employeeId || ticket.extensionNumber) {
-                      <div class="text-sm text-gray-700">{{ ticket.employeeId || '—' }}</div>
-                      <div class="text-xs text-gray-500">Ext: {{ ticket.extensionNumber || '—' }}</div>
-                    } @else {
-                      <div class="text-sm text-gray-500">—</div>
+                  <td class="px-4 py-4 whitespace-nowrap">
+                    <div class="text-sm text-gray-700">{{ ticket.employeeId || '—' }}</div>
+                    @if (ticket.extensionNumber) {
+                      <div class="text-xs text-gray-500">Ext: {{ ticket.extensionNumber }}</div>
                     }
                   </td>
 
                   <!-- Assignee -->
-                  <td class="px-6 py-4 whitespace-nowrap">
+                  <td class="px-4 py-4 whitespace-nowrap">
                     @if (getAssignee(ticket.assigneeId); as assignee) {
-                      <div>
-                        <div class="text-sm font-medium text-gray-900">{{ assignee.name }}</div>
-                        <div class="text-sm text-gray-500">{{ assignee.contactEmail }}</div>
-                      </div>
+                      <div class="text-sm font-medium text-gray-900">{{ assignee.name }}</div>
+                      <div class="text-xs text-gray-500">{{ assignee.contactEmail }}</div>
                     } @else {
-                      <div class="text-sm text-gray-500">Unassigned</div>
+                      <div class="text-sm text-gray-400">Unassigned</div>
                     }
                   </td>
 
                   <!-- Status -->
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [class]="getStatusClass(ticket.status)">
-                      {{ ticket.status }}
+                  <td class="px-4 py-4 whitespace-nowrap">
+                    <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full" [ngClass]="getStatusClass(ticket.status)">
+                      {{ ticket.status || '—' }}
                     </span>
                   </td>
 
                   <!-- Priority -->
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [class]="getPriorityClass(ticket.priority)">
-                      {{ ticket.priority }}
+                  <td class="px-4 py-4 whitespace-nowrap">
+                    <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full" [ngClass]="getPriorityClass(ticket.priority)">
+                      {{ ticket.priority || '—' }}
                     </span>
                   </td>
 
                   <!-- Created At -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ ticket.createdAt | date:'short' }}
+                  <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ ticket.createdAt ? (ticket.createdAt | date:'short') : '—' }}
                   </td>
 
                   <!-- Last Updated -->
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ ticket.updatedAt | date:'short' }}
+                  <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {{ ticket.updatedAt ? (ticket.updatedAt | date:'short') : '—' }}
                   </td>
 
-                  <!-- View Link -->
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a [routerLink]="['/tickets', ticket.id]" class="text-blue-600 hover:text-blue-900">View</a>
+                  <!-- View -->
+                  <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <a [routerLink]="['/tickets', ticket.id]" class="text-blue-600 hover:text-blue-900 font-semibold">View</a>
                   </td>
+
                 </tr>
               } @empty {
                 <tr>
@@ -167,11 +159,11 @@
   <!-- Mobile Card View -->
   <div class="md:hidden space-y-4">
     @for(ticket of tickets(); track ticket.id) {
-      <div class="bg-white shadow rounded-lg p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-px">
+      <div class="bg-white shadow rounded-lg p-4 transition-all duration-200 hover:shadow-md">
         <div class="flex justify-between items-start">
           <div>
-            <p class="font-semibold text-gray-800">{{ticket.title}}</p>
-            <p class="text-sm text-gray-500">#{{ticket.id}}</p>
+            <p class="font-semibold text-gray-800">{{ ticket.title || '(No title)' }}</p>
+            <p class="text-sm text-gray-500">#{{ ticket.id }}</p>
           </div>
           <a [routerLink]="['/tickets', ticket.id]" class="text-blue-600 font-semibold text-sm">View</a>
         </div>
@@ -180,66 +172,50 @@
           <p class="mt-2 text-sm text-gray-600 line-clamp-2">{{ ticket.description }}</p>
         }
 
-        <div class="mt-2">
-          <p class="text-xs text-gray-600 font-medium">{{ticket.category}} > {{ticket.subCategory}}</p>
-          @if (ticket.division) {
-            <p class="text-xs text-gray-500 mt-1">Division: {{ticket.division}}</p>
-          }
+        <div class="mt-2 text-xs text-gray-600">
+          @if (ticket.category) { <span class="font-medium">{{ ticket.category }}</span> }
+          @if (ticket.subCategory) { <span> › {{ ticket.subCategory }}</span> }
+          @if (ticket.division) { <span class="ml-2 text-gray-500">· {{ ticket.division }}</span> }
         </div>
 
-        <div class="mt-4 border-t pt-4 space-y-2">
-          <!-- Reporter -->
+        <div class="mt-3 border-t pt-3 space-y-1.5">
           <div class="flex justify-between text-sm">
-            <span class="text-gray-500 font-medium">Reporter:</span>
-            <span class="text-gray-700">
-              {{ getReporter(ticket.reporterId)?.name ?? ticket.createdBy ?? '—' }}
-            </span>
+            <span class="text-gray-500">Reporter:</span>
+            <span class="text-gray-800 font-medium">{{ getReporter(ticket.reporterId)?.name || ticket.createdBy || '—' }}</span>
           </div>
-
-          <!-- Employee ID -->
           @if (ticket.employeeId) {
             <div class="flex justify-between text-sm">
-              <span class="text-gray-500 font-medium">Emp. ID:</span>
-              <span class="text-gray-700">{{ ticket.employeeId }}</span>
+              <span class="text-gray-500">Emp. ID:</span>
+              <span class="text-gray-800">{{ ticket.employeeId }}</span>
             </div>
           }
-
-          <!-- Extension -->
           @if (ticket.extensionNumber) {
             <div class="flex justify-between text-sm">
-              <span class="text-gray-500 font-medium">Extension:</span>
-              <span class="text-gray-700">{{ ticket.extensionNumber }}</span>
+              <span class="text-gray-500">Extension:</span>
+              <span class="text-gray-800">{{ ticket.extensionNumber }}</span>
             </div>
           }
-
-          <!-- Assignee -->
           <div class="flex justify-between text-sm">
-            <span class="text-gray-500 font-medium">Assignee:</span>
-            @if(getAssignee(ticket.assigneeId); as assignee) {
-              <span class="text-gray-700">{{assignee.name}}</span>
-            } @else {
-              <span class="text-gray-400">Unassigned</span>
-            }
+            <span class="text-gray-500">Assignee:</span>
+            <span class="text-gray-800">{{ getAssignee(ticket.assigneeId)?.name || 'Unassigned' }}</span>
           </div>
         </div>
 
-        <div class="mt-4 flex justify-between items-center">
-            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [class]="getStatusClass(ticket.status)">
-              {{ ticket.status }}
-            </span>
-            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" [class]="getPriorityClass(ticket.priority)">
-              {{ ticket.priority }}
-            </span>
+        <div class="mt-3 flex justify-between items-center">
+          <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full" [ngClass]="getStatusClass(ticket.status)">
+            {{ ticket.status || '—' }}
+          </span>
+          <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full" [ngClass]="getPriorityClass(ticket.priority)">
+            {{ ticket.priority || '—' }}
+          </span>
         </div>
         <div class="mt-2 flex justify-between text-xs text-gray-400">
-          <span>Created: {{ ticket.createdAt | date:'shortDate' }}</span>
-          <span>Updated: {{ ticket.updatedAt | date:'shortDate' }}</span>
+          <span>Created: {{ ticket.createdAt ? (ticket.createdAt | date:'shortDate') : '—' }}</span>
+          <span>Updated: {{ ticket.updatedAt ? (ticket.updatedAt | date:'shortDate') : '—' }}</span>
         </div>
       </div>
     } @empty {
-      <div class="bg-white shadow rounded-lg p-10 text-center text-gray-500">
-        No tickets found.
-      </div>
+      <div class="bg-white shadow rounded-lg p-10 text-center text-gray-500">No tickets found.</div>
     }
   </div>
 </div>
