@@ -5,8 +5,8 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { NotificationService } from './notification.service';
 
-const API_URL = 'http://localhost:3001/api';
-// const API_URL = "https://vms.uathayam.in:4300/TICKETING-API/api"
+// const API_URL = 'http://localhost:3001/api';
+const API_URL = "https://vms.uathayam.in:4300/TICKETING-API/api"
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
