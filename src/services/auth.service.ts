@@ -56,7 +56,7 @@ export class AuthService {
       }
       return false;
     } catch (error) {
-      console.error('Login failed', error);
+      console.log('Login failed', error);
       return false;
     }
   }

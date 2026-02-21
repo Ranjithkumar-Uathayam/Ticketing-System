@@ -245,7 +245,7 @@ export class TicketDetailComponent implements OnInit {
       }
       this.router.navigate(['/tickets']);
     } catch (error) {
-      console.error('Failed to save ticket', error);
+      console.log('Failed to save ticket', error);
     } finally {
       this.loading.set(false);
     }

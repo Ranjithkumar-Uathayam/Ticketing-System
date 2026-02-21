@@ -26,7 +26,7 @@ exports.getAllTickets = async (req, res) => {
     const result = await pool.request().query('SELECT * FROM Tickets ORDER BY UpdatedAt DESC');
     res.status(200).json(result.recordset.map(mapTicketToCamelCase));
   } catch (err) {
-    console.error('Database query error:', err);
+    console.log('Database query error:', err);
     res.status(500).send({ message: 'Failed to retrieve tickets', error: err.message });
   }
 };
@@ -90,7 +90,7 @@ exports.createTicket = async (req, res) => {
     res.status(201).json(mapTicketToCamelCase(newTicket));
   } catch (err) {
     await transaction.rollback();
-    console.error('Database insert error:', err);
+    console.log('Database insert error:', err);
     res.status(500).send({ message: 'Failed to create ticket', error: err.message });
   }
 };
@@ -183,7 +183,7 @@ exports.updateTicket = async (req, res) => {
     res.status(200).json(mapTicketToCamelCase(updatedTicket));
   } catch (err) {
     await transaction.rollback();
-    console.error('Database update error:', err);
+    console.log('Database update error:', err);
     res.status(500).send({ message: 'Failed to update ticket', error: err.message });
   }
 };

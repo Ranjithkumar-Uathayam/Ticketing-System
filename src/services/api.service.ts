@@ -25,7 +25,7 @@ export class ApiService {
         this.getRoles()
       ]);
     } catch (error) {
-      console.error('Failed to load initial data', error);
+      console.log('Failed to load initial data', error);
     } finally {
       this.loading.set(false);
     }

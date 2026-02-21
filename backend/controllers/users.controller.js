@@ -15,7 +15,7 @@ exports.getAllUsers = async (req, res) => {
       .query('SELECT Id, Name, Username, ContactEmail, RoleId FROM Users');
     res.status(200).json(result.recordset.map(mapUserToCamelCase));
   } catch (err) {
-    console.error('Database query error:', err);
+    console.log('Database query error:', err);
     res.status(500).send({ message: 'Failed to retrieve users', error: err.message });
   }
 };
@@ -69,7 +69,7 @@ exports.updateUser = async (req, res) => {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (err) {
-    console.error('Database update error:', err);
+    console.log('Database update error:', err);
     res.status(500).send({ message: 'Failed to update user', error: err.message });
   }
 };

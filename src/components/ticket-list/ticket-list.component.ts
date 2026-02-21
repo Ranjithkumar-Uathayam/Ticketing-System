@@ -1,7 +1,8 @@
-import { Component, ChangeDetectionStrategy, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, ChangeDetectorRef, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
 import { TicketPriority, TicketStatus, User } from '../../models';
 
 @Component({
@@ -33,20 +34,43 @@ export class TicketListComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
+    private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {
-    this.tickets = this.apiService.tickets;
-    this.users = this.apiService.users;
-    this.loading = this.apiService.loading;
-  }
+        this.users = this.apiService.users;
+        this.loading = this.apiService.loading;
+        this.tickets = computed(() => {
+        const currentUser  = this.authService.currentUser();
+        const isAdmin      = this.authService.isAdmin();
+        const isManager    = this.authService.isManager();
+        const adminCategory = this.authService.adminCategory(); // 'Hardware' | 'Software' | null
+        const allTickets   = this.apiService.tickets();
+
+        if (isAdmin) 
+        {
+            return adminCategory
+            ? allTickets.filter(t => t.category === adminCategory)
+            : allTickets;
+        }
+
+        if (isManager) 
+        {
+            return allTickets;           // Manager sees all
+        }
+
+        // All other roles → only tickets where they are the assignee
+        if (!currentUser) return [];
+        return allTickets.filter(t => t.assigneeId === currentUser.id);
+        });
+    }
 
   async ngOnInit() {
     try {
       await this.apiService.getTickets();
       this.cdr.markForCheck();
     } catch (e) {
-      console.error('Failed to refresh tickets', e);
+      console.log('Failed to refresh tickets', e);
     }
   }
 

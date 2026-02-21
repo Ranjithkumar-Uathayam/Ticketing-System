@@ -76,7 +76,7 @@ export class UserManagementComponent {
       await this.apiService.createUser(this.newUserForm.getRawValue() as any);
       this.closeUserModal();
     } catch (error) {
-      console.error('Failed to create user', error);
+      console.log('Failed to create user', error);
     } finally {
       this.loading.set(false);
     }
@@ -140,7 +140,7 @@ export class UserManagementComponent {
       }
       this.closeRoleModal();
     } catch (error) {
-      console.error('Failed to save role', error);
+      console.log('Failed to save role', error);
     } finally {
       this.loading.set(false);
     }

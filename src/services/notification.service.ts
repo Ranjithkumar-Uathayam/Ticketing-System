@@ -18,7 +18,7 @@ export class NotificationService {
       const notifications = await firstValueFrom(this.http.get<Notification[]>(`${API_URL}/notifications/${userId}`));
       this.notifications.set(notifications);
     } catch (error) {
-      console.error('Failed to fetch notifications', error);
+      console.log('Failed to fetch notifications', error);
     }
   }
 
@@ -33,7 +33,7 @@ export class NotificationService {
     try {
       await firstValueFrom(this.http.post(`${API_URL}/notifications/read/${userId}`, {}));
     } catch (error) {
-      console.error('Failed to mark notifications as read', error);
+      console.log('Failed to mark notifications as read', error);
       // Revert optimistic update on failure (optional, but good practice)
       this.fetchNotifications(userId);
     }
@@ -49,7 +49,7 @@ export class NotificationService {
     try {
       await firstValueFrom(this.http.delete(`${API_URL}/notifications/${userId}`));
     } catch (error) {
-       console.error('Failed to clear notifications', error);
+       console.log('Failed to clear notifications', error);
        // Revert on failure
        this.notifications.set(previousNotifications);
     }

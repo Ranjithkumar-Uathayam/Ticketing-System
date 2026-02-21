@@ -34,7 +34,7 @@ exports.login = async (req, res) => {
       res.status(401).send({ message: 'Invalid credentials' });
     }
   } catch (err) {
-    console.error('Database query error:', err);
+    console.log('Database query error:', err);
     res.status(500).send({ message: 'Error during authentication', error: err.message });
   }
 };
