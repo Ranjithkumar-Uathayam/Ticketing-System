@@ -21,10 +21,7 @@ exports.getAllUsers = async (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
-  // contactEmail removed from destructure — no longer collected in the form
-  const { name, username, password, roleId } = req.body;
-
-  // FIXME: Hash passwords with bcrypt in production.
+  const { name, username, contactEmail, password, roleId } = req.body;
   const passwordHash = password;
 
   try {
@@ -32,19 +29,19 @@ exports.createUser = async (req, res) => {
     const result = await pool.request()
       .input('name',         sql.NVarChar, name)
       .input('username',     sql.NVarChar, username)
+      .input('contactEmail', sql.NVarChar, contactEmail)
       .input('passwordHash', sql.NVarChar, passwordHash)
       .input('roleId',       sql.Int,      roleId)
       .query(`
-        INSERT INTO Users (Name, Username, PasswordHash, RoleId)
+        INSERT INTO Users (Name, Username, ContactEmail, PasswordHash, RoleId)
         OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.Username, INSERTED.ContactEmail, INSERTED.RoleId
-        VALUES (@name, @username, @passwordHash, @roleId)
+        VALUES (@name, @username, @contactEmail, @passwordHash, @roleId)
       `);
 
     res.status(201).json(mapUserToCamelCase(result.recordset[0]));
   } catch (err) {
-    console.error('Database insert error:', err);
     if (err.number === 2627 || err.number === 2601) {
-      return res.status(409).send({ message: 'Username already exists.' });
+      return res.status(409).send({ message: 'Username or email already exists.' });
     }
     res.status(500).send({ message: 'Failed to create user', error: err.message });
   }
