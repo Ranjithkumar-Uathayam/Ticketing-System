@@ -40,16 +40,15 @@
     <table class="min-w-full">
       <thead>
         <tr style="background: #F8F9FC; border-bottom: 2px solid #E8EDF8;">
-          <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Title</th>
+          <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Date</th>
           <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Description</th>
-          <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Category</th>
           <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Division</th>
           <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Reporter</th>
+          <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Category</th>
           <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">ID / Ext.</th>
           <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Assignee</th>
           <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Status</th>
           <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Priority</th>
-          <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Created</th>
           <th class="px-5 py-3.5 text-left text-xs font-bold uppercase tracking-widest" style="color: rgba(27,47,110,0.4);">Updated</th>
           <th class="px-5 py-3.5"><span class="sr-only">Action</span></th>
         </tr>
@@ -57,25 +56,17 @@
       <tbody class="divide-y" style="border-color: #F0F4FC;">
         @for(ticket of tickets(); track ticket.id) {
           <tr class="hover:bg-amber-50/25 transition-colors group cursor-pointer" [routerLink]="['/tickets', ticket.id]">
+            <td class="px-5 py-4 text-xs whitespace-nowrap" style="color: rgba(27,47,110,0.45);">{{ ticket.createdAt ? (ticket.createdAt | date:'MMM d, y') : '—' }}</td>
             <td class="px-5 py-4">
               <div class="flex items-center gap-2">
                 <!-- Status indicator bar -->
                 <div class="w-1 h-8 rounded-full flex-shrink-0"
                   [style.background]="ticket.status === 'New' ? '#94a3b8' : ticket.status === 'Open' ? '#FDB515' : ticket.status === 'In Progress' ? '#8b5cf6' : ticket.status === 'Resolved' ? '#22c55e' : ticket.status === 'Closed' ? '#6b7280' : '#06b6d4'"></div>
                 <div>
-                  <div class="text-sm font-semibold" style="color: #1B2F6E;">{{ ticket.title || '—' }}</div>
+                    <div class="text-xs truncate" style="color: rgba(27,47,110,0.6);">{{ ticket.description || '—' }}</div>
                   <div class="text-xs font-mono" style="color: rgba(27,47,110,0.4);">#{{ ticket.id }}</div>
                 </div>
               </div>
-            </td>
-            <td class="px-5 py-4 max-w-[130px]">
-              <div class="text-xs truncate" style="color: rgba(27,47,110,0.6);">{{ ticket.description || '—' }}</div>
-            </td>
-            <td class="px-5 py-4">
-              <div class="text-xs font-semibold" style="color: #1B2F6E;">{{ ticket.category || '—' }}</div>
-              @if(ticket.subCategory) {
-                <div class="text-xs" style="color: rgba(27,47,110,0.4);">{{ ticket.subCategory }}</div>
-              }
             </td>
             <td class="px-5 py-4">
               <div class="text-xs" style="color: rgba(27,47,110,0.6);">{{ ticket.division || '—' }}</div>
@@ -83,6 +74,12 @@
             <td class="px-5 py-4">
               <div class="text-xs font-medium" style="color: #1B2F6E;">{{ getReporter(ticket.reporterId)?.name || ticket.createdBy || '—' }}</div>
             </td>
+            <td class="px-5 py-4">
+              <div class="text-xs font-semibold" style="color: #1B2F6E;">{{ ticket.category || '—' }}</div>
+              @if(ticket.subCategory) {
+                <div class="text-xs" style="color: rgba(27,47,110,0.4);">{{ ticket.subCategory }}</div>
+              }
+            </td>            
             <td class="px-5 py-4">
               <div class="text-xs" style="color: rgba(27,47,110,0.6);">{{ ticket.employeeId || '—' }}</div>
               @if(ticket.extensionNumber) {
@@ -112,7 +109,6 @@
                 {{ ticket.priority || '—' }}
               </span>
             </td>
-            <td class="px-5 py-4 text-xs whitespace-nowrap" style="color: rgba(27,47,110,0.45);">{{ ticket.createdAt ? (ticket.createdAt | date:'MMM d, y') : '—' }}</td>
             <td class="px-5 py-4 text-xs whitespace-nowrap" style="color: rgba(27,47,110,0.45);">{{ ticket.updatedAt ? (ticket.updatedAt | date:'MMM d, y') : '—' }}</td>
             <td class="px-5 py-4">
               <a [routerLink]="['/tickets', ticket.id]"

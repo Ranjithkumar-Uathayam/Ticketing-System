@@ -72,6 +72,16 @@
             Reports
           </a>
         }
+        @if(canViewDispatch()) {
+          <a routerLink="/dispatch" routerLinkActive="uath-active-nav"
+            class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+            style="color: rgba(253,181,21,0.7);">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H8zm0 0v4h8M10 12h4m-4 4h4m-6-4h.01m-.01 4h.01"/></svg>
+            </div>
+            Online Dispatch
+          </a>
+        }
       </nav>
 
       <div class="px-4 py-4" style="border-top: 1px solid rgba(253,181,21,0.15);">
@@ -151,6 +161,16 @@
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             </div>
             Reports
+          </a>
+        }
+        @if(canViewDispatch()) {
+          <a routerLink="/dispatch" routerLinkActive="uath-active-nav"
+            class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+            style="color: rgba(253,181,21,0.7);">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H8zm0 0v4h8M10 12h4m-4 4h4m-6-4h.01m-.01 4h.01"/></svg>
+            </div>
+            Online Dispatch
           </a>
         }
       </nav>
