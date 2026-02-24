@@ -24,10 +24,10 @@ export class UserManagementComponent {
 
   editingRole = signal<Role | null>(null);
 
-  availableScreens: AppScreen[] = ['Dashboard', 'Tickets', 'User Management', 'Reports'];
+  availableScreens: AppScreen[] = ['Dashboard', 'Tickets', 'User Management', 'Reports', 'Dispatch'];
 
   // Tracks which permissions are checked — simple boolean array, no FormArray
-  selectedPermissions = signal<boolean[]>([false, false, false, false]);
+  selectedPermissions = signal<boolean[]>([false, false, false, false, false]);
 
   // contactEmail removed from the form
   newUserForm = new FormGroup({
@@ -140,7 +140,6 @@ export class UserManagementComponent {
       }
       this.closeRoleModal();
     } catch (error) {
-      console.log('Failed to save role', error);
     } finally {
       this.loading.set(false);
     }

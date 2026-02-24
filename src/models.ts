@@ -1,4 +1,4 @@
-export type AppScreen = 'Dashboard' | 'Tickets' | 'User Management' | 'Reports';
+export type AppScreen = 'Dashboard' | 'Tickets' | 'User Management' | 'Reports' | 'Dispatch';
 
 export interface Role {
   id: number;
@@ -18,7 +18,7 @@ export interface User {
   roleId: number;
 }
 
-export type TicketStatus = 'Open' | 'In Progress' | 'Resolved' | 'Closed' | 'Reopened';
+export type TicketStatus = 'New' | 'Open' | 'In Progress' | 'Resolved' | 'Closed' | 'Reopened';
 export type TicketPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
 export type TicketCategory = 'Hardware' | 'Software';
 
@@ -37,7 +37,6 @@ export interface Ticket {
   updatedAt: string;
   screenshotUrl?: string;
   screenshotFileName?: string;
-  // New fields
   createdBy?: string;
   employeeId?: string;
   extensionNumber?: string;

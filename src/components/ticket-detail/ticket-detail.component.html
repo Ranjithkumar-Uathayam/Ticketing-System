@@ -1,290 +1,360 @@
-<!-- Global API Loading Overlay -->
+<!-- Loading Overlay -->
 @if(apiLoading() || loading()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
-    <div class="bg-white rounded-xl shadow-2xl px-8 py-6 flex flex-col items-center gap-3">
-      <svg class="animate-spin h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      <p class="text-sm font-medium text-gray-700">{{ loading() ? 'Saving ticket...' : 'Loading...' }}</p>
+  <div class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm" style="background: rgba(27,47,110,0.4);">
+    <div class="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4">
+      <div class="relative">
+        <div class="w-14 h-14 rounded-full border-4" style="border-color: #FEF3C7;"></div>
+        <div class="absolute inset-0 w-14 h-14 rounded-full border-4 border-t-transparent animate-spin" style="border-color: #FDB515; border-top-color: transparent;"></div>
+      </div>
+      <p class="text-sm font-semibold" style="color: #1B2F6E;">{{ loading() ? 'Saving Ticket...' : 'Loading...' }}</p>
     </div>
   </div>
 }
 
-<div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6 animate-fade-in">
-  <div class="md:grid md:grid-cols-3 md:gap-6">
-    <div class="md:col-span-1">
-      <h3 class="text-lg font-medium leading-6 text-gray-900">{{ pageTitle() }}</h3>
-      <p class="mt-1 text-sm text-gray-500">
-        {{ isNew() ? 'Fill in the details to create a new support ticket.' : 'View and update the ticket details below.' }}
-      </p>
-      @if(isSupportView()) {
-        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-          <p class="text-xs text-yellow-700 font-medium">Support Agent View</p>
-          <p class="text-xs text-yellow-600 mt-1">You can only update the status and add a comment.</p>
+<div class="animate-fade-in max-w-5xl mx-auto">
+  <!-- Page Header -->
+  <div class="mb-6 flex items-center justify-between">
+    <button (click)="cancel()" class="flex items-center gap-1.5 text-sm font-medium transition-colors hover:opacity-80" style="color: #1B2F6E;">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      Back to Tickets
+    </button>
+    @if(!isNew()) {
+      <span class="text-xs font-mono px-3 py-1 rounded-full" style="background: #EEF2FF; color: #1B2F6E; font-weight: 600;">Ticket #{{ ticket()?.id }}</span>
+    }
+  </div>
+
+  <form [formGroup]="ticketForm" (ngSubmit)="saveTicket()">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- LEFT: Main Details -->
+      <div class="lg:col-span-2 space-y-5">
+
+        <!-- Title Card -->
+        <div class="bg-white rounded-2xl shadow-sm p-6" style="border: 1px solid #E8EDF8;">
+          <label class="block text-xs font-bold uppercase tracking-widest mb-2" style="color: #1B2F6E; opacity: 0.5;">Ticket Title</label>
+          <input type="text" formControlName="title" placeholder="Brief description of the issue..."
+            class="w-full text-lg font-semibold bg-transparent pb-2 transition-colors placeholder:font-normal outline-none disabled:opacity-40"
+            style="color: #1B2F6E; border-bottom: 2px solid #E8EDF8;"
+            onfocus="this.style.borderBottomColor='#FDB515'"
+            onblur="this.style.borderBottomColor='#E8EDF8'">
+          @if(ticketForm.get('title')?.invalid && ticketForm.get('title')?.touched) {
+            <p class="mt-1 text-xs text-red-500">Title is required.</p>
+          }
         </div>
-      }
-    </div>
-    <div class="mt-5 md:mt-0 md:col-span-2">
-      <form [formGroup]="ticketForm" (ngSubmit)="saveTicket()">
-        <div class="space-y-6">
 
-          <!-- Title -->
-          <div>
-            <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
-            <input type="text" id="title" formControlName="title"
-              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-50 disabled:text-gray-500">
-          </div>
+        <!-- Description Card -->
+        <div class="bg-white rounded-2xl shadow-sm p-6" style="border: 1px solid #E8EDF8;">
+          <label class="block text-xs font-bold uppercase tracking-widest mb-3" style="color: #1B2F6E; opacity: 0.5;">Description</label>
+          @if(!isSupportView()) {
+            <textarea formControlName="description" rows="6" placeholder="Describe the issue in detail..."
+              class="w-full text-sm rounded-xl p-4 resize-none transition-all outline-none placeholder:text-slate-300 disabled:bg-slate-50 disabled:text-slate-400"
+              style="color: #1B2F6E; border: 1.5px solid #E8EDF8;"
+              onfocus="this.style.borderColor='#FDB515'; this.style.boxShadow='0 0 0 3px rgba(253,181,21,0.12)'"
+              onblur="this.style.borderColor='#E8EDF8'; this.style.boxShadow='none'"></textarea>
+            @if(ticketForm.get('description')?.invalid && ticketForm.get('description')?.touched) {
+              <p class="mt-1 text-xs text-red-500">Description is required.</p>
+            }
+          } @else {
+            <div class="rounded-xl p-4 text-sm whitespace-pre-wrap" style="background: #F8F9FC; color: #1B2F6E;">{{ ticket()?.description }}</div>
+          }
+        </div>
 
-          <!-- Created By / Employee ID / Extension — same row -->
-          <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-3">
-            <!-- Created By -->
+        <!-- Reporter Info -->
+        <div class="bg-white rounded-2xl shadow-sm p-6" style="border: 1px solid #E8EDF8;">
+          <label class="block text-xs font-bold uppercase tracking-widest mb-4" style="color: #1B2F6E; opacity: 0.5;">Reporter Information</label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700">Created By</label>
+              <label class="block text-xs font-semibold mb-1.5" style="color: #1B2F6E;">Created By</label>
               @if(isEmployee()) {
-                <input type="text" formControlName="createdBy"
-                  placeholder="Enter your name"
-                  class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <input type="text" formControlName="createdBy" placeholder="Your name"
+                  class="w-full text-sm rounded-xl px-3 py-2.5 outline-none transition-all"
+                  style="border: 1.5px solid #E8EDF8; color: #1B2F6E;"
+                  onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
               } @else {
-                <input type="text" [value]="currentUser()?.name || ''" readonly
-                  class="mt-1 block w-full border border-gray-200 rounded-md bg-gray-50 py-2 px-3 text-gray-500 sm:text-sm cursor-not-allowed">
+                <div class="text-sm font-medium rounded-xl px-3 py-2.5" style="background: #F8F9FC; color: #1B2F6E;">{{ currentUser()?.name || '—' }}</div>
               }
             </div>
-
-            <!-- Employee ID -->
             <div>
-              <label for="employeeId" class="block text-sm font-medium text-gray-700">Employee ID</label>
-              <input type="text" id="employeeId" formControlName="employeeId"
-                placeholder="e.g. EMP-001"
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-50 disabled:text-gray-500">
+              <label class="block text-xs font-semibold mb-1.5" style="color: #1B2F6E;">Employee ID</label>
+              <input type="text" formControlName="employeeId" placeholder="e.g. EMP001"
+                class="w-full text-sm rounded-xl px-3 py-2.5 outline-none transition-all disabled:opacity-50"
+                style="border: 1.5px solid #E8EDF8; color: #1B2F6E;"
+                onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
             </div>
-
-            <!-- Extension Number -->
             <div>
-              <label for="extensionNumber" class="block text-sm font-medium text-gray-700">Extension No.</label>
-              <input type="text" id="extensionNumber" formControlName="extensionNumber"
-                placeholder="e.g. 1023"
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-50 disabled:text-gray-500">
+              <label class="block text-xs font-semibold mb-1.5" style="color: #1B2F6E;">Extension</label>
+              <input type="text" formControlName="extensionNumber" placeholder="e.g. 1234"
+                class="w-full text-sm rounded-xl px-3 py-2.5 outline-none transition-all disabled:opacity-50"
+                style="border: 1.5px solid #E8EDF8; color: #1B2F6E;"
+                onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
             </div>
           </div>
+        </div>
 
-          <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-
-            <!-- Category -->
-            <div class="sm:col-span-3">
-              <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
-              <select id="category" formControlName="category"
-                class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-50">
-                <option [ngValue]="null" disabled>Select a category</option>
-                @for(category of categories; track category) {
-                  <option [value]="category">{{ category }}</option>
+        <!-- Category -->
+        <div class="bg-white rounded-2xl shadow-sm p-6" style="border: 1px solid #E8EDF8;">
+          <label class="block text-xs font-bold uppercase tracking-widest mb-4" style="color: #1B2F6E; opacity: 0.5;">Category & Classification</label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold mb-1.5" style="color: #1B2F6E;">Category</label>
+              <select formControlName="category"
+                class="w-full text-sm rounded-xl px-3 py-2.5 outline-none transition-all bg-white disabled:opacity-50"
+                style="border: 1.5px solid #E8EDF8; color: #1B2F6E;">
+                <option [ngValue]="null" disabled>Select category</option>
+                @for(cat of categories; track cat) {
+                  <option [value]="cat">{{ cat }}</option>
                 }
               </select>
+              @if(ticketForm.get('category')?.invalid && ticketForm.get('category')?.touched) {
+                <p class="mt-1 text-xs text-red-500">Category is required.</p>
+              }
             </div>
-
-            <!-- Sub-Category -->
-            <div class="sm:col-span-3">
-              <label for="subCategory" class="block text-sm font-medium text-gray-700">Sub-Category</label>
-              <select id="subCategory" formControlName="subCategory"
-                class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-50">
-                <option [ngValue]="null" disabled>Select a sub-category</option>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5" style="color: #1B2F6E;">Sub-Category</label>
+              <select formControlName="subCategory"
+                class="w-full text-sm rounded-xl px-3 py-2.5 outline-none transition-all bg-white disabled:opacity-50"
+                style="border: 1.5px solid #E8EDF8; color: #1B2F6E;">
+                <option [ngValue]="null" disabled>Select sub-category</option>
                 @for(sub of availableSubCategories(); track sub) {
                   <option [value]="sub">{{ sub }}</option>
                 }
               </select>
             </div>
-
-            <!-- Status -->
-            <div class="sm:col-span-3">
-              <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-              <select id="status" formControlName="status"
-                class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                @for(status of availableStatuses(); track status) {
-                  <option [value]="status">{{ status }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Priority -->
-            <div class="sm:col-span-3">
-              <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
-              <select id="priority" formControlName="priority"
-                class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-50">
-                @for(priority of priorities; track priority) {
-                  <option [value]="priority">{{ priority }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Division -->
-            <div class="sm:col-span-3">
-              <label for="division" class="block text-sm font-medium text-gray-700">Division</label>
-              <select id="division" formControlName="division"
-                class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-50">
-                <option [ngValue]="null" disabled>Select a division</option>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-semibold mb-1.5" style="color: #1B2F6E;">Division</label>
+              <select formControlName="division"
+                class="w-full text-sm rounded-xl px-3 py-2.5 outline-none transition-all bg-white disabled:opacity-50"
+                style="border: 1.5px solid #E8EDF8; color: #1B2F6E;">
+                <option [ngValue]="null" disabled>Select division</option>
                 @for(div of divisions; track div) {
                   <option [value]="div">{{ div }}</option>
                 }
               </select>
             </div>
-
-            <!-- Assignee — Admin only -->
-            <div class="sm:col-span-3">
-              <label for="assignee" class="block text-sm font-medium text-gray-700">Assignee</label>
-              <select id="assignee" formControlName="assigneeId"
-                class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-50">
-                <option [ngValue]="null">Unassigned</option>
-                @for(user of users(); track user.id) {
-                  <option [ngValue]="user.id">{{ user.name }}</option>
-                }
-              </select>
-            </div>
           </div>
+        </div>
 
-          <!-- Description -->
-          <div>
-            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
-            <textarea id="description" formControlName="description" rows="4"
-              class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-50 disabled:text-gray-500"></textarea>
-          </div>
-
-          <!-- Screenshots (Multiple) -->
-          <div>
-            <div class="flex items-center justify-between">
-              <label class="block text-sm font-medium text-gray-700">
-                Screenshots
-                @if(screenshots().length > 0) {
-                  <span class="ml-2 text-xs font-normal text-gray-400">({{ screenshots().length }} attached)</span>
-                }
-              </label>
-            </div>
-
-            <!-- Upload zone (hidden for support view) -->
-            @if(!isSupportView()) {
-              <div class="mt-2">
-                <label for="file-upload"
-                  class="flex items-center justify-center gap-2 w-full px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors"
-                  [class]="uploadingScreenshot() ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'">
-
-                  @if(uploadingScreenshot()) {
-                    <!-- Upload in progress spinner -->
-                    <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span class="text-sm font-medium text-blue-600">Processing images...</span>
-                  } @else {
-                    <svg class="h-5 w-5 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <span class="text-sm text-gray-500">
-                      <span class="font-medium text-blue-600">Click to upload</span> or drag &amp; drop
-                    </span>
-                    <span class="text-xs text-gray-400">PNG, JPG, GIF — multiple allowed</span>
-                  }
-                  <input id="file-upload" type="file" class="sr-only"
-                    (change)="onFilesSelected($event)"
-                    accept="image/*"
-                    multiple
-                    [disabled]="uploadingScreenshot()">
-                </label>
-              </div>
-            }
-
-            <!-- Screenshot grid -->
+        <!-- ✅ ATTACHMENTS CARD with Download -->
+        <div class="bg-white rounded-2xl shadow-sm p-6" style="border: 1px solid #E8EDF8;">
+          <div class="flex items-center justify-between mb-4">
+            <label class="block text-xs font-bold uppercase tracking-widest" style="color: #1B2F6E; opacity: 0.5;">Attachments</label>
             @if(screenshots().length > 0) {
-              <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                @for(shot of screenshots(); track shot.fileName; let i = $index) {
-                  <div class="relative group border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
-                    <!-- Thumbnail -->
-                    <div class="aspect-video flex items-center justify-center overflow-hidden">
-                      <img [src]="shot.url" [alt]="shot.fileName"
-                           class="w-full h-full object-cover cursor-zoom-in transition-transform duration-200 group-hover:scale-105"
-                           (click)="openScreenshot(shot.url)">
-                    </div>
-                    <!-- Hover overlay with actions -->
-                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                      <!-- View full -->
-                      <button type="button" (click)="openScreenshot(shot.url)"
-                              class="p-1.5 bg-white rounded-full shadow text-gray-700 hover:text-blue-600 transition-colors"
-                              title="View full size">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                        </svg>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background: rgba(27,47,110,0.08); color: #1B2F6E;">
+                {{ screenshots().length }} file{{ screenshots().length > 1 ? 's' : '' }}
+              </span>
+            }
+          </div>
+
+          @if(screenshots().length > 0) {
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              @for(shot of screenshots(); track $index) {
+                <div class="rounded-xl overflow-hidden group relative" style="border: 1.5px solid #E8EDF8;">
+                  <!-- Image Preview -->
+                  <div class="aspect-video bg-slate-50 relative overflow-hidden">
+                    <img [src]="shot.url" [alt]="shot.fileName" class="w-full h-full object-cover">
+                    <!-- Hover Overlay -->
+                    <div class="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200" style="background: rgba(27,47,110,0.6);">
+                      <!-- Download Button -->
+                      <a [href]="shot.url" [download]="shot.fileName"
+                        class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold shadow-lg transition-all hover:scale-105"
+                        style="background: #FDB515; color: #1B2F6E;"
+                        title="Download {{ shot.fileName }}">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Download
+                      </a>
+                      <!-- Remove Button -->
+                      <button type="button" (click)="removeScreenshot($index)"
+                        class="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold shadow-lg bg-red-500 text-white transition-all hover:bg-red-600 hover:scale-105">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        Remove
                       </button>
-                      <!-- Download -->
-                      <button type="button" (click)="downloadScreenshot(shot.url, shot.fileName)"
-                              class="p-1.5 bg-white rounded-full shadow text-gray-700 hover:text-green-600 transition-colors"
-                              title="Download">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                      </button>
-                      <!-- Remove (not for support) -->
-                      @if(!isSupportView()) {
-                        <button type="button" (click)="removeScreenshot(i)"
-                                class="p-1.5 bg-white rounded-full shadow text-gray-700 hover:text-red-600 transition-colors"
-                                title="Remove">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                          </svg>
-                        </button>
-                      }
-                    </div>
-                    <!-- Filename bar -->
-                    <div class="px-2 py-1 bg-white border-t border-gray-100">
-                      <p class="text-xs text-gray-500 truncate" [title]="shot.fileName">{{ shot.fileName }}</p>
                     </div>
                   </div>
-                }
-              </div>
-            } @else if(isSupportView()) {
-              <p class="mt-2 text-sm text-gray-400 italic">No screenshots attached.</p>
-            }
-          </div>
+                  <!-- File Info Bar -->
+                  <div class="flex items-center justify-between px-3 py-2" style="background: #F8F9FC; border-top: 1px solid #E8EDF8;">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <svg class="w-3.5 h-3.5 flex-shrink-0" style="color: #1B2F6E; opacity: 0.5;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                      <span class="text-xs truncate font-medium" style="color: #1B2F6E;">{{ shot.fileName }}</span>
+                    </div>
+                    <!-- Inline Download Icon -->
+                    <a [href]="shot.url" [download]="shot.fileName"
+                      class="flex-shrink-0 p-1 rounded-lg transition-colors hover:bg-amber-100"
+                      style="color: #1B2F6E;" title="Download">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    </a>
+                  </div>
+                </div>
+              }
+            </div>
 
-          <!-- Support Comment Section -->
-          @if(isSupportView()) {
-            <div class="border-t pt-4">
-              <label for="supportComment" class="block text-sm font-medium text-gray-700">
-                Add Comment
-                <span class="ml-1 text-xs text-gray-400 font-normal">(visible in ticket description)</span>
-              </label>
-              <textarea id="supportComment" [formControl]="supportComment" rows="3"
-                placeholder="Add a support comment..."
-                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+            <!-- Download All Button -->
+            <button type="button" (click)="downloadAllScreenshots()"
+              class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all mb-3"
+              style="background: rgba(27,47,110,0.06); color: #1B2F6E; border: 1.5px dashed #C7D0E8;">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Download All ({{ screenshots().length }})
+            </button>
+          }
+
+          <!-- Upload Area -->
+          <label class="flex items-center gap-3 cursor-pointer rounded-xl p-4 transition-all group" style="border: 2px dashed #C7D0E8;" onmouseenter="this.style.borderColor='#FDB515'; this.style.background='rgba(253,181,21,0.04)'" onmouseleave="this.style.borderColor='#C7D0E8'; this.style.background='transparent'">
+            <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors" style="background: rgba(253,181,21,0.12);">
+              <svg class="w-5 h-5" style="color: #FDB515;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold" style="color: #1B2F6E;">{{ uploadingScreenshot() ? 'Uploading...' : 'Upload Screenshot' }}</p>
+              <p class="text-xs text-slate-400">PNG, JPG, GIF up to 10MB</p>
+            </div>
+            <input type="file" accept="image/*" class="hidden" (change)="onScreenshotUpload($event)" [disabled]="uploadingScreenshot()">
+          </label>
+        </div>
+
+        <!-- Support Comment -->
+        @if(isSupportView()) {
+          <div class="rounded-2xl p-6" style="background: rgba(253,181,21,0.08); border: 1.5px solid rgba(253,181,21,0.3);">
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="w-4 h-4" style="color: #FDB515;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+              <label class="block text-xs font-bold uppercase tracking-widest" style="color: #1B2F6E;">Support Comment</label>
+            </div>
+            <textarea [formControl]="supportComment" rows="3" placeholder="Add a support comment..."
+              class="w-full text-sm rounded-xl p-4 resize-none transition-all outline-none placeholder:text-amber-300"
+              style="border: 1.5px solid rgba(253,181,21,0.3); color: #1B2F6E; background: white;"
+              onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='rgba(253,181,21,0.3)'"></textarea>
+          </div>
+        }
+
+      </div>
+
+      <!-- RIGHT: Status & Meta -->
+      <div class="space-y-5">
+
+        <!-- Status Card -->
+        <div class="bg-white rounded-2xl shadow-sm p-6" style="border: 1px solid #E8EDF8;">
+          <label class="block text-xs font-bold uppercase tracking-widest mb-4" style="color: #1B2F6E; opacity: 0.5;">Ticket Status</label>
+
+          @if(isNew()) {
+            <div class="mb-4 flex items-start gap-2 p-3 rounded-xl" style="background: rgba(27,47,110,0.06);">
+              <svg class="w-4 h-4 flex-shrink-0 mt-0.5" style="color: #FDB515;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <p class="text-xs font-medium" style="color: #1B2F6E;">New tickets start as <strong>New</strong> — auto-changes to <strong>Open</strong> when assigned</p>
             </div>
           }
 
+          <select formControlName="status"
+            class="w-full text-sm font-semibold rounded-xl px-3 py-2.5 outline-none transition-all bg-white"
+            style="border: 1.5px solid #E8EDF8; color: #1B2F6E;">
+            @for(status of availableStatuses(); track status) {
+              <option [value]="status">{{ status }}</option>
+            }
+          </select>
+
+          <!-- Status Flow -->
+          <div class="mt-4 pt-4" style="border-top: 1px solid #E8EDF8;">
+            <p class="text-xs font-medium mb-3" style="color: #1B2F6E; opacity: 0.4;">Status Flow</p>
+            <div class="flex items-center gap-1 flex-wrap">
+              @for(s of ['New','Open','In Progress','Resolved','Closed']; track s) {
+                <div class="flex items-center gap-1">
+                  <span class="text-xs px-2 py-0.5 rounded-full font-semibold transition-all"
+                    [style.background]="s === ticketForm.get('status')?.value ? '#FDB515' : 'rgba(27,47,110,0.07)'"
+                    [style.color]="s === ticketForm.get('status')?.value ? '#1B2F6E' : 'rgba(27,47,110,0.4)'">
+                    {{ s }}
+                  </span>
+                  @if(s !== 'Closed') {
+                    <svg class="w-3 h-3 flex-shrink-0" style="color: rgba(27,47,110,0.25);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  }
+                </div>
+              }
+            </div>
+          </div>
         </div>
 
-        <div class="flex justify-end mt-6 pt-4 border-t gap-3">
-          <button type="button" (click)="cancel()"
-            class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            Cancel
-          </button>
+        <!-- Priority Card -->
+        <div class="bg-white rounded-2xl shadow-sm p-6" style="border: 1px solid #E8EDF8;">
+          <label class="block text-xs font-bold uppercase tracking-widest mb-4" style="color: #1B2F6E; opacity: 0.5;">Priority</label>
+          <div class="grid grid-cols-2 gap-2">
+            @for(p of priorities; track p) {
+              <label class="relative cursor-pointer">
+                <input type="radio" formControlName="priority" [value]="p" class="sr-only">
+                <div class="text-center px-2 py-2.5 rounded-xl border-2 text-xs font-bold transition-all cursor-pointer"
+                  [style.borderColor]="ticketForm.get('priority')?.value === p ? (p === 'Low' ? '#22c55e' : p === 'Medium' ? '#f59e0b' : p === 'High' ? '#f97316' : '#ef4444') : '#E8EDF8'"
+                  [style.color]="ticketForm.get('priority')?.value === p ? (p === 'Low' ? '#15803d' : p === 'Medium' ? '#b45309' : p === 'High' ? '#c2410c' : '#b91c1c') : 'rgba(27,47,110,0.4)'"
+                  [style.background]="ticketForm.get('priority')?.value === p ? (p === 'Low' ? '#f0fdf4' : p === 'Medium' ? '#fffbeb' : p === 'High' ? '#fff7ed' : '#fef2f2') : 'transparent'">
+                  {{ p }}
+                </div>
+              </label>
+            }
+          </div>
+        </div>
+
+        <!-- Assignee Card -->
+        @if(canEditAssignee()) {
+          <div class="bg-white rounded-2xl shadow-sm p-6" style="border: 1px solid #E8EDF8;">
+            <div class="flex items-center justify-between mb-3">
+              <label class="block text-xs font-bold uppercase tracking-widest" style="color: #1B2F6E; opacity: 0.5;">Assignee</label>
+              @if(ticketForm.get('assigneeId')?.value) {
+                <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background: rgba(253,181,21,0.15); color: #1B2F6E;">Assigned</span>
+              } @else {
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full" style="background: rgba(27,47,110,0.07); color: rgba(27,47,110,0.5);">Unassigned</span>
+              }
+            </div>
+
+            <div class="mb-3 flex items-start gap-2 p-3 rounded-xl" style="background: rgba(253,181,21,0.08); border: 1px solid rgba(253,181,21,0.2);">
+              <svg class="w-4 h-4 mt-0.5 flex-shrink-0" style="color: #FDB515;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <p class="text-xs font-medium" style="color: #1B2F6E;">Assigning a user auto-changes <strong>New → Open</strong></p>
+            </div>
+
+            <select formControlName="assigneeId"
+              class="w-full text-sm rounded-xl px-3 py-2.5 outline-none transition-all bg-white"
+              style="border: 1.5px solid #E8EDF8; color: #1B2F6E;">
+              <option [ngValue]="null">— Unassigned —</option>
+              @for(user of users(); track user.id) {
+                <option [value]="user.id">{{ user.name }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <!-- Ticket Info (edit mode) -->
+        @if(!isNew() && ticket()) {
+          <div class="rounded-2xl p-5 space-y-3" style="background: #F8F9FC; border: 1px solid #E8EDF8;">
+            <p class="text-xs font-bold uppercase tracking-widest" style="color: #1B2F6E; opacity: 0.4;">Ticket Info</p>
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs">
+                <span style="color: rgba(27,47,110,0.5);">Created</span>
+                <span class="font-semibold" style="color: #1B2F6E;">{{ ticket()?.createdAt | date:'mediumDate' }}</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span style="color: rgba(27,47,110,0.5);">Updated</span>
+                <span class="font-semibold" style="color: #1B2F6E;">{{ ticket()?.updatedAt | date:'mediumDate' }}</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span style="color: rgba(27,47,110,0.5);">Ticket ID</span>
+                <span class="font-mono font-bold" style="color: #1B2F6E;">#{{ ticket()?.id }}</span>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col gap-3">
           <button type="submit" [disabled]="!ticketForm.valid || loading() || uploadingScreenshot()"
-            class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors">
+            class="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-bold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            style="background: #1B2F6E; color: #FDB515; box-shadow: 0 4px 14px rgba(27,47,110,0.25);">
             @if(loading()) {
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
+              <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
               Saving...
-            } @else if(uploadingScreenshot()) {
-              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Uploading...
             } @else {
-              {{ isSupportView() ? 'Update Status' : 'Save Ticket' }}
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              {{ isSupportView() ? 'Update Status' : isNew() ? 'Create Ticket' : 'Save Changes' }}
             }
           </button>
+          <button type="button" (click)="cancel()"
+            class="w-full py-3 px-6 rounded-xl font-semibold text-sm bg-white transition-all hover:bg-slate-50"
+            style="border: 1.5px solid #E8EDF8; color: #1B2F6E;">
+            Cancel
+          </button>
         </div>
-      </form>
+
+      </div>
     </div>
-  </div>
+  </form>
 </div>

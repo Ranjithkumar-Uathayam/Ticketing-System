@@ -19,7 +19,6 @@ exports.getNotificationsForUser = async (req, res) => {
     
     res.status(200).json(result.recordset.map(mapNotificationToCamelCase));
   } catch (err) {
-    console.log('Database query error:', err);
     res.status(500).send({ message: 'Failed to retrieve notifications', error: err.message });
   }
 };
@@ -34,7 +33,6 @@ exports.markNotificationsAsRead = async (req, res) => {
     
     res.status(200).send({ message: 'Notifications marked as read' });
   } catch (err) {
-    console.log('Database update error:', err);
     res.status(500).send({ message: 'Failed to mark notifications as read', error: err.message });
   }
 };
@@ -49,7 +47,6 @@ exports.deleteNotificationsForUser = async (req, res) => {
     
     res.status(200).send({ message: 'Notifications cleared' });
   } catch (err) {
-    console.log('Database delete error:', err);
     res.status(500).send({ message: 'Failed to clear notifications', error: err.message });
   }
 };

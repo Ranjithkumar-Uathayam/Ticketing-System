@@ -1,0 +1,290 @@
+<!-- Toast notification -->
+@if(toast()) {
+  <div class="fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl text-sm font-bold"
+       [style.background]="toast()!.type==='success' ? '#1B2F6E' : '#DC2626'"
+       style="color:#FDB515; min-width:260px; animation: slideIn 0.3s ease;">
+    @if(toast()!.type==='success') {
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+    } @else {
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    }
+    {{ toast()!.msg }}
+  </div>
+}
+
+<!-- Loading overlay -->
+@if(loading()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center" style="background:rgba(27,47,110,0.4); backdrop-filter:blur(4px);">
+    <div class="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-4">
+      <div class="w-14 h-14 rounded-full border-4 border-t-transparent animate-spin" style="border-color:#FDB515; border-top-color:transparent;"></div>
+      <p class="text-sm font-bold" style="color:#1B2F6E;">Loading…</p>
+    </div>
+  </div>
+}
+
+<div class="max-w-7xl mx-auto">
+
+  <!-- ── Page Header ── -->
+  <div class="flex items-center justify-between mb-5">
+    <div class="flex items-center gap-3">
+      <button (click)="cancel()" class="p-2 rounded-xl transition-colors hover:bg-amber-50" style="color:#1B2F6E;">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      </button>
+      <div>
+        <h1 class="text-xl font-bold" style="color:#1B2F6E;">
+          {{ isEdit() ? 'Edit' : 'New' }} Online Dispatch Entry
+        </h1>
+        <p class="text-xs mt-0.5" style="color:rgba(27,47,110,0.45);">Daily dispatch & returns tracking</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button (click)="reset()" type="button"
+        class="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+        style="background:rgba(27,47,110,0.07); color:#1B2F6E;">
+        Reset
+      </button>
+      <button (click)="save()" type="button" [disabled]="saving()"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+        style="background:#1B2F6E; color:#FDB515; box-shadow:0 4px 14px rgba(27,47,110,0.25);">
+        @if(saving()) {
+          <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" class="opacity-75"/></svg>
+          Saving…
+        } @else {
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          {{ isEdit() ? 'Update' : 'Save Entry' }}
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Meta / Header Row ── -->
+  <div class="bg-white rounded-2xl shadow-sm p-5 mb-5 flex flex-wrap gap-5 items-end" style="border:1px solid #E8EDF8;">
+    <!-- Date -->
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.4);">Dispatch Date</label>
+      <input type="date" [value]="dispatchDate()" (change)="dispatchDate.set($any($event.target).value)"
+        class="text-sm font-semibold rounded-xl px-4 py-2.5 outline-none"
+        style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+    </div>
+    <!-- Total Persons -->
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.4);">Total No. of Persons</label>
+      <input type="number" min="0" [value]="totalPersons()"
+        (input)="totalPersons.set($any($event.target).valueAsNumber || 0)"
+        class="w-24 text-center text-sm font-semibold rounded-xl px-3 py-2.5 outline-none"
+        style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+    </div>
+    <!-- Pending Orders -->
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.4);">Pending Orders</label>
+      <input type="number" min="0" [value]="pendingOrders()"
+        (input)="pendingOrders.set($any($event.target).valueAsNumber || 0)"
+        class="w-24 text-center text-sm font-semibold rounded-xl px-3 py-2.5 outline-none"
+        style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+    </div>
+    <!-- Only Invoiced -->
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.4);">Only Invoiced</label>
+      <input type="text" [value]="onlyInvoiced()"
+        (input)="onlyInvoiced.set($any($event.target).value)"
+        placeholder="NIL"
+        class="w-24 text-center text-sm font-semibold rounded-xl px-3 py-2.5 outline-none"
+        style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+    </div>
+
+    <!-- Live summary chips -->
+    <div class="ml-auto flex gap-3 flex-wrap">
+      <div class="flex flex-col items-center px-5 py-2.5 rounded-xl" style="background:#1B2F6E;">
+        <span class="text-xs font-bold" style="color:rgba(253,181,21,0.7);">Total Dispatched</span>
+        <span class="text-3xl font-black" style="color:#FDB515;">{{ totalDispatched() }}</span>
+      </div>
+      <div class="flex flex-col items-center px-5 py-2.5 rounded-xl" style="background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.2);">
+        <span class="text-xs font-bold" style="color:rgba(220,38,38,0.6);">Total Returns</span>
+        <span class="text-3xl font-black text-red-600">{{ totalReturns() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Two-column layout for both tables ── -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+
+    <!-- ════════ DISPATCH TABLE ════════ -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+
+      <!-- Table header bar -->
+      <div class="flex items-center justify-between px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div>
+          <h2 class="text-sm font-bold text-white">Daily Online Dispatch</h2>
+          <p class="text-xs mt-0.5" style="color:rgba(253,181,21,0.65);">Enter quantities per courier</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs font-semibold" style="color:rgba(253,181,21,0.65);">Order Dispatch Today</p>
+          <p class="text-2xl font-black" style="color:#FDB515;">{{ totalDispatched() }}</p>
+        </div>
+      </div>
+
+      <!-- Column headers -->
+      <div class="grid grid-cols-3 px-4 py-2.5" style="background:#F0F4FC; border-bottom:1px solid #E8EDF8;">
+        <span class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Channel</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Courier</span>
+        <span class="text-xs font-bold uppercase tracking-widest text-right" style="color:rgba(27,47,110,0.45);">Qty</span>
+      </div>
+
+      <!-- Data rows -->
+      @for(row of dispatchRows(); track $index) {
+        <div class="grid grid-cols-3 px-4 items-center"
+             [style.background]="isGroupStart(dispatchRows(), $index) && row.channel ? 'rgba(27,47,110,0.02)' : 'white'"
+             [style.borderTop]="isGroupStart(dispatchRows(), $index) && $index > 0 ? '1px solid #E8EDF8' : '1px solid #F5F7FC'">
+
+          <!-- Channel badge -->
+          <div class="py-2.5">
+            @if(isGroupStart(dispatchRows(), $index) && row.channel) {
+              <span class="inline-block text-xs font-bold px-2.5 py-1 rounded-lg" style="background:rgba(253,181,21,0.15); color:#1B2F6E;">
+                {{ row.channel }}
+              </span>
+            }
+          </div>
+
+          <!-- Courier label -->
+          <div class="py-2.5">
+            <span class="text-sm" style="color:rgba(27,47,110,0.7);">{{ row.courier }}</span>
+          </div>
+
+          <!-- Qty input -->
+          <div class="py-1.5 flex justify-end">
+            <input type="number" min="0"
+              [value]="row.quantity || null"
+              (input)="setDispatchQty($index, $any($event.target).value)"
+              placeholder="—"
+              class="w-20 text-right text-sm font-bold rounded-lg px-3 py-2 outline-none transition-all"
+              style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#FAFBFF;"
+              onfocus="this.style.borderColor='#FDB515'; this.style.background='#FFFBEB'"
+              onblur="this.style.borderColor='#E8EDF8'; this.style.background='#FAFBFF'">
+          </div>
+        </div>
+      }
+
+      <!-- Total footer row -->
+      <div class="grid grid-cols-3 px-4 py-3 mt-0.5" style="background:#1B2F6E; border-top:2px solid #FDB515;">
+        <span class="text-sm font-bold text-white col-span-2">Total</span>
+        <span class="text-xl font-black text-right" style="color:#FDB515;">{{ totalDispatched() }}</span>
+      </div>
+    </div>
+
+    <!-- ════════ RETURNS TABLE ════════ -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+
+      <!-- Table header bar -->
+      <div class="flex items-center justify-between px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #DC2626;">
+        <div>
+          <h2 class="text-sm font-bold text-white">Daily Returns Details</h2>
+          <p class="text-xs mt-0.5" style="color:rgba(253,181,21,0.65);">RTO = Return to Origin &nbsp;|&nbsp; CUS = Customer returns</p>
+        </div>
+        <div class="flex gap-3 text-right">
+          <div>
+            <p class="text-xs font-semibold" style="color:rgba(253,181,21,0.65);">RTO</p>
+            <p class="text-2xl font-black text-red-400">{{ totalRTO() }}</p>
+          </div>
+          <div>
+            <p class="text-xs font-semibold" style="color:rgba(253,181,21,0.65);">CUS</p>
+            <p class="text-2xl font-black" style="color:#FDB515;">{{ totalCUS() }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column headers -->
+      <div class="grid grid-cols-4 px-4 py-2.5" style="background:#F0F4FC; border-bottom:1px solid #E8EDF8;">
+        <span class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Channel</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Courier</span>
+        <span class="text-xs font-bold uppercase tracking-widest text-right" style="color:rgba(220,38,38,0.6);">RTO</span>
+        <span class="text-xs font-bold uppercase tracking-widest text-right" style="color:rgba(27,47,110,0.45);">CUS</span>
+      </div>
+
+      <!-- Data rows -->
+      @for(row of returnRows(); track $index) {
+        <div class="grid grid-cols-4 px-4 items-center"
+             [style.background]="isGroupStart(returnRows(), $index) && row.channel ? 'rgba(27,47,110,0.02)' : 'white'"
+             [style.borderTop]="isGroupStart(returnRows(), $index) && $index > 0 ? '1px solid #E8EDF8' : '1px solid #F5F7FC'">
+
+          <!-- Channel -->
+          <div class="py-2.5">
+            @if(isGroupStart(returnRows(), $index) && row.channel) {
+              <span class="inline-block text-xs font-bold px-2.5 py-1 rounded-lg" style="background:rgba(253,181,21,0.15); color:#1B2F6E;">
+                {{ row.channel }}
+              </span>
+            }
+          </div>
+
+          <!-- Courier -->
+          <div class="py-2.5">
+            <span class="text-sm" style="color:rgba(27,47,110,0.7);">{{ row.courier }}</span>
+          </div>
+
+          <!-- RTO -->
+          <div class="py-1.5 flex justify-end">
+            <input type="number" min="0"
+              [value]="row.rto || null"
+              (input)="setReturnRTO($index, $any($event.target).value)"
+              placeholder="—"
+              class="w-16 text-right text-sm font-bold rounded-lg px-2.5 py-2 outline-none transition-all"
+              style="border:1.5px solid #FED7D7; color:#DC2626; background:#FFF5F5;"
+              onfocus="this.style.borderColor='#DC2626'" onblur="this.style.borderColor='#FED7D7'">
+          </div>
+
+          <!-- CUS -->
+          <div class="py-1.5 flex justify-end">
+            <input type="number" min="0"
+              [value]="row.cus || null"
+              (input)="setReturnCUS($index, $any($event.target).value)"
+              placeholder="—"
+              class="w-16 text-right text-sm font-bold rounded-lg px-2.5 py-2 outline-none transition-all"
+              style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#FAFBFF;"
+              onfocus="this.style.borderColor='#FDB515'; this.style.background='#FFFBEB'"
+              onblur="this.style.borderColor='#E8EDF8'; this.style.background='#FAFBFF'">
+          </div>
+        </div>
+      }
+
+      <!-- Total footer -->
+      <div class="grid grid-cols-4 px-4 py-3 mt-0.5" style="background:#1B2F6E; border-top:2px solid #DC2626;">
+        <span class="text-sm font-bold text-white col-span-2">Total</span>
+        <span class="text-xl font-black text-right text-red-400">{{ totalRTO() }}</span>
+        <span class="text-xl font-black text-right" style="color:#FDB515;">{{ totalCUS() }}</span>
+      </div>
+      <div class="grid grid-cols-4 px-4 py-2.5" style="background:rgba(220,38,38,0.06);">
+        <span class="text-sm font-bold col-span-2" style="color:#1B2F6E;">Grand Total Returns</span>
+        <span class="text-lg font-black text-right text-red-600 col-span-2">{{ totalReturns() }}</span>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+  <!-- Bottom action bar -->
+  <div class="mt-6 flex justify-end gap-3">
+    <button (click)="cancel()"
+      class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white transition-all"
+      style="border:1.5px solid #E8EDF8; color:#1B2F6E;">
+      Cancel
+    </button>
+    <button (click)="save()" [disabled]="saving()"
+      class="flex items-center gap-2 px-8 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+      style="background:#1B2F6E; color:#FDB515; box-shadow:0 4px 14px rgba(27,47,110,0.25);">
+      {{ saving() ? 'Saving…' : (isEdit() ? 'Update Record' : 'Save Entry') }}
+    </button>
+  </div>
+
+</div>
+
+<style>
+  @keyframes slideIn {
+    from { transform: translateX(40px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type=number] { -moz-appearance: textfield; }
+</style>

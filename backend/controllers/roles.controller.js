@@ -46,7 +46,6 @@ exports.getAllRoles = async (req, res) => {
     }));
     res.status(200).json(roles);
   } catch (err) {
-    console.log('getAllRoles error:', err);
     res.status(500).json({ message: 'Failed to retrieve roles', error: err.message });
   }
 };

@@ -18,18 +18,19 @@ export class TicketListComponent implements OnInit {
   loading;
 
   priorityColors: Record<TicketPriority, string> = {
-    'Low': 'bg-green-100 text-green-800',
-    'Medium': 'bg-yellow-100 text-yellow-800',
-    'High': 'bg-orange-100 text-orange-800',
-    'Urgent': 'bg-red-100 text-red-800',
+    'Low': 'bg-emerald-100 text-emerald-700',
+    'Medium': 'bg-amber-100 text-amber-700',
+    'High': 'bg-orange-100 text-orange-700',
+    'Urgent': 'bg-red-100 text-red-700',
   };
 
   statusColors: Record<TicketStatus, string> = {
-    'Open': 'bg-blue-100 text-blue-800',
-    'In Progress': 'bg-purple-100 text-purple-800',
-    'Resolved': 'bg-gray-100 text-gray-800',
-    'Closed': 'bg-gray-100 text-gray-800',
-    'Reopened': 'bg-cyan-100 text-cyan-800',
+    'New': 'bg-slate-100 text-slate-600',
+    'Open': 'bg-blue-100 text-blue-700',
+    'In Progress': 'bg-violet-100 text-violet-700',
+    'Resolved': 'bg-green-100 text-green-700',
+    'Closed': 'bg-gray-100 text-gray-600',
+    'Reopened': 'bg-cyan-100 text-cyan-700',
   };
 
   constructor(
@@ -38,32 +39,29 @@ export class TicketListComponent implements OnInit {
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {
-        this.users = this.apiService.users;
-        this.loading = this.apiService.loading;
-        this.tickets = computed(() => {
-        const currentUser  = this.authService.currentUser();
-        const isAdmin      = this.authService.isAdmin();
-        const isManager    = this.authService.isManager();
-        const adminCategory = this.authService.adminCategory(); // 'Hardware' | 'Software' | null
-        const allTickets   = this.apiService.tickets();
+    this.users = this.apiService.users;
+    this.loading = this.apiService.loading;
+    this.tickets = computed(() => {
+      const currentUser = this.authService.currentUser();
+      const isAdmin = this.authService.isAdmin();
+      const isManager = this.authService.isManager();
+      const adminCategory = this.authService.adminCategory();
+      const allTickets = this.apiService.tickets();
 
-        if (isAdmin) 
-        {
-            return adminCategory
-            ? allTickets.filter(t => t.category === adminCategory)
-            : allTickets;
-        }
+      if (isAdmin) {
+        return adminCategory
+          ? allTickets.filter(t => t.category === adminCategory)
+          : allTickets;
+      }
 
-        if (isManager) 
-        {
-            return allTickets;           // Manager sees all
-        }
+      if (isManager) {
+        return allTickets;
+      }
 
-        // All other roles → only tickets where they are the assignee
-        if (!currentUser) return [];
-        return allTickets.filter(t => t.assigneeId === currentUser.id);
-        });
-    }
+      if (!currentUser) return [];
+      return allTickets.filter(t => t.assigneeId === currentUser.id);
+    });
+  }
 
   async ngOnInit() {
     try {

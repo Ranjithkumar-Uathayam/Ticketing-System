@@ -23,13 +23,11 @@ export class TicketDetailComponent implements OnInit {
   loading = signal(false);
   uploadingScreenshot = signal(false);
 
-  // Multiple screenshots stored as array in component state
   screenshots = signal<ScreenshotItem[]>([]);
 
   users;
   currentUser;
 
-  // Comment added by support role
   supportComment = new FormControl('');
 
   ticketForm = new FormGroup({
@@ -38,7 +36,7 @@ export class TicketDetailComponent implements OnInit {
     employeeId: new FormControl(''),
     extensionNumber: new FormControl(''),
     description: new FormControl('', Validators.required),
-    status: new FormControl<TicketStatus>('Open', Validators.required),
+    status: new FormControl<TicketStatus>('New', Validators.required),
     priority: new FormControl<TicketPriority>('Medium', Validators.required),
     category: new FormControl<TicketCategory | null>(null, Validators.required),
     subCategory: new FormControl<string | null>(null, Validators.required),
@@ -54,7 +52,7 @@ export class TicketDetailComponent implements OnInit {
   priorities: TicketPriority[] = ['Low', 'Medium', 'High', 'Urgent'];
   divisions: Division[] = DIVISIONS;
 
-  allStatuses: TicketStatus[] = ['Open', 'In Progress', 'Resolved', 'Closed', 'Reopened'];
+  allStatuses: TicketStatus[] = ['New', 'Open', 'In Progress', 'Resolved', 'Closed', 'Reopened'];
 
   availableStatuses;
   canEditAssignee;
@@ -82,7 +80,7 @@ export class TicketDetailComponent implements OnInit {
 
     this.availableStatuses = computed(() => {
       if (this.authService.isEmployee()) {
-        return ['Open', 'Reopened'];
+        return ['New', 'Open', 'Reopened'] as TicketStatus[];
       }
       return this.allStatuses;
     });
@@ -90,8 +88,8 @@ export class TicketDetailComponent implements OnInit {
     this.isEmployee = computed(() => this.authService.isEmployee());
 
     this.canEditAssignee = computed(() => {
-        return this.authService.isAdmin() || 
-        this.authService.isManager() || 
+      return this.authService.isAdmin() ||
+        this.authService.isManager() ||
         this.authService.isSupport();
     });
 
@@ -111,6 +109,14 @@ export class TicketDetailComponent implements OnInit {
         this.ticketForm.get('subCategory')?.disable();
       }
     });
+
+    // Auto-change status from 'New' to 'Open' when assignee is added
+    this.ticketForm.get('assigneeId')?.valueChanges.subscribe(assigneeId => {
+      const currentStatus = this.ticketForm.get('status')?.value;
+      if (assigneeId && currentStatus === 'New') {
+        this.ticketForm.get('status')?.setValue('Open');
+      }
+    });
   }
 
   ngOnInit() {
@@ -125,6 +131,7 @@ export class TicketDetailComponent implements OnInit {
         this.ticketForm.controls.assigneeId.disable();
       }
       this.ticketForm.get('subCategory')?.disable();
+      this.ticketForm.controls.status.setValue('New');
     } else if (idParam) {
       const ticketId = +idParam;
       const foundTicket = this.apiService.getTicketById(ticketId);
@@ -132,7 +139,6 @@ export class TicketDetailComponent implements OnInit {
         this.ticket.set(foundTicket);
         this.ticketForm.patchValue(foundTicket as any);
 
-        // Restore multiple screenshots from stored JSON
         if (foundTicket.screenshotUrl) {
           try {
             const parsed = JSON.parse(foundTicket.screenshotUrl);
@@ -162,83 +168,117 @@ export class TicketDetailComponent implements OnInit {
           this.ticketForm.controls.category.disable();
           this.ticketForm.controls.subCategory.disable();
           this.ticketForm.controls.division.disable();
-          this.ticketForm.controls.assigneeId.disable();
-          this.ticketForm.controls.screenshotUrl.disable();
-          this.ticketForm.controls.screenshotFileName.disable();
+          this.ticketForm.controls.createdBy.disable();
+          this.ticketForm.controls.employeeId.disable();
+          this.ticketForm.controls.extensionNumber.disable();
         }
-      } else {
-        this.router.navigate(['/tickets']);
       }
     }
   }
 
-  onFilesSelected(event: Event) {
-    const files = Array.from((event.target as HTMLInputElement).files || []);
-    if (!files.length) return;
+  async onScreenshotUpload(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
 
-    this.uploadingScreenshot.set(true);
+    try {
+      this.uploadingScreenshot.set(true);
+      const base64 = await this.fileToBase64(file);
+      const newScreenshot: ScreenshotItem = { url: base64, fileName: file.name };
+      this.screenshots.update(prev => [...prev, newScreenshot]);
 
-    const readers = files.map(file => new Promise<ScreenshotItem>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => resolve({
-        url: e.target?.result as string,
-        fileName: file.name
-      });
-      reader.readAsDataURL(file);
-    }));
-
-    Promise.all(readers).then(newItems => {
-      this.screenshots.update(existing => [...existing, ...newItems]);
+      const allScreenshots = this.screenshots();
+      this.ticketForm.controls.screenshotUrl.setValue(JSON.stringify(allScreenshots));
+      this.ticketForm.controls.screenshotFileName.setValue(file.name);
+    } catch (err) {
+      console.error('Screenshot upload failed', err);
+    } finally {
       this.uploadingScreenshot.set(false);
-      (event.target as HTMLInputElement).value = '';
-    });
+    }
   }
 
   removeScreenshot(index: number) {
-    this.screenshots.update(items => items.filter((_, i) => i !== index));
+    this.screenshots.update(prev => prev.filter((_, i) => i !== index));
+    const allScreenshots = this.screenshots();
+    this.ticketForm.controls.screenshotUrl.setValue(
+      allScreenshots.length > 0 ? JSON.stringify(allScreenshots) : null
+    );
   }
 
-  openScreenshot(url: string) {
-    window.open(url, '_blank');
+  /** Download all screenshots one by one */
+  downloadAllScreenshots() {
+    const shots = this.screenshots();
+    shots.forEach((shot, index) => {
+      // Stagger downloads slightly to avoid browser blocking
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = shot.url;
+        link.download = shot.fileName || `attachment-${index + 1}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }, index * 300);
+    });
   }
 
-  downloadScreenshot(url: string, fileName: string) {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    a.click();
+  private fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   }
 
   async saveTicket() {
-    if (this.ticketForm.invalid) return;
+    if (!this.ticketForm.valid) {
+      this.ticketForm.markAllAsTouched();
+      return;
+    }
 
     this.loading.set(true);
-    const formValue = this.ticketForm.getRawValue();
-    const screenshotList = this.screenshots();
-
-    const screenshotUrl = screenshotList.length > 0 ? JSON.stringify(screenshotList) : null;
-    const screenshotFileName = screenshotList.length > 0 ? screenshotList.map(s => s.fileName).join(', ') : null;
-
     try {
+      const formValue = this.ticketForm.getRawValue();
+      const screenshotUrl = this.screenshots().length > 0 ? JSON.stringify(this.screenshots()) : null;
+      const screenshotFileName = this.screenshots()[0]?.fileName || null;
+
       if (this.isNew()) {
-        const newTicketData = {
-          ...formValue,
-          reporterId: this.currentUser()!.id,
-          screenshotUrl,
-          screenshotFileName,
-        } as Omit<Ticket, 'id' | 'createdAt' | 'updatedAt'>;
-        await this.apiService.createTicket(newTicketData);
+        const newTicket: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt'> = {
+          title: formValue.title ?? '',
+          description: formValue.description ?? '',
+          status: formValue.status ?? 'New',
+          priority: formValue.priority ?? 'Medium',
+          category: formValue.category ?? undefined,
+          subCategory: formValue.subCategory ?? undefined,
+          division: formValue.division ?? undefined,
+          reporterId: this.currentUser()?.id ?? 0,
+          assigneeId: formValue.assigneeId ?? undefined,
+          screenshotUrl: screenshotUrl ?? undefined,
+          screenshotFileName: screenshotFileName ?? undefined,
+          createdBy: formValue.createdBy ?? undefined,
+          employeeId: formValue.employeeId ?? undefined,
+          extensionNumber: formValue.extensionNumber ?? undefined,
+        };
+        await this.apiService.createTicket(newTicket);
       } else {
         const currentTicket = this.ticket();
         if (currentTicket) {
           const updatedTicket: Ticket = {
             ...currentTicket,
-            ...formValue,
-            screenshotUrl: screenshotUrl ?? undefined,
-            screenshotFileName: screenshotFileName ?? undefined,
+            title: formValue.title ?? currentTicket.title,
             description: this.authService.isSupport() && this.supportComment.value
               ? `${currentTicket.description}\n\n[Support Comment - ${new Date().toLocaleString()}]: ${this.supportComment.value}`
               : (formValue.description ?? currentTicket.description),
+            status: formValue.status ?? currentTicket.status,
+            priority: formValue.priority ?? currentTicket.priority,
+            category: formValue.category ?? undefined,
+            subCategory: formValue.subCategory ?? undefined,
+            division: formValue.division ?? undefined,
+            assigneeId: formValue.assigneeId ?? undefined,
+            screenshotUrl: screenshotUrl ?? undefined,
+            screenshotFileName: screenshotFileName ?? undefined,
+            createdBy: formValue.createdBy ?? undefined,
+            employeeId: formValue.employeeId ?? undefined,
+            extensionNumber: formValue.extensionNumber ?? undefined,
           };
           await this.apiService.updateTicket(updatedTicket);
         }

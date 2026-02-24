@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Notification } from '../models';
 
-// const API_URL = 'http://localhost:3001/api';
-const API_URL = "https://vms.uathayam.in:4300/TICKETING-API/api"
+const API_URL = 'http://localhost:3001/api';
+// const API_URL = "https://vms.uathayam.in:4300/TICKETING-API/api"
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -33,7 +33,6 @@ export class NotificationService {
     try {
       await firstValueFrom(this.http.post(`${API_URL}/notifications/read/${userId}`, {}));
     } catch (error) {
-      console.log('Failed to mark notifications as read', error);
       // Revert optimistic update on failure (optional, but good practice)
       this.fetchNotifications(userId);
     }
@@ -49,7 +48,6 @@ export class NotificationService {
     try {
       await firstValueFrom(this.http.delete(`${API_URL}/notifications/${userId}`));
     } catch (error) {
-       console.log('Failed to clear notifications', error);
        // Revert on failure
        this.notifications.set(previousNotifications);
     }
