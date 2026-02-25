@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, OnInit, ChangeDetectorRef, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, ChangeDetectorRef, computed, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -16,6 +16,53 @@ export class TicketListComponent implements OnInit {
   tickets;
   users;
   loading;
+
+  // ── Filter signals ──────────────────────────────────────────────────────────
+  // Default: current month as "YYYY-MM"
+  private _now = new Date();
+  filterMonth = signal<string>(
+    `${this._now.getFullYear()}-${String(this._now.getMonth() + 1).padStart(2, '0')}`
+  );
+  filterStatus = signal<TicketStatus | ''>('');
+
+  statuses: TicketStatus[] = ['New', 'Open', 'In Progress', 'Resolved', 'Closed', 'Reopened'];
+
+  // ── Filtered view ───────────────────────────────────────────────────────────
+  filteredTickets = computed(() => {
+    const all = this.tickets();
+    const monthStr = this.filterMonth();
+    const status = this.filterStatus();
+
+    // Parse selected month boundaries
+    const [yr, mo] = monthStr.split('-').map(Number);
+    const monthStart = new Date(yr, mo - 1, 1);
+    const monthEnd   = new Date(yr, mo, 1); // exclusive
+
+    // Previous month boundaries
+    const prevMonthStart = new Date(yr, mo - 2, 1);
+    const prevMonthEnd   = monthStart; // exclusive
+
+    return all.filter(ticket => {
+      const created = ticket.createdAt ? new Date(ticket.createdAt) : null;
+      if (!created) return false;
+
+      // Check if ticket falls in the selected month
+      const inSelectedMonth = created >= monthStart && created < monthEnd;
+
+      // Check if ticket is from previous month AND not closed
+      const inPrevMonth = created >= prevMonthStart && created < prevMonthEnd;
+      const notClosed = ticket.status !== 'Closed';
+      const carryOver = inPrevMonth && notClosed;
+
+      const dateMatch = inSelectedMonth || carryOver;
+      if (!dateMatch) return false;
+
+      // Status filter (optional)
+      if (status && ticket.status !== status) return false;
+
+      return true;
+    });
+  });
 
   priorityColors: Record<TicketPriority, string> = {
     'Low': 'bg-emerald-100 text-emerald-700',
@@ -70,6 +117,29 @@ export class TicketListComponent implements OnInit {
     } catch (e) {
       console.log('Failed to refresh tickets', e);
     }
+  }
+
+  // ── Filter helpers ──────────────────────────────────────────────────────────
+  setMonth(value: string) {
+    this.filterMonth.set(value);
+  }
+
+  setStatus(value: string) {
+    this.filterStatus.set(value as TicketStatus | '');
+  }
+
+  clearFilters() {
+    const now = new Date();
+    this.filterMonth.set(
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    );
+    this.filterStatus.set('');
+  }
+
+  get hasActiveFilters(): boolean {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return this.filterStatus() !== '' || this.filterMonth() !== currentMonth;
   }
 
   getAssignee(assigneeId?: number | null): User | undefined {
