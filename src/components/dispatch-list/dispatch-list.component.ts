@@ -1,8 +1,9 @@
-// src/components/dispatch/dispatch-list/dispatch-list.component.ts
+// src/components/dispatch-list/dispatch-list.component.ts
 import { Component, ChangeDetectionStrategy, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DispatchService } from '../../services/dispatch.service';
+import { DispatchPdfService } from '../../services/dispatch-pdf.service';
 import { DispatchRecord } from '../../dispatch.models';
 
 @Component({
@@ -27,7 +28,11 @@ export class DispatchListComponent implements OnInit {
     return this.records().filter(r => r.dispatchDate?.includes(q));
   });
 
-  constructor(private svc: DispatchService, private router: Router) {}
+  constructor(
+    private svc: DispatchService,
+    private pdf: DispatchPdfService,
+    private router: Router
+  ) {}
 
   ngOnInit() { this.svc.getAll(); }
 
@@ -54,6 +59,24 @@ export class DispatchListComponent implements OnInit {
       this.flash('error', 'Failed to delete record.');
     }
   }
+
+  // ── PDF actions ──────────────────────────────────────────────────────────
+
+  downloadEntry(rec: DispatchRecord, event: Event) {
+    event.stopPropagation();
+    this.pdf.printEntry(rec);
+  }
+
+  downloadReport() {
+    const recs = this.filtered();
+    if (!recs.length) { this.flash('error', 'No records to export.'); return; }
+    const label = this.searchDate()
+      ? `Date filter: ${this.searchDate()}`
+      : `All Records (${recs.length})`;
+    this.pdf.printReport(recs, label);
+  }
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
 
   totalDispatched(rec: DispatchRecord) {
     return rec.dispatchItems?.reduce((s, r) => s + (r.quantity || 0), 0) ?? 0;
