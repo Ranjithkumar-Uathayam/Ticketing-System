@@ -92,3 +92,82 @@ INSERT INTO Users (Name, Username, ContactEmail, PasswordHash, RoleId) VALUES
 ('Employee User', 'employee', 'employee@ticketing.corp', 'password', 4);
 
 GO
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Uathayam Ticketing System — MSSQL Schema
+-- ─────────────────────────────────────────────────────────────────────────────
+
+CREATE TABLE Roles (
+    Id   INT PRIMARY KEY IDENTITY(1,1),
+    Name NVARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE Permissions (
+    Id         INT PRIMARY KEY IDENTITY(1,1),
+    ScreenName NVARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE RolePermissions (
+    RoleId       INT NOT NULL,
+    PermissionId INT NOT NULL,
+    PRIMARY KEY (RoleId, PermissionId),
+    FOREIGN KEY (RoleId)       REFERENCES Roles(Id)       ON DELETE CASCADE,
+    FOREIGN KEY (PermissionId) REFERENCES Permissions(Id) ON DELETE CASCADE
+);
+
+CREATE TABLE Users (
+    Id           INT PRIMARY KEY IDENTITY(1,1),
+    Name         NVARCHAR(100) NOT NULL,
+    Username     NVARCHAR(50)  NOT NULL UNIQUE,
+    ContactEmail NVARCHAR(100) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(255) NOT NULL,  -- bcrypt hash, never plain text
+    RoleId       INT NOT NULL,
+    FOREIGN KEY (RoleId) REFERENCES Roles(Id)
+);
+
+CREATE TABLE Tickets (
+    Id                 INT PRIMARY KEY IDENTITY(1,1),
+    Title              NVARCHAR(200) NOT NULL,
+    Description        NVARCHAR(MAX) NOT NULL,
+    Status             NVARCHAR(50)  NOT NULL,
+    Priority           NVARCHAR(50)  NOT NULL,
+    Category           NVARCHAR(50),
+    SubCategory        NVARCHAR(100),
+    Division           NVARCHAR(100),
+    ReporterId         INT NOT NULL,
+    AssigneeId         INT,
+    CreatedAt          DATETIME2 NOT NULL DEFAULT GETDATE(),
+    UpdatedAt          DATETIME2 NOT NULL DEFAULT GETDATE(),
+    ScreenshotUrl      NVARCHAR(MAX),       -- Store object-storage URL, not base64
+    ScreenshotFileName NVARCHAR(255),
+    CreatedBy          NVARCHAR(100),
+    EmployeeId         NVARCHAR(50),
+    ExtensionNumber    NVARCHAR(20),
+    FOREIGN KEY (ReporterId) REFERENCES Users(Id),
+    FOREIGN KEY (AssigneeId) REFERENCES Users(Id)
+);
+
+-- Performance indexes for common query patterns
+CREATE INDEX IX_Tickets_UpdatedAt   ON Tickets (UpdatedAt DESC);
+CREATE INDEX IX_Tickets_Status      ON Tickets (Status);
+CREATE INDEX IX_Tickets_Priority    ON Tickets (Priority);
+CREATE INDEX IX_Tickets_AssigneeId  ON Tickets (AssigneeId);
+CREATE INDEX IX_Tickets_ReporterId  ON Tickets (ReporterId);
+
+CREATE TABLE Notifications (
+    Id        INT PRIMARY KEY IDENTITY(1,1),
+    UserId    INT NOT NULL,
+    TicketId  INT,            -- SET NULL when ticket is deleted (not CASCADE)
+    Message   NVARCHAR(255) NOT NULL,
+    IsRead    BIT NOT NULL DEFAULT 0,
+    CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+    FOREIGN KEY (UserId)   REFERENCES Users(Id)   ON DELETE CASCADE,
+    FOREIGN KEY (TicketId) REFERENCES Tickets(Id) ON DELETE SET NULL  -- ← was missing
+);
+
+CREATE INDEX IX_Notifications_UserId ON Notifications (UserId);
+
+-- ─── Seed data ─────────────────────────────────────────────────────────────
+INSERT INTO Permissions (ScreenName)
+VALUES ('Dashboard'), ('Tickets'), ('User Management'), ('Reports'), ('Dispatch');

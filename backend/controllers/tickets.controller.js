@@ -1,32 +1,79 @@
 const { sql, poolPromise } = require('../db');
 
-const mapTicketToCamelCase = (ticket) => ({
-  id: ticket.Id,
-  title: ticket.Title,
-  description: ticket.Description,
-  status: ticket.Status,
-  priority: ticket.Priority,
-  category: ticket.Category,
-  subCategory: ticket.SubCategory,
-  division: ticket.Division,
-  reporterId: ticket.ReporterId,
-  assigneeId: ticket.AssigneeId,
-  createdAt: ticket.CreatedAt,
-  updatedAt: ticket.UpdatedAt,
-  screenshotUrl: ticket.ScreenshotUrl,
-  screenshotFileName: ticket.ScreenshotFileName,
-  createdBy: ticket.CreatedBy,
-  employeeId: ticket.EmployeeId,
-  extensionNumber: ticket.ExtensionNumber,
+const TICKET_COLUMNS = `
+  Id, Title, Description, Status, Priority, Category, SubCategory, Division,
+  ReporterId, AssigneeId, CreatedAt, UpdatedAt,
+  ScreenshotUrl, ScreenshotFileName, CreatedBy, EmployeeId, ExtensionNumber
+`;
+
+const mapTicketToCamelCase = (t) => ({
+  id:                t.Id,
+  title:             t.Title,
+  description:       t.Description,
+  status:            t.Status,
+  priority:          t.Priority,
+  category:          t.Category,
+  subCategory:       t.SubCategory,
+  division:          t.Division,
+  reporterId:        t.ReporterId,
+  assigneeId:        t.AssigneeId,
+  createdAt:         t.CreatedAt,
+  updatedAt:         t.UpdatedAt,
+  screenshotUrl:     t.ScreenshotUrl,
+  screenshotFileName:t.ScreenshotFileName,
+  createdBy:         t.CreatedBy,
+  employeeId:        t.EmployeeId,
+  extensionNumber:   t.ExtensionNumber,
 });
 
+// GET /api/tickets?page=1&limit=50&status=Open&priority=High&assigneeId=5
 exports.getAllTickets = async (req, res) => {
+  const page       = Math.max(1, parseInt(req.query.page,  10) || 1);
+  const limit      = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
+  const offset     = (page - 1) * limit;
+
+  // Optional server-side filters
+  const { status, priority, assigneeId, reporterId } = req.query;
+
   try {
-    const pool = await poolPromise;
-    const result = await pool.request().query('SELECT * FROM Tickets ORDER BY UpdatedAt DESC');
-    res.status(200).json(result.recordset.map(mapTicketToCamelCase));
+    const pool    = await poolPromise;
+    const request = pool.request()
+      .input('limit',  sql.Int, limit)
+      .input('offset', sql.Int, offset);
+
+    let where = 'WHERE 1=1';
+    if (status)     { request.input('status',     sql.NVarChar, status);         where += ' AND Status = @status'; }
+    if (priority)   { request.input('priority',   sql.NVarChar, priority);       where += ' AND Priority = @priority'; }
+    if (assigneeId) { request.input('assigneeId', sql.Int, parseInt(assigneeId, 10)); where += ' AND AssigneeId = @assigneeId'; }
+    if (reporterId) { request.input('reporterId', sql.Int, parseInt(reporterId, 10)); where += ' AND ReporterId = @reporterId'; }
+
+    const result = await request.query(`
+      SELECT ${TICKET_COLUMNS}
+      FROM Tickets
+      ${where}
+      ORDER BY UpdatedAt DESC
+      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
+    `);
+
+    // Return total count so the frontend can display pagination info
+    const countReq = pool.request();
+    if (status)     countReq.input('status',     sql.NVarChar, status);
+    if (priority)   countReq.input('priority',   sql.NVarChar, priority);
+    if (assigneeId) countReq.input('assigneeId', sql.Int, parseInt(assigneeId, 10));
+    if (reporterId) countReq.input('reporterId', sql.Int, parseInt(reporterId, 10));
+    const countResult = await countReq.query(`SELECT COUNT(*) AS Total FROM Tickets ${where}`);
+    const total = countResult.recordset[0].Total;
+
+    res.status(200).json({
+      data:  result.recordset.map(mapTicketToCamelCase),
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+    });
   } catch (err) {
-    res.status(500).send({ message: 'Failed to retrieve tickets', error: err.message });
+    console.error('[tickets.getAllTickets]', err);
+    res.status(500).json({ message: 'Failed to retrieve tickets.' });
   }
 };
 
@@ -37,42 +84,37 @@ exports.createTicket = async (req, res) => {
     createdBy, employeeId, extensionNumber,
   } = req.body;
 
-  // Business rule: default status is 'New'.
-  // If an assignee is set at creation time, auto-promote to 'Open'.
   let resolvedStatus = status || 'New';
-  if (assigneeId && resolvedStatus === 'New') {
-    resolvedStatus = 'Open';
-  }
+  if (assigneeId && resolvedStatus === 'New') resolvedStatus = 'Open';
 
-  const pool = await poolPromise;
+  const pool        = await poolPromise;
   const transaction = new sql.Transaction(pool);
 
   try {
     await transaction.begin();
-    const ticketRequest = new sql.Request(transaction);
 
-    const result = await ticketRequest
+    const result = await new sql.Request(transaction)
       .input('title',              sql.NVarChar, title)
       .input('description',        sql.NVarChar, description)
       .input('status',             sql.NVarChar, resolvedStatus)
       .input('priority',           sql.NVarChar, priority)
-      .input('category',           sql.NVarChar, category)
-      .input('subCategory',        sql.NVarChar, subCategory)
+      .input('category',           sql.NVarChar, category           || null)
+      .input('subCategory',        sql.NVarChar, subCategory        || null)
       .input('reporterId',         sql.Int,      reporterId)
-      .input('assigneeId',         sql.Int,      assigneeId || null)
-      .input('screenshotUrl',      sql.NVarChar, screenshotUrl   || null)
+      .input('assigneeId',         sql.Int,      assigneeId         || null)
+      .input('screenshotUrl',      sql.NVarChar, screenshotUrl      || null)
       .input('screenshotFileName', sql.NVarChar, screenshotFileName || null)
-      .input('createdBy',          sql.NVarChar, createdBy       || null)
-      .input('employeeId',         sql.NVarChar, employeeId      || null)
-      .input('extensionNumber',    sql.NVarChar, extensionNumber || null)
-      .input('division',           sql.NVarChar, division        || null)
+      .input('createdBy',          sql.NVarChar, createdBy          || null)
+      .input('employeeId',         sql.NVarChar, employeeId         || null)
+      .input('extensionNumber',    sql.NVarChar, extensionNumber    || null)
+      .input('division',           sql.NVarChar, division           || null)
       .query(`
         INSERT INTO Tickets (
           Title, Description, Status, Priority, Category, SubCategory, Division,
           ReporterId, AssigneeId, ScreenshotUrl, ScreenshotFileName,
           CreatedBy, EmployeeId, ExtensionNumber
         )
-        OUTPUT INSERTED.*
+        OUTPUT ${TICKET_COLUMNS.split('\n').map(l => `INSERTED.${l.trim()}`).join(', ').replace(/^INSERTED\.\s*/,'INSERTED.')}
         VALUES (
           @title, @description, @status, @priority, @category, @subCategory, @division,
           @reporterId, @assigneeId, @screenshotUrl, @screenshotFileName,
@@ -82,13 +124,11 @@ exports.createTicket = async (req, res) => {
 
     const newTicket = result.recordset[0];
 
-    // Notify the assignee if one was set
     if (newTicket.AssigneeId) {
-      const notificationRequest = new sql.Request(transaction);
-      await notificationRequest
-        .input('userId',  sql.Int,      newTicket.AssigneeId)
-        .input('ticketId', sql.Int,     newTicket.Id)
-        .input('message', sql.NVarChar, `You have been assigned to ticket #${newTicket.Id}: "${newTicket.Title}"`)
+      await new sql.Request(transaction)
+        .input('userId',   sql.Int,      newTicket.AssigneeId)
+        .input('ticketId', sql.Int,      newTicket.Id)
+        .input('message',  sql.NVarChar, `You have been assigned to ticket #${newTicket.Id}: "${newTicket.Title}"`)
         .query('INSERT INTO Notifications (UserId, TicketId, Message) VALUES (@userId, @ticketId, @message)');
     }
 
@@ -96,7 +136,8 @@ exports.createTicket = async (req, res) => {
     res.status(201).json(mapTicketToCamelCase(newTicket));
   } catch (err) {
     await transaction.rollback();
-    res.status(500).send({ message: 'Failed to create ticket', error: err.message });
+    console.error('[tickets.createTicket]', err);
+    res.status(500).json({ message: 'Failed to create ticket.' });
   }
 };
 
@@ -107,85 +148,68 @@ exports.updateTicket = async (req, res) => {
     assigneeId, screenshotUrl, screenshotFileName,
     createdBy, employeeId, extensionNumber,
   } = req.body;
-  const pool = await poolPromise;
+
+  const pool        = await poolPromise;
   const transaction = new sql.Transaction(pool);
 
   try {
     await transaction.begin();
 
-    // Fetch old ticket state for change-detection notifications
-    const oldTicketRequest = new sql.Request(transaction);
-    const oldTicketResult = await oldTicketRequest
+    const oldTicketResult = await new sql.Request(transaction)
       .input('id', sql.Int, ticketId)
-      .query('SELECT * FROM Tickets WHERE Id = @id');
-    const oldTicket = oldTicketResult.recordset[0];
+      .query(`SELECT ${TICKET_COLUMNS} FROM Tickets WHERE Id = @id`);
 
+    const oldTicket = oldTicketResult.recordset[0];
     if (!oldTicket) {
       await transaction.rollback();
-      return res.status(404).json({ message: 'Ticket not found' });
+      return res.status(404).json({ message: 'Ticket not found.' });
     }
 
-    // Business rule: if status is 'New' and an assignee is being added, promote to 'Open'
     let resolvedStatus = status;
-    const oldAssigneeId = oldTicket.AssigneeId;
     const newAssigneeId = assigneeId || null;
-    if (resolvedStatus === 'New' && newAssigneeId && newAssigneeId !== oldAssigneeId) {
+    if (resolvedStatus === 'New' && newAssigneeId && newAssigneeId !== oldTicket.AssigneeId) {
       resolvedStatus = 'Open';
     }
 
-    const updateRequest = new sql.Request(transaction);
-    const result = await updateRequest
+    const result = await new sql.Request(transaction)
       .input('id',              sql.Int,      ticketId)
       .input('title',           sql.NVarChar, title)
       .input('description',     sql.NVarChar, description)
       .input('status',          sql.NVarChar, resolvedStatus)
       .input('priority',        sql.NVarChar, priority)
-      .input('category',        sql.NVarChar, category)
-      .input('subCategory',     sql.NVarChar, subCategory)
-      .input('assigneeId',      sql.Int,      assigneeId || null)
-      .input('screenshotUrl',   sql.NVarChar, screenshotUrl   || null)
+      .input('category',        sql.NVarChar, category           || null)
+      .input('subCategory',     sql.NVarChar, subCategory        || null)
+      .input('assigneeId',      sql.Int,      newAssigneeId)
+      .input('screenshotUrl',   sql.NVarChar, screenshotUrl      || null)
       .input('screenshotFileName', sql.NVarChar, screenshotFileName || null)
-      .input('createdBy',       sql.NVarChar, createdBy       || null)
-      .input('employeeId',      sql.NVarChar, employeeId      || null)
-      .input('extensionNumber', sql.NVarChar, extensionNumber || null)
-      .input('division',        sql.NVarChar, division        || null)
+      .input('createdBy',       sql.NVarChar, createdBy          || null)
+      .input('employeeId',      sql.NVarChar, employeeId         || null)
+      .input('extensionNumber', sql.NVarChar, extensionNumber    || null)
+      .input('division',        sql.NVarChar, division           || null)
       .query(`
-        UPDATE Tickets
-        SET
-          Title              = @title,
-          Description        = @description,
-          Status             = @status,
-          Priority           = @priority,
-          Category           = @category,
-          SubCategory        = @subCategory,
-          Division           = @division,
-          AssigneeId         = @assigneeId,
-          ScreenshotUrl      = @screenshotUrl,
-          ScreenshotFileName = @screenshotFileName,
-          CreatedBy          = @createdBy,
-          EmployeeId         = @employeeId,
-          ExtensionNumber    = @extensionNumber,
-          UpdatedAt          = GETDATE()
-        OUTPUT INSERTED.*
+        UPDATE Tickets SET
+          Title = @title, Description = @description, Status = @status,
+          Priority = @priority, Category = @category, SubCategory = @subCategory,
+          Division = @division, AssigneeId = @assigneeId,
+          ScreenshotUrl = @screenshotUrl, ScreenshotFileName = @screenshotFileName,
+          CreatedBy = @createdBy, EmployeeId = @employeeId,
+          ExtensionNumber = @extensionNumber, UpdatedAt = GETDATE()
+        OUTPUT ${TICKET_COLUMNS.trim().split(',').map(c => `INSERTED.${c.trim()}`).join(', ')}
         WHERE Id = @id
       `);
 
     const updatedTicket = result.recordset[0];
 
-    // 1. Notify new assignee if assignee changed
     if (updatedTicket.AssigneeId && oldTicket.AssigneeId !== updatedTicket.AssigneeId) {
-      const notificationRequest = new sql.Request(transaction);
-      await notificationRequest
+      await new sql.Request(transaction)
         .input('userId',   sql.Int,      updatedTicket.AssigneeId)
         .input('ticketId', sql.Int,      updatedTicket.Id)
         .input('message',  sql.NVarChar, `You have been assigned to ticket #${updatedTicket.Id}: "${updatedTicket.Title}"`)
         .query('INSERT INTO Notifications (UserId, TicketId, Message) VALUES (@userId, @ticketId, @message)');
     }
 
-    // 2. Notify reporter if status changed
     if (oldTicket.Status !== updatedTicket.Status) {
-      const notificationRequest = new sql.Request(transaction);
-      await notificationRequest
+      await new sql.Request(transaction)
         .input('userId',   sql.Int,      updatedTicket.ReporterId)
         .input('ticketId', sql.Int,      updatedTicket.Id)
         .input('message',  sql.NVarChar, `Status of ticket #${updatedTicket.Id} was updated to "${updatedTicket.Status}"`)
@@ -196,6 +220,7 @@ exports.updateTicket = async (req, res) => {
     res.status(200).json(mapTicketToCamelCase(updatedTicket));
   } catch (err) {
     await transaction.rollback();
-    res.status(500).send({ message: 'Failed to update ticket', error: err.message });
+    console.error('[tickets.updateTicket]', err);
+    res.status(500).json({ message: 'Failed to update ticket.' });
   }
 };

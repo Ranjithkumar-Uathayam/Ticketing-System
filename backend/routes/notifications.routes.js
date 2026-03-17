@@ -1,14 +1,12 @@
-const express = require('express');
-const router = express.Router();
-const notificationsController = require('../controllers/notifications.controller');
+const express    = require('express');
+const router     = express.Router();
+const ctrl       = require('../controllers/notifications.controller');
+const { authenticate } = require('../middleware/auth.middleware');
 
-// GET /api/notifications/:userId
-router.get('/:userId', notificationsController.getNotificationsForUser);
+router.use(authenticate);
 
-// POST /api/notifications/read/:userId
-router.post('/read/:userId', notificationsController.markNotificationsAsRead);
-
-// DELETE /api/notifications/:userId
-router.delete('/:userId', notificationsController.deleteNotificationsForUser);
+router.get('/:userId',          ctrl.getNotificationsForUser);
+router.post('/read/:userId',    ctrl.markNotificationsAsRead);
+router.delete('/:userId',       ctrl.deleteNotificationsForUser);
 
 module.exports = router;

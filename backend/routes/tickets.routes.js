@@ -1,15 +1,14 @@
+const express    = require('express');
+const router     = express.Router();
+const ctrl       = require('../controllers/tickets.controller');
+const { authenticate } = require('../middleware/auth.middleware');
+const { validateCreateTicket, validateUpdateTicket } = require('../validators');
 
-const express = require('express');
-const router = express.Router();
-const ticketsController = require('../controllers/tickets.controller');
+// All ticket routes require a valid JWT
+router.use(authenticate);
 
-// GET /api/tickets
-router.get('/', ticketsController.getAllTickets);
-
-// POST /api/tickets
-router.post('/', ticketsController.createTicket);
-
-// PUT /api/tickets/:id
-router.put('/:id', ticketsController.updateTicket);
+router.get('/',     ctrl.getAllTickets);
+router.post('/',    validateCreateTicket, ctrl.createTicket);
+router.put('/:id',  validateUpdateTicket, ctrl.updateTicket);
 
 module.exports = router;
