@@ -64,7 +64,27 @@ export class TicketDetailComponent implements OnInit {
   categories: TicketCategory[] = ['Hardware', 'Software'];
   subCategories: Record<TicketCategory, string[]> = {
     'Hardware': ['Network Issue', 'Application Install', 'System Issue', 'New Mail ID/ System Request', 'Others'],
-    'Software': ['SAP Not Working', 'SAP User Creation', 'Other Application Issue']
+    'Software': ['SAP Login Issues',
+        'SAP Addon Connection Failure',
+        'SAP New Requirement / Fine Tune',
+        'Crystal Report - Creating new reports and modifying existing Crystal Reports based',
+        'New Addon Development / Changes',
+        'SAP Data Issue / Transaction Error',
+        'API / Integration Issues',
+        'User Support and Guidance', 
+        'SQL Query Support',
+        'SAP Master Data Management (Item Master, BP Master) – DTW Tools',
+        'SAP User Creation and Report Authorization Management', 
+        'SAP License Allocation and Management', 
+        'SAP System Configuration and Add-on Support',
+        'SSRS Report Development: - Microsoft Reporting Tools (Auto Mail Creation/ At Scheduled Time)',
+        'Troubleshooting SAP Errors and Issues',
+        'Requirement Analysis and Solution Implementation',
+        'Database Maintenance and Query Optimization',
+        'Supporting POS and Integration Systems', 
+        'Other Application Issue'
+    ]
+
   };
   availableSubCategories = signal<string[]>([]);
 
