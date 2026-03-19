@@ -22,7 +22,6 @@ exports.login = async (req, res) => {
 
     // Secure bcrypt comparison — works against timing attacks
     const isPasswordValid = password === user.PasswordHash //await bcrypt.compare(password, user.PasswordHash);
-    console.log("************", isPasswordValid)
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid credentials.' });
     }
