@@ -6,8 +6,7 @@ const jwt = require('jsonwebtoken');
  * Attaches: req.user = { id, username, roleId }
  */
 function authenticate(req, res, next) {
-    console.log("**********req.headers",req.headers['Authorization'])
-    const authHeader = req.headers['Authorization'];
+    const authHeader = req.headers['authorization'];
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ message: 'Authentication required.' });
     }
