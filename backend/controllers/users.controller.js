@@ -28,7 +28,7 @@ exports.createUser = async (req, res) => {
 
   try {
     // Hash the password with bcrypt before storing
-    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const passwordHash = password //await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     const pool   = await poolPromise;
     const result = await pool.request()
