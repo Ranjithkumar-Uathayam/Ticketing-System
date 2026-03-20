@@ -278,6 +278,7 @@ export class TicketDetailComponent implements OnInit {
           employeeId: formValue.employeeId ?? undefined,
           extensionNumber: formValue.extensionNumber ?? undefined,
         };
+        
         await this.apiService.createTicket(newTicket);
       } else {
         const currentTicket = this.ticket();

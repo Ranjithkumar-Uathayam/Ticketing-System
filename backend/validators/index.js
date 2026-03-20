@@ -41,7 +41,7 @@ const validateUpdateUser = [
 
 const VALID_STATUSES   = ['New', 'Open', 'In Progress', 'Resolved', 'Closed', 'Reopened'];
 const VALID_PRIORITIES = ['Low', 'Medium', 'High', 'Urgent'];
-const VALID_CATEGORIES = ['Hardware', 'Software'];
+const VALID_CATEGORIES = ['Hardware', 'Software', 'ASRS'];
 
 const validateCreateTicket = [
   body('title').trim().notEmpty().withMessage('Title is required.')

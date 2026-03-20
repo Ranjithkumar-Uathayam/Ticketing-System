@@ -1,9 +1,8 @@
 const { sql, poolPromise } = require('../db');
 
-const TICKET_COLUMNS = `
-  Id, Title, Description, Status, Priority, Category, SubCategory, Division,
-  ReporterId, AssigneeId, CreatedAt, UpdatedAt,
-  ScreenshotUrl, ScreenshotFileName, CreatedBy, EmployeeId, ExtensionNumber
+const TICKET_COLUMNS = `Id, Title, Description, Status, Priority, Category, SubCategory, Division,
+    ReporterId, AssigneeId, CreatedAt, UpdatedAt,
+    ScreenshotUrl, ScreenshotFileName, CreatedBy, EmployeeId, ExtensionNumber
 `;
 
 const mapTicketToCamelCase = (t) => ({
@@ -81,7 +80,7 @@ exports.createTicket = async (req, res) => {
   const {
     title, description, status, priority, category, subCategory, division,
     reporterId, assigneeId, screenshotUrl, screenshotFileName,
-    createdBy, employeeId, extensionNumber,
+    createdBy, employeeId, extensionNumber
   } = req.body;
 
   let resolvedStatus = status || 'New';
@@ -92,7 +91,12 @@ exports.createTicket = async (req, res) => {
 
   try {
     await transaction.begin();
-
+    const outputColumns = TICKET_COLUMNS.split(',')              
+    .map(col => col.trim())         // clean spaces
+    .filter(col => col.length > 0)  // remove empty
+    .map(col => `INSERTED.${col}`)  // prefix
+    .join(', ');
+    
     const result = await new sql.Request(transaction)
       .input('title',              sql.NVarChar, title)
       .input('description',        sql.NVarChar, description)
@@ -114,7 +118,7 @@ exports.createTicket = async (req, res) => {
           ReporterId, AssigneeId, ScreenshotUrl, ScreenshotFileName,
           CreatedBy, EmployeeId, ExtensionNumber
         )
-        OUTPUT ${TICKET_COLUMNS.split('\n').map(l => `INSERTED.${l.trim()}`).join(', ').replace(/^INSERTED\.\s*/,'INSERTED.')}
+        OUTPUT ${outputColumns}
         VALUES (
           @title, @description, @status, @priority, @category, @subCategory, @division,
           @reporterId, @assigneeId, @screenshotUrl, @screenshotFileName,
@@ -123,7 +127,6 @@ exports.createTicket = async (req, res) => {
       `);
 
     const newTicket = result.recordset[0];
-
     if (newTicket.AssigneeId) {
       await new sql.Request(transaction)
         .input('userId',   sql.Int,      newTicket.AssigneeId)
@@ -136,8 +139,7 @@ exports.createTicket = async (req, res) => {
     res.status(201).json(mapTicketToCamelCase(newTicket));
   } catch (err) {
     await transaction.rollback();
-    console.error('[tickets.createTicket]', err);
-    res.status(500).json({ message: 'Failed to create ticket.' });
+    res.status(500).json({ message: err.message });
   }
 };
 
