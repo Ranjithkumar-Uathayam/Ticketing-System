@@ -61,7 +61,7 @@ export class TicketDetailComponent implements OnInit {
   canCreateTicket;
   apiLoading;
 
-  categories: TicketCategory[] = ['Hardware', 'Software'];
+  categories: TicketCategory[] = ['Hardware', 'Software','ASRS'];
   subCategories: Record<TicketCategory, string[]> = {
     'Hardware': ['Network Issue', 'Application Install', 'System Issue', 'New Mail ID/ System Request', 'Others'],
     'Software': ['SAP Login Issues',
@@ -83,8 +83,8 @@ export class TicketDetailComponent implements OnInit {
         'Database Maintenance and Query Optimization',
         'Supporting POS and Integration Systems', 
         'Other Application Issue'
-    ]
-
+    ],
+    'ASRS':['MLS','Totelift','Conveyor', 'Others']
   };
   availableSubCategories = signal<string[]>([]);
 

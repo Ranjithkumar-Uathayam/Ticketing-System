@@ -33,7 +33,7 @@ export interface User {
 
 export type TicketStatus   = 'New' | 'Open' | 'In Progress' | 'Resolved' | 'Closed' | 'Reopened';
 export type TicketPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
-export type TicketCategory = 'Hardware' | 'Software';
+export type TicketCategory = 'Hardware' | 'Software' | 'ASRS';
 
 export interface Ticket {
   id:                number;
