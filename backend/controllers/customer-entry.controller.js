@@ -12,8 +12,8 @@ const map = (r) => ({
   pvcQty:           r.PvcQty,
   emailWhatsappQty: r.EmailWhatsappQty,
 
-  engatiAriserQty:  r.EngatiAriserQty,
-  engatiUdhayamQty: r.EngatiUdhayamQty,
+  engatiAriser:  !!r.EngatiAriser,
+  engatiUdhayam: !!r.EngatiUdhayam,
 
   exchangePickupQty:           r.ExchangePickupQty,
   exchangeCallQty:             r.ExchangeCallQty,
@@ -94,8 +94,8 @@ exports.create = async (req, res) => {
       .input('avcQty',           sql.Int, b.avcQty           ?? 0)
       .input('pvcQty',           sql.Int, b.pvcQty           ?? 0)
       .input('emailWhatsappQty', sql.Int, b.emailWhatsappQty ?? 0)
-      .input('engatiAriserQty',  sql.Int, b.engatiAriserQty  ?? 0)
-      .input('engatiUdhayamQty', sql.Int, b.engatiUdhayamQty ?? 0)
+      .input('engatiAriser',  sql.Bit, b.engatiAriser  ? 1 : 0)
+      .input('engatiUdhayam', sql.Bit, b.engatiUdhayam ? 1 : 0)
       .input('exchangePickupQty',            sql.Int, b.exchangePickupQty            ?? 0)
       .input('exchangeCallQty',              sql.Int, b.exchangeCallQty              ?? 0)
       .input('exchangeOrderReplacementQty',  sql.Int, b.exchangeOrderReplacementQty  ?? 0)
@@ -120,7 +120,7 @@ exports.create = async (req, res) => {
         INSERT INTO CustomerEntries (
           EntryDate, EmployeeName, EmployeeId,
           AvcQty, PvcQty, EmailWhatsappQty,
-          EngatiAriserQty, EngatiUdhayamQty,
+          EngatiAriser, EngatiUdhayam,
           ExchangePickupQty, ExchangeCallQty, ExchangeOrderReplacementQty,
           PoQty,
           MailAriser, MailUdhayam,
@@ -136,7 +136,7 @@ exports.create = async (req, res) => {
         VALUES (
           @entryDate, @employeeName, @employeeId,
           @avcQty, @pvcQty, @emailWhatsappQty,
-          @engatiAriserQty, @engatiUdhayamQty,
+          @engatiAriser, @engatiUdhayam,
           @exchangePickupQty, @exchangeCallQty, @exchangeOrderReplacementQty,
           @poQty,
           @mailAriser, @mailUdhayam,
@@ -171,8 +171,8 @@ exports.update = async (req, res) => {
       .input('avcQty',           sql.Int, b.avcQty           ?? 0)
       .input('pvcQty',           sql.Int, b.pvcQty           ?? 0)
       .input('emailWhatsappQty', sql.Int, b.emailWhatsappQty ?? 0)
-      .input('engatiAriserQty',  sql.Int, b.engatiAriserQty  ?? 0)
-      .input('engatiUdhayamQty', sql.Int, b.engatiUdhayamQty ?? 0)
+      .input('engatiAriser',  sql.Bit, b.engatiAriser  ? 1 : 0)
+      .input('engatiUdhayam', sql.Bit, b.engatiUdhayam ? 1 : 0)
       .input('exchangePickupQty',            sql.Int, b.exchangePickupQty            ?? 0)
       .input('exchangeCallQty',              sql.Int, b.exchangeCallQty              ?? 0)
       .input('exchangeOrderReplacementQty',  sql.Int, b.exchangeOrderReplacementQty  ?? 0)
@@ -199,7 +199,7 @@ exports.update = async (req, res) => {
           EmployeeName = @employeeName,
           EmployeeId   = @employeeId,
           AvcQty = @avcQty, PvcQty = @pvcQty, EmailWhatsappQty = @emailWhatsappQty,
-          EngatiAriserQty = @engatiAriserQty, EngatiUdhayamQty = @engatiUdhayamQty,
+          EngatiAriser = @engatiAriser, EngatiUdhayam = @engatiUdhayam,
           ExchangePickupQty = @exchangePickupQty, ExchangeCallQty = @exchangeCallQty,
           ExchangeOrderReplacementQty = @exchangeOrderReplacementQty,
           PoQty = @poQty,

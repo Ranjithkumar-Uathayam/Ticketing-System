@@ -65,7 +65,6 @@ export class CustomerEntryListComponent implements OnInit {
   /** Sum of all Qty fields for a quick overview badge */
   totalQty(r: CustomerEntry): number {
     return (r.avcQty ?? 0) + (r.pvcQty ?? 0) + (r.emailWhatsappQty ?? 0)
-         + (r.engatiAriserQty ?? 0) + (r.engatiUdhayamQty ?? 0)
          + (r.exchangePickupQty ?? 0) + (r.exchangeCallQty ?? 0) + (r.exchangeOrderReplacementQty ?? 0)
          + (r.poQty ?? 0) + (r.offlineOrderQty ?? 0) + (r.manualOrderQty ?? 0);
   }

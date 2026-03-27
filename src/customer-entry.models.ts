@@ -13,9 +13,9 @@ export interface CustomerEntry {
   pvcQty:             number;
   emailWhatsappQty:   number;
 
-  // ── Engati (Qty) ─────────────────────────────────────────────────────────
-  engatiAriserQty:    number;
-  engatiUdhayamQty:   number;
+  // ── Engati (Checkbox) ────────────────────────────────────────────────────
+  engatiAriser:    boolean;
+  engatiUdhayam:   boolean;
 
   // ── Exchange (Qty) ───────────────────────────────────────────────────────
   exchangePickupQty:            number;
@@ -69,8 +69,8 @@ export function emptyCustomerEntry(): Omit<CustomerEntry, 'id' | 'createdAt' | '
     avcQty:             0,
     pvcQty:             0,
     emailWhatsappQty:   0,
-    engatiAriserQty:    0,
-    engatiUdhayamQty:   0,
+    engatiAriser:    false,
+    engatiUdhayam:   false,
     exchangePickupQty:            0,
     exchangeCallQty:              0,
     exchangeOrderReplacementQty:  0,

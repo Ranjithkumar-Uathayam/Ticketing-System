@@ -25,7 +25,7 @@
       </button>
       <div>
         <h1 class="text-xl font-black" style="color:#1B2F6E;">
-          {{ isEdit() ? 'Edit' : 'New' }} Customer Care Entry
+          {{ isEdit() ? 'Edit' : 'New' }} Customer Entry
         </h1>
         <p class="text-xs mt-0.5" style="color:rgba(27,47,110,0.45);">Employee-wise online customer tracking</p>
       </div>
@@ -139,11 +139,9 @@
           <p class="text-xs" style="color:rgba(253,181,21,0.6);">Ariser · Udhayam</p>
         </div>
       </div>
-      <div class="p-5">
-        <div class="grid grid-cols-2 gap-3">
-          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'Ariser', field:'engatiAriserQty', val:entry().engatiAriserQty }"></ng-container>
-          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'Udhayam', field:'engatiUdhayamQty', val:entry().engatiUdhayamQty }"></ng-container>
-        </div>
+      <div class="p-5 flex gap-6">
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'Ariser',  field:'engatiAriser',  val:entry().engatiAriser }"></ng-container>
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'Udhayam', field:'engatiUdhayam', val:entry().engatiUdhayam }"></ng-container>
       </div>
     </div>
 

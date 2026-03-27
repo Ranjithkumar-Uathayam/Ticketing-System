@@ -31,7 +31,7 @@
   <!-- ── Page Header ───────────────────────────────────────────────────── -->
   <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
     <div>
-      <h1 class="text-xl font-black" style="color:#1B2F6E;">Online Customer Care Entry</h1>
+      <h1 class="text-xl font-black" style="color:#1B2F6E;">Online Customer Entry</h1>
       <p class="text-xs mt-0.5" style="color:rgba(27,47,110,0.45);">Employee-wise customer tracking records</p>
     </div>
     <button (click)="openEntry()"
@@ -165,9 +165,12 @@
               <!-- Engati -->
               <div>
                 <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:rgba(27,47,110,0.4);">Engati</p>
-                <div class="space-y-1 text-xs" style="color:#1B2F6E;">
-                  <p>Ariser: <span class="font-bold">{{ rec.engatiAriserQty }}</span></p>
-                  <p>Udhayam: <span class="font-bold">{{ rec.engatiUdhayamQty }}</span></p>
+                <div class="flex flex-wrap gap-1.5">
+                  @if(rec.engatiAriser)  { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#EEF2FF; color:#4338ca;">Ariser</span>  }
+                  @if(rec.engatiUdhayam) { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#EEF2FF; color:#4338ca;">Udhayam</span> }
+                  @if(!rec.engatiAriser && !rec.engatiUdhayam) {
+                    <span class="text-xs" style="color:rgba(27,47,110,0.35);">—</span>
+                  }
                 </div>
               </div>
 
@@ -205,6 +208,8 @@
               <div class="col-span-full">
                 <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:rgba(27,47,110,0.4);">Flags</p>
                 <div class="flex flex-wrap gap-2">
+                  @if(rec.engatiAriser)   { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#EEF2FF; color:#4338ca;">Engati – Ariser</span>  }
+                  @if(rec.engatiUdhayam)  { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#EEF2FF; color:#4338ca;">Engati – Udhayam</span> }
                   @if(rec.mailAriser)     { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#EFF6FF; color:#1B2F6E;">Mail – Ariser</span> }
                   @if(rec.mailUdhayam)    { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#EFF6FF; color:#1B2F6E;">Mail – Udhayam</span> }
                   @if(rec.looxAriser)     { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#FFF7ED; color:#c2410c;">Loox – Ariser</span> }
@@ -214,7 +219,8 @@
                   @if(rec.ndr)            { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#FEF2F2; color:#DC2626;">NDR</span> }
                   @if(rec.mis)            { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#F5F3FF; color:#7c3aed;">MIS</span> }
                   @if(rec.postOfficeMail) { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#ECFEFF; color:#0891b2;">PO Mail</span> }
-                  @if(!rec.mailAriser && !rec.mailUdhayam && !rec.looxAriser && !rec.looxUdhayam &&
+                  @if(!rec.engatiAriser && !rec.engatiUdhayam &&
+                      !rec.mailAriser && !rec.mailUdhayam && !rec.looxAriser && !rec.looxUdhayam &&
                       !rec.facebookAriser && !rec.facebookUdhayam && !rec.ndr && !rec.mis && !rec.postOfficeMail) {
                     <span class="text-xs" style="color:rgba(27,47,110,0.4);">No flags selected</span>
                   }
