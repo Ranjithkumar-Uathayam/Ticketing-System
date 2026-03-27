@@ -1,4 +1,4 @@
-// src/components/layout/layout.component.ts  (UPDATED - dispatch added to nav)
+// src/components/layout/layout.component.ts  (UPDATED — Customer Entry added)
 import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -27,7 +27,8 @@ export class LayoutComponent {
   canViewTickets;
   canViewUserManagement;
   canViewReports;
-  canViewDispatch;   // ← NEW
+  canViewDispatch;
+  canViewCustomerEntry;  // ← NEW
 
   constructor(
     public authService:        AuthService,
@@ -44,6 +45,7 @@ export class LayoutComponent {
     this.canViewUserManagement = computed(() => this.authService.hasPermission('User Management'));
     this.canViewReports        = computed(() => this.authService.hasPermission('Reports'));
     this.canViewDispatch       = computed(() => this.authService.hasPermission('Dispatch') || this.authService.isAdmin() || this.authService.isManager() || this.authService.isSupport());
+    this.canViewCustomerEntry  = computed(() => this.authService.hasPermission('Customer Entry') || this.authService.isAdmin() || this.authService.isManager() || this.authService.isEmployee());
 
     this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd)
@@ -54,14 +56,17 @@ export class LayoutComponent {
   }
 
   getRouteTitle(url: string): string {
-    if (url.includes('/dashboard'))       return 'Dashboard';
-    if (url.includes('/tickets/'))        return 'Ticket Details';
-    if (url.includes('/tickets'))         return 'Tickets';
-    if (url.includes('/user-management')) return 'User Management';
-    if (url.includes('/reports'))         return 'Reports';
-    if (url.match(/\/dispatch\/\d+/))     return 'Dispatch Entry';
-    if (url.includes('/dispatch/new'))    return 'New Dispatch Entry';
-    if (url.includes('/dispatch'))        return 'Online Dispatch Details';
+    if (url.includes('/dashboard'))          return 'Dashboard';
+    if (url.includes('/tickets/'))           return 'Ticket Details';
+    if (url.includes('/tickets'))            return 'Tickets';
+    if (url.includes('/user-management'))    return 'User Management';
+    if (url.includes('/reports'))            return 'Reports';
+    if (url.match(/\/dispatch\/\d+/))        return 'Dispatch Entry';
+    if (url.includes('/dispatch/new'))       return 'New Dispatch Entry';
+    if (url.includes('/dispatch'))           return 'Online Dispatch Details';
+    if (url.match(/\/customer-entry\/\d+/)) return 'Customer Entry';
+    if (url.includes('/customer-entry/new')) return 'New Customer Entry';
+    if (url.includes('/customer-entry'))     return 'Online Customer Entry';
     return 'Dashboard';
   }
 

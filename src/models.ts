@@ -1,5 +1,7 @@
+// src/models.ts  (UPDATED — Customer Entry added)
+
 // ─── Screen / Permission types ────────────────────────────────────────────────
-export type AppScreen = 'Dashboard' | 'Tickets' | 'User Management' | 'Reports' | 'Dispatch';
+export type AppScreen = 'Dashboard' | 'Tickets' | 'User Management' | 'Reports' | 'Dispatch' | 'Customer Entry';
 
 // ─── Role names as a typed constant — use these everywhere instead of magic strings
 export const USER_ROLES = {

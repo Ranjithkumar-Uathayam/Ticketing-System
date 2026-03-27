@@ -1,4 +1,4 @@
-// src/app.routes.ts  (UPDATED - dispatch routes added)
+// src/app.routes.ts  (UPDATED — customer-entry routes added)
 import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
 
@@ -34,7 +34,7 @@ export const appRoutes: Routes = [
         path: 'reports',
         loadComponent: () => import('./components/reports/reports.component').then(c => c.ReportsComponent)
       },
-      // ── NEW: Online Dispatch ──────────────────────────────────────────────
+      // ── Online Dispatch ──────────────────────────────────────────────────
       {
         path: 'dispatch',
         loadComponent: () => import('./components/dispatch-list/dispatch-list.component').then(c => c.DispatchListComponent)
@@ -42,6 +42,15 @@ export const appRoutes: Routes = [
       {
         path: 'dispatch/:id',
         loadComponent: () => import('./components/dispatch-form/dispatch-form.component').then(c => c.DispatchFormComponent)
+      },
+      // ── Online Customer Entry ────────────────────────────────────────────
+      {
+        path: 'customer-entry',
+        loadComponent: () => import('./components/customer-entry-list/customer-entry-list.component').then(c => c.CustomerEntryListComponent)
+      },
+      {
+        path: 'customer-entry/:id',
+        loadComponent: () => import('./components/customer-entry-form/customer-entry-form.component').then(c => c.CustomerEntryFormComponent)
       },
     ]
   },

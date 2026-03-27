@@ -24,7 +24,7 @@ export class UserManagementComponent {
 
   editingRole = signal<Role | null>(null);
 
-  availableScreens: AppScreen[] = ['Dashboard', 'Tickets', 'User Management', 'Reports', 'Dispatch'];
+  availableScreens: AppScreen[] = ['Dashboard', 'Tickets', 'User Management', 'Reports', 'Dispatch', 'Customer Entry'];
 
   // Tracks which permissions are checked — simple boolean array, no FormArray
   selectedPermissions = signal<boolean[]>([false, false, false, false, false]);

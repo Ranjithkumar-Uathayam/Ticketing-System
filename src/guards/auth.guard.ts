@@ -1,3 +1,4 @@
+// src/guards/auth.guard.ts  (UPDATED — customer-entry added)
 import { Injectable, Injector } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
@@ -15,6 +16,7 @@ const ROUTE_PERMISSIONS: Record<string, AppScreen> = {
   'user-management': 'User Management',
   'reports':         'Reports',
   'dispatch':        'Dispatch',
+  'customer-entry':  'Customer Entry',
 };
 
 @Injectable({ providedIn: 'root' })
@@ -25,7 +27,6 @@ export class AuthGuard implements CanActivate, CanActivateChild {
   ) {}
 
   private get router(): Router {
-    // Lazy injection avoids the circular-dependency issue with Router at init time
     return this.injector.get(Router);
   }
 
@@ -38,8 +39,11 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     const requiredPermission = ROUTE_PERMISSIONS[path];
 
     if (requiredPermission) {
-      // Admins and Managers bypass the permission table for Dispatch
-      if (path === 'dispatch' && (this.authService.isAdmin() || this.authService.isManager())) {
+      // Admins and Managers bypass the permission table for Dispatch & Customer Entry
+      if (
+        (path === 'dispatch' || path === 'customer-entry') &&
+        (this.authService.isAdmin() || this.authService.isManager())
+      ) {
         return true;
       }
       return this.authService.hasPermission(requiredPermission)
@@ -47,7 +51,6 @@ export class AuthGuard implements CanActivate, CanActivateChild {
         : this.router.parseUrl('/dashboard');
     }
 
-    // Unrestricted child routes (dashboard, tickets, ticket detail)
     return true;
   }
 }

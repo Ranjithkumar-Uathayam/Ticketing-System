@@ -10,6 +10,7 @@ const userRoutes         = require('./routes/users.routes');
 const roleRoutes         = require('./routes/roles.routes');
 const notificationRoutes = require('./routes/notifications.routes');
 const dispatchRoutes     = require('./routes/dispatch.routes');
+const customerEntryRoutes = require('./routes/customer-entry.routes');
 
 const app = express();
 
@@ -48,12 +49,13 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ limit: '1mb', extended: true }));
 
 // ── Routes ─────────────────────────────────────────────────────────────────
-app.use('/api/auth',          authRoutes);        // Public (rate-limited)
-app.use('/api/tickets',       ticketRoutes);       // Protected
-app.use('/api/users',         userRoutes);         // Protected
-app.use('/api/roles',         roleRoutes);         // Protected
-app.use('/api/notifications', notificationRoutes); // Protected
-app.use('/api/dispatch',      dispatchRoutes);     // Protected
+app.use('/api/auth',          authRoutes);        
+app.use('/api/tickets',       ticketRoutes);       
+app.use('/api/users',         userRoutes);         
+app.use('/api/roles',         roleRoutes);         
+app.use('/api/notifications', notificationRoutes); 
+app.use('/api/dispatch',      dispatchRoutes);     
+app.use('/api/customer-entries', customerEntryRoutes);
 
 app.get('/', (_req, res) => res.json({ message: 'Uathayam Ticketing & Dispatch API' }));
 

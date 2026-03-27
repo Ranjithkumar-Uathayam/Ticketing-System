@@ -1,0 +1,411 @@
+<!-- src/components/customer-entry-form/customer-entry-form.component.html -->
+<div class="min-h-screen p-4 md:p-6" style="background:#F4F6FB;">
+
+  <!-- ── Toast ─────────────────────────────────────────────────────────── -->
+  @if(toast()) {
+    <div class="fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl text-sm font-semibold"
+         style="animation: slideIn .3s ease; min-width:260px;"
+         [style.background]="toast()!.type === 'success' ? '#16a34a' : '#DC2626'"
+         [style.color]="'white'">
+      @if(toast()!.type === 'success') {
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+      } @else {
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M12 3a9 9 0 100 18A9 9 0 0012 3z"/></svg>
+      }
+      {{ toast()!.msg }}
+    </div>
+  }
+
+  <!-- ── Page Header ───────────────────────────────────────────────────── -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <button (click)="cancel()" class="p-2 rounded-xl transition-all hover:scale-105"
+        style="background:rgba(27,47,110,0.07); color:#1B2F6E;">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      </button>
+      <div>
+        <h1 class="text-xl font-black" style="color:#1B2F6E;">
+          {{ isEdit() ? 'Edit' : 'New' }} Customer Entry
+        </h1>
+        <p class="text-xs mt-0.5" style="color:rgba(27,47,110,0.45);">Employee-wise online customer tracking</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button (click)="reset()" type="button"
+        class="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+        style="background:rgba(27,47,110,0.07); color:#1B2F6E;">
+        Reset
+      </button>
+      <button (click)="save()" type="button" [disabled]="saving()"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+        style="background:#1B2F6E; color:#FDB515; box-shadow:0 4px 14px rgba(27,47,110,0.25);">
+        @if(saving()) {
+          <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/>
+            <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" class="opacity-75"/>
+          </svg>
+          Saving…
+        } @else {
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          {{ isEdit() ? 'Update' : 'Save Entry' }}
+        }
+      </button>
+    </div>
+  </div>
+
+  @if(loading()) {
+    <div class="flex items-center justify-center py-24">
+      <svg class="animate-spin w-8 h-8" fill="none" viewBox="0 0 24 24" style="color:#1B2F6E;">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/>
+        <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" class="opacity-75"/>
+      </svg>
+    </div>
+  } @else {
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       HEADER CARD — Date + Employee
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <div class="bg-white rounded-2xl shadow-sm p-5 mb-5 flex flex-wrap gap-5 items-end" style="border:1px solid #E8EDF8;">
+
+    <!-- Entry Date -->
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.4);">Entry Date</label>
+      <input type="date"
+        [value]="entry().entryDate"
+        (change)="patch('entryDate', $any($event.target).value)"
+        class="text-sm font-semibold rounded-xl px-4 py-2.5 outline-none"
+        style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+    </div>
+
+    <!-- Employee Name -->
+    <div class="flex-1 min-w-[180px]">
+      <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.4);">Employee Name <span class="text-red-400">*</span></label>
+      <input type="text"
+        [value]="entry().employeeName"
+        (input)="patch('employeeName', $any($event.target).value)"
+        placeholder="e.g. Priya Rajan"
+        class="w-full text-sm font-semibold rounded-xl px-4 py-2.5 outline-none"
+        style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+    </div>
+
+    <!-- Employee ID -->
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.4);">Employee ID <span class="text-red-400">*</span></label>
+      <input type="text"
+        [value]="entry().employeeId"
+        (input)="patch('employeeId', $any($event.target).value)"
+        placeholder="e.g. EMP-042"
+        class="text-sm font-semibold rounded-xl px-4 py-2.5 outline-none"
+        style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       MODULE GRID — 2 columns on md+
+  ══════════════════════════════════════════════════════════════════════════ -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+    <!-- ── 1. Verification ─────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Verification</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">AVC · PVC · Email & WhatsApp</p>
+        </div>
+      </div>
+      <div class="p-5 space-y-4">
+        <div class="grid grid-cols-3 gap-3">
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'AVC', field:'avcQty', val:entry().avcQty }"></ng-container>
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'PVC', field:'pvcQty', val:entry().pvcQty }"></ng-container>
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'Email / WA', field:'emailWhatsappQty', val:entry().emailWhatsappQty }"></ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2. Engati ────────────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Engati</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Ariser · Udhayam</p>
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="grid grid-cols-2 gap-3">
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'Ariser', field:'engatiAriserQty', val:entry().engatiAriserQty }"></ng-container>
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'Udhayam', field:'engatiUdhayamQty', val:entry().engatiUdhayamQty }"></ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 3. Exchange ──────────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Exchange</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Pickup · Call · Order Replacement</p>
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="grid grid-cols-3 gap-3">
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'Pickup', field:'exchangePickupQty', val:entry().exchangePickupQty }"></ng-container>
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'Call', field:'exchangeCallQty', val:entry().exchangeCallQty }"></ng-container>
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'Order Repl.', field:'exchangeOrderReplacementQty', val:entry().exchangeOrderReplacementQty }"></ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 4. Purchase Order ────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Purchase Order (PO)</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Quantity</p>
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="max-w-[140px]">
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'PO Qty', field:'poQty', val:entry().poQty }"></ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 5. Mail ──────────────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Mail</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Ariser · Udhayam</p>
+        </div>
+      </div>
+      <div class="p-5 flex gap-6">
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'Ariser', field:'mailAriser', val:entry().mailAriser }"></ng-container>
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'Udhayam', field:'mailUdhayam', val:entry().mailUdhayam }"></ng-container>
+      </div>
+    </div>
+
+    <!-- ── 6. Loox ──────────────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Loox</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Ariser · Udhayam</p>
+        </div>
+      </div>
+      <div class="p-5 flex gap-6">
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'Ariser', field:'looxAriser', val:entry().looxAriser }"></ng-container>
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'Udhayam', field:'looxUdhayam', val:entry().looxUdhayam }"></ng-container>
+      </div>
+    </div>
+
+    <!-- ── 7. Facebook ──────────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 2h-3a5 5 0 00-5 5v3H6v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Facebook</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Ariser · Udhayam</p>
+        </div>
+      </div>
+      <div class="p-5 flex gap-6">
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'Ariser', field:'facebookAriser', val:entry().facebookAriser }"></ng-container>
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'Udhayam', field:'facebookUdhayam', val:entry().facebookUdhayam }"></ng-container>
+      </div>
+    </div>
+
+    <!-- ── 8–10. NDR / MIS / Post Office Mail (combined card) ────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">NDR / MIS / Post Office Mail</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Checkbox selection</p>
+        </div>
+      </div>
+      <div class="p-5 flex flex-wrap gap-6">
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'NDR', field:'ndr', val:entry().ndr }"></ng-container>
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'MIS', field:'mis', val:entry().mis }"></ng-container>
+        <ng-container *ngTemplateOutlet="checkField; context:{ label:'Post Office Mail', field:'postOfficeMail', val:entry().postOfficeMail }"></ng-container>
+      </div>
+    </div>
+
+    <!-- ── 11. Refund ───────────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Refund</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Prepaid · COD — Amount (₹)</p>
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="grid grid-cols-2 gap-3">
+          <ng-container *ngTemplateOutlet="amountField; context:{ label:'Prepaid ₹', field:'refundPrepaidAmount', val:entry().refundPrepaidAmount }"></ng-container>
+          <ng-container *ngTemplateOutlet="amountField; context:{ label:'COD ₹', field:'refundCodAmount', val:entry().refundCodAmount }"></ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 12. Payment Link ─────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Payment Link</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Amount (₹)</p>
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="max-w-[160px]">
+          <ng-container *ngTemplateOutlet="amountField; context:{ label:'Amount ₹', field:'paymentLinkAmount', val:entry().paymentLinkAmount }"></ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 13. Offline Order ────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Offline Order</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Qty + Amount (₹)</p>
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="grid grid-cols-2 gap-3">
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'Qty', field:'offlineOrderQty', val:entry().offlineOrderQty }"></ng-container>
+          <ng-container *ngTemplateOutlet="amountField; context:{ label:'Amount ₹', field:'offlineOrderAmount', val:entry().offlineOrderAmount }"></ng-container>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 14. Manual Order ─────────────────────────────────────────────── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="flex items-center gap-3 px-5 py-4" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background:rgba(253,181,21,0.15);">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="#FDB515"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-sm font-bold text-white">Manual Order</h2>
+          <p class="text-xs" style="color:rgba(253,181,21,0.6);">Qty + Amount (₹)</p>
+        </div>
+      </div>
+      <div class="p-5">
+        <div class="grid grid-cols-2 gap-3">
+          <ng-container *ngTemplateOutlet="qtyField; context:{ label:'Qty', field:'manualOrderQty', val:entry().manualOrderQty }"></ng-container>
+          <ng-container *ngTemplateOutlet="amountField; context:{ label:'Amount ₹', field:'manualOrderAmount', val:entry().manualOrderAmount }"></ng-container>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /grid -->
+
+  <!-- Bottom action bar -->
+  <div class="mt-6 flex justify-end gap-3">
+    <button (click)="cancel()"
+      class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white transition-all"
+      style="border:1.5px solid #E8EDF8; color:#1B2F6E;">
+      Cancel
+    </button>
+    <button (click)="save()" [disabled]="saving()"
+      class="flex items-center gap-2 px-8 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+      style="background:#1B2F6E; color:#FDB515; box-shadow:0 4px 14px rgba(27,47,110,0.25);">
+      {{ saving() ? 'Saving…' : (isEdit() ? 'Update Record' : 'Save Entry') }}
+    </button>
+  </div>
+
+  } <!-- /else loading -->
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     REUSABLE FIELD TEMPLATES
+════════════════════════════════════════════════════════════════════════════ -->
+
+<!-- QTY field -->
+<ng-template #qtyField let-label="label" let-field="field" let-val="val">
+  <div>
+    <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.45);">{{ label }}</label>
+    <input type="number" min="0"
+      [value]="val"
+      (input)="patch(field, Math.max(0, +$any($event.target).value || 0))"
+      class="w-full text-center text-sm font-bold rounded-xl px-3 py-2.5 outline-none"
+      style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+      onfocus="this.style.borderColor='#FDB515'; this.style.background='#FFFDF0'"
+      onblur="this.style.borderColor='#E8EDF8'; this.style.background='#F8F9FC'">
+  </div>
+</ng-template>
+
+<!-- Amount field -->
+<ng-template #amountField let-label="label" let-field="field" let-val="val">
+  <div>
+    <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.45);">{{ label }}</label>
+    <input type="number" min="0" step="0.01"
+      [value]="val"
+      (input)="patch(field, Math.max(0, +$any($event.target).value || 0))"
+      class="w-full text-sm font-semibold rounded-xl px-3 py-2.5 outline-none"
+      style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+      onfocus="this.style.borderColor='#FDB515'; this.style.background='#FFFDF0'"
+      onblur="this.style.borderColor='#E8EDF8'; this.style.background='#F8F9FC'">
+  </div>
+</ng-template>
+
+<!-- Checkbox field -->
+<ng-template #checkField let-label="label" let-field="field" let-val="val">
+  <label class="flex items-center gap-2.5 cursor-pointer group select-none">
+    <div class="relative">
+      <input type="checkbox" class="sr-only"
+        [checked]="val"
+        (change)="patch(field, $any($event.target).checked)">
+      <div class="w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all"
+           [style.background]="val ? '#1B2F6E' : 'white'"
+           [style.borderColor]="val ? '#1B2F6E' : '#CBD5E1'">
+        @if(val) {
+          <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+        }
+      </div>
+    </div>
+    <span class="text-sm font-semibold" style="color:#1B2F6E;">{{ label }}</span>
+  </label>
+</ng-template>
+
+<style>
+  @keyframes slideIn {
+    from { transform: translateX(40px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type=number] { -moz-appearance: textfield; }
+</style>

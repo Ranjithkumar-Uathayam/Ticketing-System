@@ -1,0 +1,238 @@
+<!-- src/components/customer-entry-list/customer-entry-list.component.html -->
+<div class="min-h-screen p-4 md:p-6" style="background:#F4F6FB;">
+
+  <!-- ── Toast ─────────────────────────────────────────────────────────── -->
+  @if(toast()) {
+    <div class="fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl text-sm font-semibold"
+         style="animation:slideIn .3s ease; min-width:240px;"
+         [style.background]="toast()!.type === 'success' ? '#16a34a' : '#DC2626'"
+         style2="color:white">
+      {{ toast()!.msg }}
+    </div>
+  }
+
+  <!-- ── Delete Confirm Modal ───────────────────────────────────────────── -->
+  @if(deleteId()) {
+    <div class="fixed inset-0 z-40 flex items-center justify-center p-4" style="background:rgba(0,0,0,0.45);">
+      <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full" style="border:1px solid #E8EDF8;">
+        <h3 class="text-base font-bold mb-2" style="color:#1B2F6E;">Delete Entry?</h3>
+        <p class="text-sm mb-6" style="color:rgba(27,47,110,0.6);">This action cannot be undone.</p>
+        <div class="flex gap-3 justify-end">
+          <button (click)="cancelDelete()"
+            class="px-4 py-2 rounded-xl text-sm font-semibold"
+            style="background:rgba(27,47,110,0.07); color:#1B2F6E;">Cancel</button>
+          <button (click)="confirmDelete()"
+            class="px-4 py-2 rounded-xl text-sm font-bold text-white bg-red-600 hover:bg-red-700">Delete</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Page Header ───────────────────────────────────────────────────── -->
+  <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-xl font-black" style="color:#1B2F6E;">Online Customer Entry</h1>
+      <p class="text-xs mt-0.5" style="color:rgba(27,47,110,0.45);">Employee-wise customer tracking records</p>
+    </div>
+    <button (click)="openEntry()"
+      class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all"
+      style="background:#1B2F6E; color:#FDB515; box-shadow:0 4px 14px rgba(27,47,110,0.25);">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+      New Entry
+    </button>
+  </div>
+
+  <!-- ── Filters ───────────────────────────────────────────────────────── -->
+  <div class="bg-white rounded-2xl shadow-sm p-4 mb-5 flex flex-wrap gap-3 items-end" style="border:1px solid #E8EDF8;">
+    <div class="flex-1 min-w-[200px]">
+      <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.4);">Search Employee</label>
+      <div class="relative">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:rgba(27,47,110,0.3);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" placeholder="Name or Employee ID…"
+          [value]="searchTerm()"
+          (input)="searchTerm.set($any($event.target).value)"
+          class="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl outline-none"
+          style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+          onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+      </div>
+    </div>
+    <div>
+      <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.4);">Filter by Date</label>
+      <input type="date"
+        [value]="filterDate()"
+        (change)="filterDate.set($any($event.target).value)"
+        class="text-sm font-semibold rounded-xl px-4 py-2.5 outline-none"
+        style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+    </div>
+    @if(filterDate() || searchTerm()) {
+      <button (click)="searchTerm.set(''); filterDate.set('')"
+        class="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+        style="background:rgba(220,38,38,0.08); color:#DC2626;">
+        Clear Filters
+      </button>
+    }
+  </div>
+
+  <!-- ── Loading ───────────────────────────────────────────────────────── -->
+  @if(loading()) {
+    <div class="flex items-center justify-center py-24">
+      <svg class="animate-spin w-8 h-8" fill="none" viewBox="0 0 24 24" style="color:#1B2F6E;">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/>
+        <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" class="opacity-75"/>
+      </svg>
+    </div>
+  } @else if(filtered().length === 0) {
+    <div class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl" style="border:1px solid #E8EDF8;">
+      <svg class="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:rgba(27,47,110,0.2);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+      <p class="text-sm font-semibold" style="color:rgba(27,47,110,0.4);">No entries found</p>
+      <button (click)="openEntry()" class="mt-4 px-5 py-2 rounded-xl text-sm font-bold"
+        style="background:#1B2F6E; color:#FDB515;">+ New Entry</button>
+    </div>
+  } @else {
+
+  <!-- ── Records ───────────────────────────────────────────────────────── -->
+  <div class="space-y-3">
+    @for(rec of filtered(); track rec.id) {
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-md"
+           style="border:1px solid #E8EDF8;"
+           (click)="toggleExpand(rec.id!)">
+
+        <!-- Summary row -->
+        <div class="flex items-center gap-4 px-5 py-4">
+
+          <!-- Avatar -->
+          <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 font-black text-sm"
+               style="background:#1B2F6E; color:#FDB515;">
+            {{ rec.employeeName.charAt(0).toUpperCase() }}
+          </div>
+
+          <!-- Name + meta -->
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold truncate" style="color:#1B2F6E;">{{ rec.employeeName }}</p>
+            <p class="text-xs" style="color:rgba(27,47,110,0.5);">{{ rec.employeeId }} · {{ formatDate(rec.entryDate) }}</p>
+          </div>
+
+          <!-- Quick stats -->
+          <div class="hidden sm:flex items-center gap-4 text-right">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-widest" style="color:rgba(27,47,110,0.35);">Total Qty</p>
+              <p class="text-lg font-black" style="color:#1B2F6E;">{{ totalQty(rec) }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-widest" style="color:rgba(27,47,110,0.35);">Amount</p>
+              <p class="text-lg font-black" style="color:#FDB515;">₹{{ fmt(totalAmount(rec)) }}</p>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-2 ml-2" (click)="$event.stopPropagation()">
+            <button (click)="openEntry(rec.id)" title="Edit"
+              class="p-2 rounded-xl transition-all hover:scale-105"
+              style="background:rgba(27,47,110,0.07); color:#1B2F6E;">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            <button (click)="requestDelete(rec.id!)" title="Delete"
+              class="p-2 rounded-xl transition-all hover:scale-105 hover:bg-red-50 text-red-400">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+            <!-- Expand chevron -->
+            <div class="p-2 rounded-xl" style="color:rgba(27,47,110,0.35);">
+              <svg class="w-4 h-4 transition-transform"
+                   [style.transform]="expanded() === rec.id ? 'rotate(180deg)' : 'rotate(0deg)'"
+                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expanded Detail Panel -->
+        @if(expanded() === rec.id) {
+          <div style="border-top:1px solid #E8EDF8; background:#F8F9FC;">
+            <div class="p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+
+              <!-- Verification -->
+              <div>
+                <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:rgba(27,47,110,0.4);">Verification</p>
+                <div class="space-y-1 text-xs" style="color:#1B2F6E;">
+                  <p>AVC: <span class="font-bold">{{ rec.avcQty }}</span></p>
+                  <p>PVC: <span class="font-bold">{{ rec.pvcQty }}</span></p>
+                  <p>Email/WA: <span class="font-bold">{{ rec.emailWhatsappQty }}</span></p>
+                </div>
+              </div>
+
+              <!-- Engati -->
+              <div>
+                <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:rgba(27,47,110,0.4);">Engati</p>
+                <div class="space-y-1 text-xs" style="color:#1B2F6E;">
+                  <p>Ariser: <span class="font-bold">{{ rec.engatiAriserQty }}</span></p>
+                  <p>Udhayam: <span class="font-bold">{{ rec.engatiUdhayamQty }}</span></p>
+                </div>
+              </div>
+
+              <!-- Exchange -->
+              <div>
+                <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:rgba(27,47,110,0.4);">Exchange</p>
+                <div class="space-y-1 text-xs" style="color:#1B2F6E;">
+                  <p>Pickup: <span class="font-bold">{{ rec.exchangePickupQty }}</span></p>
+                  <p>Call: <span class="font-bold">{{ rec.exchangeCallQty }}</span></p>
+                  <p>Order Repl.: <span class="font-bold">{{ rec.exchangeOrderReplacementQty }}</span></p>
+                </div>
+              </div>
+
+              <!-- PO + Amounts -->
+              <div>
+                <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:rgba(27,47,110,0.4);">Orders & PO</p>
+                <div class="space-y-1 text-xs" style="color:#1B2F6E;">
+                  <p>PO Qty: <span class="font-bold">{{ rec.poQty }}</span></p>
+                  <p>Offline: <span class="font-bold">{{ rec.offlineOrderQty }} / ₹{{ fmt(rec.offlineOrderAmount) }}</span></p>
+                  <p>Manual: <span class="font-bold">{{ rec.manualOrderQty }} / ₹{{ fmt(rec.manualOrderAmount) }}</span></p>
+                </div>
+              </div>
+
+              <!-- Refund + Payment + Flags -->
+              <div>
+                <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:rgba(27,47,110,0.4);">Refund & Payments</p>
+                <div class="space-y-1 text-xs" style="color:#1B2F6E;">
+                  <p>Prepaid: <span class="font-bold">₹{{ fmt(rec.refundPrepaidAmount) }}</span></p>
+                  <p>COD: <span class="font-bold">₹{{ fmt(rec.refundCodAmount) }}</span></p>
+                  <p>Pay Link: <span class="font-bold">₹{{ fmt(rec.paymentLinkAmount) }}</span></p>
+                </div>
+              </div>
+
+              <!-- Checkboxes summary -->
+              <div class="col-span-full">
+                <p class="text-xs font-bold uppercase tracking-widest mb-2" style="color:rgba(27,47,110,0.4);">Flags</p>
+                <div class="flex flex-wrap gap-2">
+                  @if(rec.mailAriser)     { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#EFF6FF; color:#1B2F6E;">Mail – Ariser</span> }
+                  @if(rec.mailUdhayam)    { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#EFF6FF; color:#1B2F6E;">Mail – Udhayam</span> }
+                  @if(rec.looxAriser)     { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#FFF7ED; color:#c2410c;">Loox – Ariser</span> }
+                  @if(rec.looxUdhayam)    { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#FFF7ED; color:#c2410c;">Loox – Udhayam</span> }
+                  @if(rec.facebookAriser) { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#F0FDF4; color:#15803d;">FB – Ariser</span> }
+                  @if(rec.facebookUdhayam){ <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#F0FDF4; color:#15803d;">FB – Udhayam</span> }
+                  @if(rec.ndr)            { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#FEF2F2; color:#DC2626;">NDR</span> }
+                  @if(rec.mis)            { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#F5F3FF; color:#7c3aed;">MIS</span> }
+                  @if(rec.postOfficeMail) { <span class="px-2 py-0.5 rounded-full text-xs font-semibold" style="background:#ECFEFF; color:#0891b2;">PO Mail</span> }
+                  @if(!rec.mailAriser && !rec.mailUdhayam && !rec.looxAriser && !rec.looxUdhayam &&
+                      !rec.facebookAriser && !rec.facebookUdhayam && !rec.ndr && !rec.mis && !rec.postOfficeMail) {
+                    <span class="text-xs" style="color:rgba(27,47,110,0.4);">No flags selected</span>
+                  }
+                </div>
+              </div>
+
+            </div>
+          </div>
+        }
+
+      </div>
+    }
+  </div>
+
+  } <!-- /else loading -->
+
+</div>
+
+<style>
+  @keyframes slideIn { from { transform:translateX(40px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+</style>
