@@ -55,8 +55,23 @@ export class CustomerEntryFormComponent implements OnInit {
     }
   }
 
-  // Two-way binding helper — patches a single field on the signal object
+  // Generic patch — for text fields and checkboxes
   patch(field: keyof Omit<CustomerEntry, 'id' | 'createdAt' | 'updatedAt'>, value: any) {
+    this.entry.update(e => ({ ...e, [field]: value }));
+  }
+
+  // Safe numeric patch — parses the raw input string and clamps to ≥ 0
+  // Called from templates instead of Math.max (Math is not available in Angular templates)
+  patchNum(field: keyof Omit<CustomerEntry, 'id' | 'createdAt' | 'updatedAt'>, raw: string) {
+    const parsed = parseFloat(raw);
+    const value  = isNaN(parsed) ? 0 : Math.max(0, parsed);
+    this.entry.update(e => ({ ...e, [field]: value }));
+  }
+
+  // Safe integer patch — for QTY fields
+  patchInt(field: keyof Omit<CustomerEntry, 'id' | 'createdAt' | 'updatedAt'>, raw: string) {
+    const parsed = parseInt(raw, 10);
+    const value  = isNaN(parsed) ? 0 : Math.max(0, parsed);
     this.entry.update(e => ({ ...e, [field]: value }));
   }
 

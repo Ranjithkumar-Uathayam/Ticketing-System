@@ -64,9 +64,9 @@ export class LayoutComponent {
     if (url.match(/\/dispatch\/\d+/))        return 'Dispatch Entry';
     if (url.includes('/dispatch/new'))       return 'New Dispatch Entry';
     if (url.includes('/dispatch'))           return 'Online Dispatch Details';
-    if (url.match(/\/customer-entry\/\d+/)) return 'Customer Entry';
-    if (url.includes('/customer-entry/new')) return 'New Customer Entry';
-    if (url.includes('/customer-entry'))     return 'Online Customer Entry';
+    if (url.match(/\/customer-entry\/\d+/)) return 'Customer Care Entry';
+    if (url.includes('/customer-entry/new')) return 'New Customer Care Entry';
+    if (url.includes('/customer-entry'))     return 'Online Customer Care Entry';
     return 'Dashboard';
   }
 
