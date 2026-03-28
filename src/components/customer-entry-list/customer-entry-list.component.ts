@@ -3,6 +3,7 @@ import { Component, ChangeDetectionStrategy, signal, computed, OnInit } from '@a
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CustomerEntryService } from '../../services/customer-entry.service';
+import { AuthService } from '../../services/auth.service';
 import { CustomerEntry } from '../../customer-entry.models';
 import { FormsModule } from '@angular/forms';
 
@@ -13,30 +14,54 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, FormsModule],
 })
 export class CustomerEntryListComponent implements OnInit {
-  loading       = this.svc.loading;
-  searchTerm    = signal('');
-  filterDate    = signal('');
-  deleteId      = signal<number | null>(null);
-  expanded      = signal<number | null>(null);
-  toast         = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
+  loading    = this.svc.loading;
+  searchTerm = signal('');
+  filterDate = signal('');
+  deleteId   = signal<number | null>(null);
+  expanded   = signal<number | null>(null);
+  toast      = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
+
+  // Admins and Managers see everyone's entries; all others see only their own
+  canViewAll = computed(() =>
+    this.auth.isAdmin() || this.auth.isManager()
+  );
 
   filtered = computed(() => {
+    const currentUserId = this.auth.currentUser()?.id;
+    const viewAll       = this.canViewAll();
+
     let list = this.svc.records();
-    const q  = this.searchTerm().toLowerCase();
-    const d  = this.filterDate();
-    if (q) list = list.filter(r =>
-      r.employeeName.toLowerCase().includes(q) ||
-      r.employeeId.toLowerCase().includes(q)
-    );
-    if (d) list = list.filter(r => r.entryDate?.startsWith(d));
+
+    // ── Scope: non-admins/managers only see their own entries ────────────────
+    if (!viewAll && currentUserId) {
+      list = list.filter(r => r.createdByUserId === currentUserId);
+    }
+
+    // ── Search by name / employee ID ─────────────────────────────────────────
+    const q = this.searchTerm().toLowerCase();
+    if (q) {
+      list = list.filter(r =>
+        r.employeeName.toLowerCase().includes(q) ||
+        r.employeeId.toLowerCase().includes(q)
+      );
+    }
+
+    // ── Date filter ──────────────────────────────────────────────────────────
+    const d = this.filterDate();
+    if (d) {
+      list = list.filter(r => r.entryDate?.startsWith(d));
+    }
+
     return list;
   });
 
-  constructor(private svc: CustomerEntryService, private router: Router) {}
+  constructor(
+    private svc:    CustomerEntryService,
+    private auth:   AuthService,
+    private router: Router,
+  ) {}
 
-  ngOnInit() {
-    this.svc.getAll();
-  }
+  ngOnInit() { this.svc.getAll(); }
 
   openEntry(id?: number) {
     this.router.navigate(['/customer-entry', id ?? 'new']);
@@ -62,7 +87,7 @@ export class CustomerEntryListComponent implements OnInit {
     }
   }
 
-  /** Sum of all Qty fields for a quick overview badge */
+  /** Sum of all Qty fields for quick overview badge */
   totalQty(r: CustomerEntry): number {
     return (r.avcQty ?? 0) + (r.pvcQty ?? 0) + (r.emailWhatsappQty ?? 0)
          + (r.exchangePickupQty ?? 0) + (r.exchangeCallQty ?? 0) + (r.exchangeOrderReplacementQty ?? 0)
@@ -78,8 +103,7 @@ export class CustomerEntryListComponent implements OnInit {
 
   formatDate(d?: string): string {
     if (!d) return '—';
-    const dt = new Date(d);
-    return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   fmt(n?: number): string {

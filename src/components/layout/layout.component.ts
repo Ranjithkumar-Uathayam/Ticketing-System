@@ -45,7 +45,11 @@ export class LayoutComponent {
     this.canViewUserManagement = computed(() => this.authService.hasPermission('User Management'));
     this.canViewReports        = computed(() => this.authService.hasPermission('Reports'));
     this.canViewDispatch       = computed(() => this.authService.hasPermission('Dispatch') || this.authService.isAdmin() || this.authService.isManager() || this.authService.isSupport());
-    this.canViewCustomerEntry  = computed(() => this.authService.hasPermission('Customer Entry') || this.authService.isAdmin() || this.authService.isManager() || this.authService.isEmployee());
+    this.canViewCustomerEntry  = computed(() =>
+      this.authService.hasPermission('Customer Entry') ||
+      this.authService.isAdmin() ||
+      this.authService.isManager()
+    );
 
     this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd)
@@ -64,9 +68,9 @@ export class LayoutComponent {
     if (url.match(/\/dispatch\/\d+/))        return 'Dispatch Entry';
     if (url.includes('/dispatch/new'))       return 'New Dispatch Entry';
     if (url.includes('/dispatch'))           return 'Online Dispatch Details';
-    if (url.match(/\/customer-entry\/\d+/)) return 'Customer Care Entry';
-    if (url.includes('/customer-entry/new')) return 'New Customer Care Entry';
-    if (url.includes('/customer-entry'))     return 'Online Customer Care Entry';
+    if (url.match(/\/customer-entry\/\d+/)) return 'Customer Entry';
+    if (url.includes('/customer-entry/new')) return 'New Customer Entry';
+    if (url.includes('/customer-entry'))     return 'Online Customer Entry';
     return 'Dashboard';
   }
 

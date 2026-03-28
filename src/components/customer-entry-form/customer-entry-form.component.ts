@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CustomerEntryService } from '../../services/customer-entry.service';
+import { AuthService } from '../../services/auth.service';
 import { CustomerEntry, emptyCustomerEntry } from '../../customer-entry.models';
 
 @Component({
@@ -24,6 +25,7 @@ export class CustomerEntryFormComponent implements OnInit {
 
   constructor(
     private svc:    CustomerEntryService,
+    private auth:   AuthService,
     private router: Router,
     private route:  ActivatedRoute,
   ) {}
@@ -84,10 +86,13 @@ export class CustomerEntryFormComponent implements OnInit {
     this.saving.set(true);
     try {
       if (this.isEdit() && this.editId()) {
+        // Keep the original createdByUserId (don't allow ownership transfer on edit)
         await this.svc.update(this.editId()!, { ...e, id: this.editId()! });
         this.flash('success', 'Record updated successfully!');
       } else {
-        await this.svc.create(e);
+        // Stamp the logged-in user's DB id so backend and frontend can filter by owner
+        const currentUserId = this.auth.currentUser()?.id;
+        await this.svc.create({ ...e, createdByUserId: currentUserId });
         this.flash('success', 'Entry saved successfully!');
       }
       setTimeout(() => this.router.navigate(['/customer-entry']), 1400);

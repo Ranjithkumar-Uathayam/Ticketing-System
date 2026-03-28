@@ -4,6 +4,9 @@ export interface CustomerEntry {
   id?:          number;
   entryDate:    string;   // YYYY-MM-DD
 
+  // ── Ownership ─────────────────────────────────────────────────────────────
+  createdByUserId?: number;  // FK → Users.Id (set automatically from JWT on create)
+
   // ── Employee ──────────────────────────────────────────────────────────────
   employeeName: string;
   employeeId:   string;

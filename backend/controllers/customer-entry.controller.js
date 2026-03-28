@@ -2,11 +2,14 @@
 const { sql, poolPromise } = require('../db');
 
 // ── camelCase mapper ──────────────────────────────────────────────────────────
+const ADMIN_MANAGER_ROLES = ['Admin', 'Hardware Admin', 'Software Admin', 'Manager'];
+
 const map = (r) => ({
-  id:           r.Id,
-  entryDate:    r.EntryDate,
-  employeeName: r.EmployeeName,
-  employeeId:   r.EmployeeId,
+  id:               r.Id,
+  createdByUserId:  r.CreatedByUserId,   // ← ownership field
+  entryDate:        r.EntryDate,
+  employeeName:     r.EmployeeName,
+  employeeId:       r.EmployeeId,
 
   avcQty:           r.AvcQty,
   pvcQty:           r.PvcQty,
@@ -30,8 +33,8 @@ const map = (r) => ({
   facebookAriser:  !!r.FacebookAriser,
   facebookUdhayam: !!r.FacebookUdhayam,
 
-  ndr:           !!r.Ndr,
-  mis:           !!r.Mis,
+  ndr:            !!r.Ndr,
+  mis:            !!r.Mis,
   postOfficeMail: !!r.PostOfficeMail,
 
   refundPrepaidAmount: r.RefundPrepaidAmount,
@@ -49,11 +52,22 @@ const map = (r) => ({
 });
 
 // ── GET all ───────────────────────────────────────────────────────────────────
+// Admin / Manager → all records
+// Everyone else   → only their own (CreatedByUserId = req.user.id)
 exports.getAll = async (req, res) => {
   try {
-    const pool   = await poolPromise;
-    const result = await pool.request()
-      .query('SELECT * FROM CustomerEntries ORDER BY EntryDate DESC, Id DESC');
+    const pool          = await poolPromise;
+    const isPrivileged  = ADMIN_MANAGER_ROLES.includes(req.user?.roleName);
+    const request       = pool.request();
+
+    let query = 'SELECT * FROM CustomerEntries';
+    if (!isPrivileged) {
+      request.input('userId', sql.Int, req.user.id);
+      query += ' WHERE CreatedByUserId = @userId';
+    }
+    query += ' ORDER BY EntryDate DESC, Id DESC';
+
+    const result = await request.query(query);
     res.json(result.recordset.map(map));
   } catch (err) {
     console.error('customerEntry getAll error:', err);
@@ -88,6 +102,7 @@ exports.create = async (req, res) => {
   try {
     const pool   = await poolPromise;
     const result = await pool.request()
+      .input('createdByUserId', sql.Int,      req.user.id)          // ← from JWT
       .input('entryDate',    sql.Date,     b.entryDate)
       .input('employeeName', sql.NVarChar, b.employeeName)
       .input('employeeId',   sql.NVarChar, b.employeeId)
@@ -118,6 +133,7 @@ exports.create = async (req, res) => {
       .input('manualOrderAmount', sql.Decimal(12,2), b.manualOrderAmount ?? 0)
       .query(`
         INSERT INTO CustomerEntries (
+          CreatedByUserId,
           EntryDate, EmployeeName, EmployeeId,
           AvcQty, PvcQty, EmailWhatsappQty,
           EngatiAriser, EngatiUdhayam,
@@ -134,6 +150,7 @@ exports.create = async (req, res) => {
         )
         OUTPUT INSERTED.*
         VALUES (
+          @createdByUserId,
           @entryDate, @employeeName, @employeeId,
           @avcQty, @pvcQty, @emailWhatsappQty,
           @engatiAriser, @engatiUdhayam,
