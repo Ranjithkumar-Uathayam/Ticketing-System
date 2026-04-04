@@ -1,9 +1,5 @@
-// src/models.ts  (UPDATED — Customer Entry added)
-
-// ─── Screen / Permission types ────────────────────────────────────────────────
 export type AppScreen = 'Dashboard' | 'Tickets' | 'User Management' | 'Reports' | 'Dispatch' | 'Customer Entry';
 
-// ─── Role names as a typed constant — use these everywhere instead of magic strings
 export const USER_ROLES = {
   Admin:         'Admin',
   HardwareAdmin: 'Hardware Admin',
@@ -15,7 +11,6 @@ export const USER_ROLES = {
 
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
-// ─── Core models ──────────────────────────────────────────────────────────────
 export interface Role {
   id:          number;
   name:        string;
@@ -31,11 +26,14 @@ export interface User {
   username:     string;
   contactEmail: string;
   roleId:       number;
+  category?:    TicketCategory | null;  // ← NEW: category scope for Admin/Support Agent
 }
 
 export type TicketStatus   = 'New' | 'Open' | 'In Progress' | 'Resolved' | 'Closed' | 'Reopened';
 export type TicketPriority = 'Low' | 'Medium' | 'High' | 'Urgent';
 export type TicketCategory = 'Hardware' | 'Software' | 'ASRS';
+
+export const TICKET_CATEGORIES: TicketCategory[] = ['Hardware', 'Software', 'ASRS'];
 
 export interface Ticket {
   id:                number;

@@ -1,7 +1,8 @@
+// src/services/auth.service.ts  (UPDATED — lockedCategory from user.category field)
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { User, AppScreen, Role, UserRole, USER_ROLES } from '../models';
+import { User, AppScreen, Role, UserRole, USER_ROLES, TicketCategory } from '../models';
 import { ApiService } from './api.service';
 import { NotificationService } from './notification.service';
 import { environment } from '../environments/environment';
@@ -37,8 +38,39 @@ export class AuthService {
   readonly isSupport        = computed(() => this.currentUserRole()?.name === USER_ROLES.SupportAgent);
   readonly isHardwareAdmin  = computed(() => this.currentUserRole()?.name === USER_ROLES.HardwareAdmin);
   readonly isSoftwareAdmin  = computed(() => this.currentUserRole()?.name === USER_ROLES.SoftwareAdmin);
+  readonly isFullAdmin      = computed(() => this.currentUserRole()?.name === USER_ROLES.Admin);
 
-  readonly adminCategory = computed<'Hardware' | 'Software' | null>(() => {
+  /**
+   * The category this user is LOCKED to — null means they can see all.
+   *
+   * Priority order:
+   *  1. user.category field (set in User Management)
+   *  2. Legacy role-name fallback for HardwareAdmin / SoftwareAdmin
+   *
+   * Full Admin and Manager are never locked (returns null).
+   * Support Agents are locked to their assigned category.
+   */
+  readonly lockedCategory = computed<TicketCategory | null>(() => {
+    const user     = this.currentUser();
+    const roleName = this.currentUserRole()?.name ?? '';
+
+    // Full Admin and Manager are NEVER locked — they see all
+    if (roleName === USER_ROLES.Admin || roleName === USER_ROLES.Manager) return null;
+
+    // If the user has an explicit category assigned, honour it
+    if (user?.category) return user.category as TicketCategory;
+
+    // Legacy fallback: HardwareAdmin / SoftwareAdmin before category field existed
+    if (roleName === USER_ROLES.HardwareAdmin) return 'Hardware';
+    if (roleName === USER_ROLES.SoftwareAdmin) return 'Software';
+
+    return null;
+  });
+
+  /** @deprecated use lockedCategory — kept for backward compat with existing templates */
+  readonly adminCategory = this.lockedCategory;
+
+  readonly adminCategory2 = computed<'Hardware' | 'Software' | null>(() => {
     if (this.isHardwareAdmin()) return 'Hardware';
     if (this.isSoftwareAdmin()) return 'Software';
     return null;
@@ -61,7 +93,6 @@ export class AuthService {
       );
 
       if (response?.token && response?.user) {
-        // Persist token and user so a page refresh does not log the user out
         localStorage.setItem(TOKEN_KEY, response.token);
         localStorage.setItem(USER_KEY, JSON.stringify(response.user));
 
@@ -79,17 +110,12 @@ export class AuthService {
     }
   }
 
-  /**
-   * Called on app startup to restore session from localStorage.
-   * If a stored token/user exists, reload app data without a full login.
-   */
   async restoreSession(): Promise<void> {
     if (this.isLoggedIn()) {
       try {
         await this.apiService.initialLoad();
         await this.notificationService.fetchNotifications(this.currentUser()!.id);
       } catch {
-        // Token may have expired server-side — clear and let the guard redirect
         this.logout();
       }
     }
@@ -98,16 +124,11 @@ export class AuthService {
   logout(): void {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-
     this.token.set(null);
     this.currentUser.set(null);
-
-    // Delegate data clearing to the service that owns it
     this.apiService.clearAll();
     this.notificationService.clearNotifications();
   }
-
-  // ── Private helpers ──────────────────────────────────────────────────────
 
   private loadStoredUser(): User | null {
     try {

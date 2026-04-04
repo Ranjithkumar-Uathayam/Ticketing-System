@@ -1,3 +1,47 @@
+<!-- src/components/dashboard/dashboard.component.html -->
+
+<!-- ── Category Filter Bar ────────────────────────────────────────────────── -->
+<div class="flex items-center justify-between flex-wrap gap-3 mb-5">
+  <div>
+    <h2 class="text-base font-black" style="color:#1B2F6E;">Dashboard</h2>
+    <p class="text-xs mt-0.5" style="color:rgba(27,47,110,0.4);">Ticket overview &amp; statistics</p>
+  </div>
+
+  <div class="flex items-center gap-2 flex-wrap">
+
+    <!-- Locked badge — shown when user is pinned to one category -->
+    @if(isCategoryLocked()) {
+      <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+           style="background:rgba(27,47,110,0.08); color:#1B2F6E; border:1.5px solid #E8EDF8;">
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+        {{ auth.lockedCategory() }}
+      </div>
+    }
+
+    <!-- Filterable pills — Admin / Manager only -->
+    @if(canFilterCategory()) {
+      <button (click)="setCategory(null)"
+        class="px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+        [style.background]="activeCategory() === null ? '#1B2F6E' : 'rgba(27,47,110,0.07)'"
+        [style.color]="activeCategory() === null ? '#FDB515' : '#1B2F6E'">
+        All
+      </button>
+      @for(cat of categories; track cat) {
+        <button (click)="setCategory(cat)"
+          class="px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+          [style.background]="activeCategory() === cat ? '#1B2F6E' : 'rgba(27,47,110,0.07)'"
+          [style.color]="activeCategory() === cat ? '#FDB515' : '#1B2F6E'">
+          {{ cat }}
+        </button>
+      }
+    }
+
+  </div>
+</div>
+
 @if(loading()) {
   <div class="space-y-6 animate-pulse">
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -48,27 +92,27 @@
     <div class="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all" style="border: 1px solid #E8EDF8;">
       <div class="flex items-start justify-between mb-3">
         <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(139,92,246,0.1);">
-          <svg class="w-5 h-5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <svg class="w-5 h-5" style="color: #8b5cf6;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         </div>
-        <span class="text-xs font-bold uppercase tracking-widest text-violet-400">In Progress</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color: rgba(139,92,246,0.7);">In Progress</span>
       </div>
       <p class="text-3xl font-bold" style="color: #1B2F6E;">{{ stats().inProgress }}</p>
-      <div class="mt-3 h-1.5 rounded-full bg-violet-100">
-        <div class="h-full rounded-full bg-violet-500 transition-all" [style.width.%]="stats().total ? (stats().inProgress / stats().total * 100) : 0"></div>
+      <div class="mt-3 h-1.5 rounded-full" style="background: rgba(139,92,246,0.12);">
+        <div class="h-full rounded-full transition-all" style="background: #8b5cf6;" [style.width.%]="stats().total ? (stats().inProgress / stats().total * 100) : 0"></div>
       </div>
     </div>
 
     <!-- Urgent -->
     <div class="bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all" style="border: 1px solid #E8EDF8;">
       <div class="flex items-start justify-between mb-3">
-        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(229,57,53,0.1);">
-          <svg class="w-5 h-5" style="color: #E53935;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: rgba(239,68,68,0.1);">
+          <svg class="w-5 h-5" style="color: #ef4444;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
         </div>
-        <span class="text-xs font-bold uppercase tracking-widest" style="color: #E53935; opacity: 0.7;">Urgent</span>
+        <span class="text-xs font-bold uppercase tracking-widest" style="color: rgba(239,68,68,0.7);">Urgent</span>
       </div>
       <p class="text-3xl font-bold" style="color: #1B2F6E;">{{ stats().urgent }}</p>
-      <div class="mt-3 h-1.5 rounded-full" style="background: rgba(229,57,53,0.1);">
-        <div class="h-full rounded-full transition-all" style="background: #E53935;" [style.width.%]="stats().total ? (stats().urgent / stats().total * 100) : 0"></div>
+      <div class="mt-3 h-1.5 rounded-full" style="background: rgba(239,68,68,0.12);">
+        <div class="h-full rounded-full transition-all" style="background: #ef4444;" [style.width.%]="stats().total ? (stats().urgent / stats().total * 100) : 0"></div>
       </div>
     </div>
 
@@ -103,7 +147,9 @@
     <div class="flex items-center justify-between px-6 py-4" style="border-bottom: 2px solid #FDB515; background: linear-gradient(to right, #1B2F6E, #243C80);">
       <div>
         <h3 class="text-sm font-bold text-white">Recent Tickets</h3>
-        <p class="text-xs mt-0.5" style="color: rgba(253,181,21,0.7);">Last updated tickets</p>
+        <p class="text-xs mt-0.5" style="color: rgba(253,181,21,0.7);">Last updated tickets
+          @if(activeCategory()) { — <span style="color:#FDB515;">{{ activeCategory() }}</span> only }
+        </p>
       </div>
       <a routerLink="/tickets" class="flex items-center gap-1 text-xs font-bold transition-opacity hover:opacity-80" style="color: #FDB515;">
         View all

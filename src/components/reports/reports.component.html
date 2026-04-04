@@ -1,27 +1,21 @@
+<!-- src/components/reports/reports.component.html -->
 @if(loading()) {
 <div class="space-y-8 animate-pulse">
-  <!-- Filters Card Skeleton -->
   <div class="bg-white p-6 rounded-lg shadow">
     <div class="h-6 w-40 bg-gray-200 rounded mb-4"></div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-      @for (_ of [1, 2, 3, 4, 5]; track $index) {
-      <div>
-        <div class="h-4 w-20 bg-gray-200 rounded mb-1"></div>
-        <div class="h-10 bg-gray-200 rounded-md"></div>
-      </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      @for (_ of [1,2,3,4,5,6]; track $index) {
+        <div><div class="h-4 w-20 bg-gray-200 rounded mb-1"></div><div class="h-10 bg-gray-200 rounded-md"></div></div>
       }
     </div>
   </div>
-
-  <!-- Report Results Card Skeleton -->
   <div class="bg-white p-6 rounded-lg shadow">
     <div class="flex justify-between items-center mb-4">
-        <div class="h-6 w-56 bg-gray-200 rounded"></div>
-        <div class="h-10 w-32 bg-gray-200 rounded-md"></div>
+      <div class="h-6 w-56 bg-gray-200 rounded"></div>
+      <div class="h-10 w-32 bg-gray-200 rounded-md"></div>
     </div>
     <div class="h-80 mb-8 bg-gray-200 rounded"></div>
     <div class="space-y-3">
-      <div class="h-8 rounded bg-gray-200"></div>
       <div class="h-8 rounded bg-gray-200"></div>
       <div class="h-8 rounded bg-gray-200"></div>
     </div>
@@ -29,62 +23,117 @@
 </div>
 } @else {
 <div class="space-y-8 animate-fade-in">
+
   <!-- Filters Card -->
   <div class="bg-white p-6 rounded-lg shadow">
-    <h3 class="text-lg font-medium text-slate-800">Filter Report</h3>
-    <form [formGroup]="filterForm" class="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+
+    <!-- Category lock badge -->
+    @if(isCategoryLocked()) {
+      <div class="flex items-center gap-2 mb-4">
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+             style="background:rgba(27,47,110,0.08); color:#1B2F6E; border:1.5px solid #E8EDF8;">
+          <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          Viewing: {{ auth.lockedCategory() }} only
+        </div>
+      </div>
+    }
+
+    <h3 class="text-lg font-medium text-slate-800 mb-4">Filter Report</h3>
+    <form [formGroup]="filterForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+
+      <!-- Start Date -->
       <div>
         <label for="startDate" class="block text-sm font-medium text-gray-700">Start Date</label>
-        <input type="date" id="startDate" formControlName="startDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        <input type="date" id="startDate" formControlName="startDate"
+          class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
       </div>
+
+      <!-- End Date -->
       <div>
         <label for="endDate" class="block text-sm font-medium text-gray-700">End Date</label>
-        <input type="date" id="endDate" formControlName="endDate" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        <input type="date" id="endDate" formControlName="endDate"
+          class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
       </div>
+
+      <!-- Status -->
       <div>
         <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-        <select id="status" formControlName="status" class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        <select id="status" formControlName="status"
+          class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
           <option value="">All Statuses</option>
           @for(status of statuses; track status) {
             <option [value]="status">{{ status }}</option>
           }
         </select>
       </div>
+
+      <!-- Priority -->
       <div>
         <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
-        <select id="priority" formControlName="priority" class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        <select id="priority" formControlName="priority"
+          class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
           <option value="">All Priorities</option>
           @for(priority of priorities; track priority) {
             <option [value]="priority">{{ priority }}</option>
           }
         </select>
       </div>
+
+      <!-- Assignee -->
       <div>
         <label for="assigneeId" class="block text-sm font-medium text-gray-700">Assignee</label>
-        <select id="assigneeId" formControlName="assigneeId" class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        <select id="assigneeId" formControlName="assigneeId"
+          class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
           <option value="">All Users</option>
           @for(user of users(); track user.id) {
             <option [value]="user.id">{{ user.name }}</option>
           }
         </select>
       </div>
+
+      <!-- Category — only shown for Admin / Manager -->
+      @if(canFilterCategory()) {
+        <div>
+          <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
+          <select id="category" formControlName="category"
+            class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            <option value="">All Categories</option>
+            @for(cat of categories; track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+        </div>
+      }
+
     </form>
   </div>
 
   <!-- Report Results Card -->
   <div class="bg-white p-6 rounded-lg shadow">
     <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-medium text-slate-800">Report Results ({{ filteredTickets().length }} tickets)</h3>
-        <button (click)="exportToCsv()" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-            Export to CSV
-        </button>
+      <h3 class="text-lg font-medium text-slate-800">
+        Report Results ({{ filteredTickets().length }} tickets)
+        @if(activeCategory()) {
+          <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold"
+                style="background:rgba(27,47,110,0.08); color:#1B2F6E;">
+            {{ activeCategory() }}
+          </span>
+        }
+      </h3>
+      <button (click)="exportToCsv()" type="button"
+        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+        Export to CSV
+      </button>
     </div>
 
     <!-- Chart -->
     <div class="h-80 mb-8">
       <canvas #categoryChart></canvas>
     </div>
-    
+
     <!-- Results Table -->
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
@@ -104,7 +153,14 @@
             <tr class="hover:bg-gray-50">
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">#{{ ticket.id }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ ticket.title }}</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.category }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                @if(ticket.category) {
+                  <span class="px-2 py-0.5 rounded-full text-xs font-semibold"
+                    [style]="ticket.category === 'Hardware' ? 'background:#EFF6FF; color:#1d4ed8;' : ticket.category === 'Software' ? 'background:#F0FDF4; color:#15803d;' : 'background:#FFF7ED; color:#c2410c;'">
+                    {{ ticket.category }}
+                  </span>
+                } @else { — }
+              </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.status }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ ticket.priority }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ getAssignee(ticket.assigneeId)?.name ?? 'Unassigned' }}</td>

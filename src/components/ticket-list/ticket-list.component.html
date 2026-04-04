@@ -1,3 +1,4 @@
+<!-- src/components/ticket-list/ticket-list.component.html -->
 @if(loading()) {
   <div class="animate-pulse space-y-4">
     <div class="flex justify-between items-center mb-6">
@@ -45,10 +46,7 @@
       <svg class="w-4 h-4 flex-shrink-0" style="color: rgba(27,47,110,0.4);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
       </svg>
-      <input
-        type="month"
-        [value]="filterMonth()"
-        (change)="setMonth($any($event.target).value)"
+      <input type="month" [value]="filterMonth()" (change)="setMonth($any($event.target).value)"
         class="text-sm rounded-xl px-3 py-2 outline-none font-medium"
         style="border: 1.5px solid #E8EDF8; color: #1B2F6E; background: white;"
         onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
@@ -59,9 +57,7 @@
       <svg class="w-4 h-4 flex-shrink-0" style="color: rgba(27,47,110,0.4);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
       </svg>
-      <select
-        [value]="filterStatus()"
-        (change)="setStatus($any($event.target).value)"
+      <select [value]="filterStatus()" (change)="setStatus($any($event.target).value)"
         class="text-sm rounded-xl px-3 py-2 outline-none font-medium"
         style="border: 1.5px solid #E8EDF8; color: #1B2F6E; background: white;"
         onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
@@ -72,9 +68,43 @@
       </select>
     </div>
 
+    <!-- ── Category Filter ── -->
+    <!-- Locked badge — when user is pinned to one category -->
+    @if(isCategoryLocked()) {
+      <div class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold"
+           style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:rgba(27,47,110,0.05);">
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+        {{ auth.lockedCategory() }}
+      </div>
+    }
+    <!-- Category filter pills — Admin / Manager only -->
+    @if(canFilterCategory()) {
+      <div class="flex items-center gap-1.5">
+        <button (click)="setCategory(null)"
+          class="px-3 py-2 rounded-xl text-sm font-medium transition-all"
+          [style.background]="activeCategory() === null ? '#1B2F6E' : 'white'"
+          [style.color]="activeCategory() === null ? '#FDB515' : '#1B2F6E'"
+          [style.border]="'1.5px solid ' + (activeCategory() === null ? '#1B2F6E' : '#E8EDF8')">
+          All
+        </button>
+        @for(cat of categories; track cat) {
+          <button (click)="setCategory(cat)"
+            class="px-3 py-2 rounded-xl text-sm font-medium transition-all"
+            [style.background]="activeCategory() === cat ? '#1B2F6E' : 'white'"
+            [style.color]="activeCategory() === cat ? '#FDB515' : '#1B2F6E'"
+            [style.border]="'1.5px solid ' + (activeCategory() === cat ? '#1B2F6E' : '#E8EDF8')">
+            {{ cat }}
+          </button>
+        }
+      </div>
+    }
+
     <!-- Active filter hint -->
     <div class="flex items-center gap-1.5 text-xs font-medium" style="color: rgba(27,47,110,0.45);">
-      <span>Showing current month + previous month unclosed</span>
+      <span>Current month + previous month unclosed</span>
     </div>
 
     <!-- Clear filters -->
@@ -114,49 +144,44 @@
                     <div class="flex items-center gap-2">
                         <div class="w-1 h-7 rounded-full flex-shrink-0" [style.background]="ticket.status === 'New' ? '#94a3b8' : ticket.status === 'Open' ? '#FDB515' : ticket.status === 'In Progress' ? '#8b5cf6' : ticket.status === 'Resolved' ? '#22c55e' : ticket.status === 'Closed' ? '#6b7280' : '#06b6d4'"></div>
                         <div class="min-w-0">
-                            <p class="font-semibold text-sm truncate max-w-[180px]" style="color: #1B2F6E;">{{ ticket.title || '(No title)' }}</p>
+                            <p class="text-xs font-semibold truncate" style="color: #1B2F6E; max-width: 160px;">{{ ticket.title }}</p>
                             <p class="text-xs font-mono" style="color: rgba(27,47,110,0.4);">#{{ ticket.id }}</p>
                         </div>
                     </div>
                 </td>
-                <td class="px-3 py-3 text-xs whitespace-nowrap" style="color: rgba(27,47,110,0.7);">{{ ticket.division || '—' }}</td>
-                <td class="px-3 py-3 text-xs whitespace-nowrap" style="color: rgba(27,47,110,0.7);">{{ ticket.category || '—' }}</td>
-                <td class="px-3 py-3 text-xs whitespace-nowrap" style="color: rgba(27,47,110,0.7);">
-                  @if(getReporter(ticket.reporterId); as rep) {
-                    {{ rep.name }}
-                  } @else { — }
+                <td class="px-3 py-3 text-xs whitespace-nowrap" style="color: rgba(27,47,110,0.6);">{{ ticket.division || '—' }}</td>
+                <td class="px-3 py-3 text-xs whitespace-nowrap">
+                  @if(ticket.category) {
+                    <span class="px-2 py-0.5 rounded-full text-xs font-semibold"
+                      [style]="ticket.category === 'Hardware' ? 'background:#EFF6FF; color:#1d4ed8;' : ticket.category === 'Software' ? 'background:#F0FDF4; color:#15803d;' : 'background:#FFF7ED; color:#c2410c;'">
+                      {{ ticket.category }}
+                    </span>
+                  } @else { <span style="color:rgba(27,47,110,0.3);">—</span> }
                 </td>
-                <td class="px-3 py-3 text-xs whitespace-nowrap font-mono" style="color: rgba(27,47,110,0.5);">{{ ticket.employeeId || '—' }}</td>
-                <td class="px-3 py-3">
-                  @if(getAssignee(ticket.assigneeId); as assignee) {
-                    <div class="flex items-center gap-1.5">
-                      <div class="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style="background: rgba(27,47,110,0.08);">
-                        <span class="text-xs font-bold" style="color: #1B2F6E; font-size: 10px;">{{ assignee.name.charAt(0) }}</span>
-                      </div>
-                      <div class="text-xs font-medium truncate max-w-[70px]" style="color: #1B2F6E;">{{ assignee.name }}</div>
-                    </div>
-                  } @else {
-                    <span class="text-xs italic" style="color: rgba(27,47,110,0.3);">—</span>
-                  }
+                <td class="px-3 py-3 text-xs" style="color: rgba(27,47,110,0.6);">{{ getReporter(ticket.reporterId)?.name || '—' }}</td>
+                <td class="px-3 py-3 text-xs font-mono whitespace-nowrap" style="color: rgba(27,47,110,0.5);">
+                  {{ ticket.employeeId || '—' }}
                 </td>
                 <td class="px-3 py-3">
-                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap" [ngClass]="getStatusClass(ticket.status)">
-                    <span class="w-1.5 h-1.5 rounded-full bg-current opacity-70 flex-shrink-0"></span>
-                    {{ ticket.status || '—' }}
-                  </span>
+                    @if(getAssignee(ticket.assigneeId); as a) {
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0" style="background: #FDB515;">
+                                <span class="text-xs font-bold" style="color: #1B2F6E; font-size:9px;">{{ a.name.charAt(0) }}</span>
+                            </div>
+                            <span class="text-xs font-medium whitespace-nowrap" style="color: #1B2F6E;">{{ a.name }}</span>
+                        </div>
+                    } @else {
+                        <span class="text-xs italic" style="color: rgba(27,47,110,0.3);">Unassigned</span>
+                    }
                 </td>
                 <td class="px-3 py-3">
-                  <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold whitespace-nowrap" [ngClass]="getPriorityClass(ticket.priority)">
-                    {{ ticket.priority || '—' }}
-                  </span>
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap" [ngClass]="getStatusClass(ticket.status)">{{ ticket.status }}</span>
                 </td>
                 <td class="px-3 py-3">
-                  <a [routerLink]="['/tickets', ticket.id]"
-                    class="inline-flex items-center gap-1 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap"
-                    style="color: #1B2F6E;">
-                    View
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                  </a>
+                    <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap" [ngClass]="getPriorityClass(ticket.priority)">{{ ticket.priority }}</span>
+                </td>
+                <td class="px-3 py-3 text-right">
+                    <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity ml-auto" style="color:#1B2F6E;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </td>
             </tr>
           } @empty {
@@ -187,18 +212,13 @@
               [style.background]="ticket.status === 'New' ? '#94a3b8' : ticket.status === 'Open' ? '#FDB515' : ticket.status === 'In Progress' ? '#8b5cf6' : ticket.status === 'Resolved' ? '#22c55e' : ticket.status === 'Closed' ? '#6b7280' : '#06b6d4'"></div>
             <div class="min-w-0">
               <p class="font-semibold text-sm truncate" style="color: #1B2F6E;">{{ ticket.title || '(No title)' }}</p>
-              <p class="text-xs font-mono" style="color: rgba(27,47,110,0.4);">#{{ ticket.id }}</p>
+              <p class="text-xs font-mono" style="color: rgba(27,47,110,0.4);">#{{ ticket.id }} · {{ ticket.category || '—' }}</p>
             </div>
           </div>
           <a [routerLink]="['/tickets', ticket.id]"
             class="flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-lg transition-colors"
             style="background: rgba(27,47,110,0.07); color: #1B2F6E;">View</a>
         </div>
-
-        @if(ticket.description) {
-          <p class="mt-2.5 text-xs line-clamp-2 ml-4" style="color: rgba(27,47,110,0.5);">{{ ticket.description }}</p>
-        }
-
         <div class="mt-3 pt-3 flex items-center justify-between gap-2 ml-4" style="border-top: 1px solid #F0F4FC;">
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold" [ngClass]="getStatusClass(ticket.status)">{{ ticket.status }}</span>
@@ -218,7 +238,7 @@
       </div>
     } @empty {
       <div class="bg-white rounded-2xl p-12 text-center" style="border: 1px solid #E8EDF8;">
-        <p class="font-medium text-sm" style="color: rgba(27,47,110,0.4);">No tickets found for this filter</p>
+        <p class="font-medium text-sm" style="color: rgba(27,47,110,0.4);">No tickets found</p>
         <button (click)="clearFilters()" class="text-xs font-bold mt-2" style="color: #1B2F6E;">Reset filters →</button>
       </div>
     }

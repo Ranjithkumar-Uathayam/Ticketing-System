@@ -1,45 +1,36 @@
-@if(apiLoading()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
-    <div class="bg-white rounded-xl shadow-2xl px-8 py-6 flex flex-col items-center gap-3">
-      <svg class="animate-spin h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-      </svg>
-      <p class="text-sm font-medium text-gray-700">Loading...</p>
-    </div>
-  </div>
-}
-
-@if(users() !== null) {
-<div class="animate-fade-in">
+<!-- src/components/user-management/user-management.component.html -->
+<div class="space-y-6">
   <!-- Tab Navigation -->
   <div class="bg-white shadow rounded-lg">
-    <div class="border-b border-gray-200 px-6">
-      <nav class="-mb-px flex space-x-8 overflow-x-auto" aria-label="Tabs">
-        <button (click)="selectTab('users')"
+    <div class="border-b border-gray-200">
+      <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+        <button (click)="selectTab('users')" type="button"
           [class]="activeTab() === 'users' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
           class="group inline-flex items-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
           <svg class="w-5 h-5 mr-2" [class]="activeTab() === 'users' ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
           <span>Users</span>
         </button>
-        <button (click)="selectTab('roles')"
+        <button (click)="selectTab('roles')" type="button"
           [class]="activeTab() === 'roles' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
           class="group inline-flex items-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
           <svg class="w-5 h-5 mr-2" [class]="activeTab() === 'roles' ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
-          <span>Roles & Permissions</span>
+          <span>Roles &amp; Permissions</span>
         </button>
       </nav>
     </div>
   </div>
 
   <div class="mt-6">
+    <!-- ── Users Panel ── -->
     @if (activeTab() === 'users') {
       <div id="users-panel">
         <div class="flex justify-end mb-4">
-          <button (click)="openUserModal()" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              Add User
+          <button (click)="openUserModal()" type="button"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Add User
           </button>
         </div>
+
         <!-- Users Desktop Table -->
         <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg hidden md:block">
           <table class="min-w-full divide-y divide-gray-200">
@@ -47,61 +38,88 @@
               <tr>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Edit Role</span></th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th scope="col" class="relative px-6 py-3"><span class="sr-only">Edit</span></th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               @for (user of users(); track user.id) {
                 <tr class="hover:bg-gray-50">
                   <td class="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
-                      <div class="text-sm text-gray-500">{{ user.username }}</div>
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0" style="background:#1B2F6E; color:#FDB515;">
+                        {{ user.name.charAt(0).toUpperCase() }}
+                      </div>
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
+                        <div class="text-sm text-gray-500">{{ user.username }}</div>
+                      </div>
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {{ getRoleById(user.roleId)?.name ?? 'Unknown Role' }}
                   </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    @if(user.category) {
+                      <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                            [style]="getCategoryBadgeStyle(user.category)">
+                        {{ user.category }}
+                      </span>
+                    } @else {
+                      <span class="text-xs text-gray-400">—</span>
+                    }
+                  </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <select [value]="user.roleId" (change)="onUserRoleChange(user, $event)" class="text-sm rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                      @for (role of roles(); track role.id) {
-                        <option [value]="role.id">{{ role.name }}</option>
-                      }
-                    </select>
+                    <button (click)="openEditUserModal(user)"
+                      class="text-blue-600 hover:text-blue-900 font-semibold">
+                      Edit
+                    </button>
                   </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
+
         <!-- Users Mobile Cards -->
         <div class="md:hidden space-y-4">
           @for(user of users(); track user.id) {
             <div class="bg-white rounded-lg shadow p-4">
-              <div>
-                <p class="font-semibold text-gray-800">{{user.name}}</p>
-                <p class="text-sm text-gray-500">{{user.username}}</p>
+              <div class="flex justify-between items-center">
+                <div>
+                  <p class="font-semibold text-gray-800">{{ user.name }}</p>
+                  <p class="text-sm text-gray-500">{{ user.username }}</p>
+                </div>
+                <button (click)="openEditUserModal(user)" class="text-blue-600 font-semibold text-sm">Edit</button>
               </div>
-              <div class="mt-4 pt-4 border-t">
-                <label for="role-{{user.id}}" class="text-xs font-medium text-gray-500">ROLE</label>
-                <select id="role-{{user.id}}" [value]="user.roleId" (change)="onUserRoleChange(user, $event)" class="mt-1 block w-full text-sm rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500">
-                    @for (role of roles(); track role.id) {
-                      <option [value]="role.id">{{ role.name }}</option>
-                    }
-                  </select>
+              <div class="mt-3 pt-3 border-t flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-medium text-gray-500">ROLE</p>
+                  <p class="text-sm font-semibold text-gray-700 mt-0.5">{{ getRoleById(user.roleId)?.name ?? '—' }}</p>
+                </div>
+                @if(user.category) {
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                        [style]="getCategoryBadgeStyle(user.category)">
+                    {{ user.category }}
+                  </span>
+                }
               </div>
             </div>
           }
         </div>
       </div>
     }
+
+    <!-- ── Roles Panel ── -->
     @if (activeTab() === 'roles') {
       <div id="roles-panel">
         <div class="flex justify-end mb-4">
-          <button (click)="openRoleModal()" type="button" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              Create Role
+          <button (click)="openRoleModal()" type="button"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Create Role
           </button>
         </div>
+
         <!-- Roles Desktop Table -->
         <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg hidden md:block">
           <table class="min-w-full divide-y divide-gray-200">
@@ -116,7 +134,7 @@
               @for(role of roles(); track role.id) {
                 <tr class="hover:bg-gray-50">
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ role.name }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td class="px-6 py-4">
                     <div class="flex flex-wrap gap-2">
                       @for(permission of role.permissions; track permission) {
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{ permission }}</span>
@@ -131,95 +149,104 @@
             </tbody>
           </table>
         </div>
+
         <!-- Roles Mobile Cards -->
         <div class="md:hidden space-y-4">
-            @for(role of roles(); track role.id) {
-              <div class="bg-white rounded-lg shadow p-4">
-                <div class="flex justify-between items-center">
-                  <p class="font-semibold text-gray-800">{{role.name}}</p>
-                  <button (click)="openRoleModal(role)" class="text-blue-600 font-semibold text-sm">Edit</button>
-                </div>
-                <div class="mt-4 pt-4 border-t">
-                  <p class="text-xs font-medium text-gray-500">PERMISSIONS</p>
-                  <div class="flex flex-wrap gap-2 mt-2">
-                    @for(permission of role.permissions; track permission) {
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{ permission }}</span>
-                    }
-                  </div>
+          @for(role of roles(); track role.id) {
+            <div class="bg-white rounded-lg shadow p-4">
+              <div class="flex justify-between items-center">
+                <p class="font-semibold text-gray-800">{{ role.name }}</p>
+                <button (click)="openRoleModal(role)" class="text-blue-600 font-semibold text-sm">Edit</button>
+              </div>
+              <div class="mt-4 pt-4 border-t">
+                <p class="text-xs font-medium text-gray-500">PERMISSIONS</p>
+                <div class="flex flex-wrap gap-2 mt-2">
+                  @for(permission of role.permissions; track permission) {
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{ permission }}</span>
+                  }
                 </div>
               </div>
-            }
+            </div>
+          }
         </div>
       </div>
     }
   </div>
 </div>
-}
 
 
-<!-- Add User Modal — Contact Email removed -->
-<div class="fixed z-20 inset-0 overflow-y-auto transition-opacity" aria-labelledby="modal-title" role="dialog" aria-modal="true"
-     [class.duration-300]="isUserModalOpen()"
-     [class.ease-out]="isUserModalOpen()"
-     [class.opacity-100]="isUserModalOpen()"
-     [class.pointer-events-auto]="isUserModalOpen()"
-     [class.duration-200]="!isUserModalOpen()"
-     [class.ease-in]="!isUserModalOpen()"
-     [class.opacity-0]="!isUserModalOpen()"
-     [class.pointer-events-none]="!isUserModalOpen()">
+<!-- ══════════════════════════════════════════════════════════════
+     CREATE User Modal
+══════════════════════════════════════════════════════════════ -->
+<div class="fixed z-20 inset-0 overflow-y-auto transition-opacity"
+     [class.opacity-100]="isUserModalOpen() && !editingUser()"
+     [class.pointer-events-auto]="isUserModalOpen() && !editingUser()"
+     [class.opacity-0]="!isUserModalOpen() || !!editingUser()"
+     [class.pointer-events-none]="!isUserModalOpen() || !!editingUser()">
   <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75" (click)="closeUserModal()"></div>
     <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-         [class.ease-out]="isUserModalOpen()"
-         [class.duration-300]="isUserModalOpen()"
-         [class.scale-100]="isUserModalOpen()"
-         [class.opacity-100]="isUserModalOpen()"
-         [class.ease-in]="!isUserModalOpen()"
-         [class.duration-200]="!isUserModalOpen()"
-         [class.scale-95]="!isUserModalOpen()"
-         [class.opacity-0]="!isUserModalOpen()">
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
       <form [formGroup]="newUserForm" (ngSubmit)="createUser()">
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Create New User</h3>
-            <div class="mt-4 space-y-4">
-                <div>
-                  <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
-                  <input type="text" id="name" formControlName="name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div>
-                  <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
-                  <input type="text" id="username" formControlName="username" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <!-- Contact Email removed -->
-                <div>
-                  <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                  <input type="password" id="password" formControlName="password" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                  <p class="mt-1 text-xs text-gray-500">Minimum 8 characters.</p>
-                </div>
-                <div>
-                  <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
-                  <select id="role" formControlName="roleId" class="mt-1 block w-full bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    @for (role of roles(); track role.id) {
-                        <option [value]="role.id">{{ role.name }}</option>
-                    }
-                  </select>
-                </div>
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Create New User</h3>
+          <div class="space-y-4">
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
+              <input type="text" id="name" formControlName="name"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
+            <div>
+              <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+              <input type="text" id="username" formControlName="username"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+              <input type="password" id="password" formControlName="password"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+            <div>
+              <label for="roleId" class="block text-sm font-medium text-gray-700">Role</label>
+              <select id="roleId" formControlName="roleId"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option [value]="null" disabled>Select role…</option>
+                @for(role of roles(); track role.id) {
+                  <option [value]="role.id">{{ role.name }}</option>
+                }
+              </select>
+            </div>
+            <!-- Category Scope — only for roles that need it -->
+            @if(newUserNeedsCategory()) {
+              <div>
+                <label for="newCategory" class="block text-sm font-medium text-gray-700">Category Scope</label>
+                <select id="newCategory" formControlName="category"
+                  class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                  <option [value]="null">— None (sees all) —</option>
+                  @for(cat of ticketCategories; track cat) {
+                    <option [value]="cat">{{ cat }}</option>
+                  }
+                </select>
+                <p class="mt-1 text-xs text-gray-400">Restrict this user to only see tickets in this category.</p>
+              </div>
+            }
+          </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="submit" [disabled]="!newUserForm.valid || loading()" class="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-blue-400">
+          <button type="submit" [disabled]="!newUserForm.valid || loading()"
+            class="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-blue-400">
             @if(loading()) {
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
               </svg>
               <span>Creating...</span>
             } @else {
               <span>Create User</span>
             }
           </button>
-          <button type="button" (click)="closeUserModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+          <button type="button" (click)="closeUserModal()"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
             Cancel
           </button>
         </div>
@@ -228,35 +255,88 @@
   </div>
 </div>
 
-<!-- Add/Edit Role Modal -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     EDIT User Modal (Role + Category)
+══════════════════════════════════════════════════════════════ -->
 <div class="fixed z-20 inset-0 overflow-y-auto transition-opacity"
-     [class.duration-300]="isRoleModalOpen()"
-     [class.ease-out]="isRoleModalOpen()"
+     [class.opacity-100]="isUserModalOpen() && !!editingUser()"
+     [class.pointer-events-auto]="isUserModalOpen() && !!editingUser()"
+     [class.opacity-0]="!isUserModalOpen() || !editingUser()"
+     [class.pointer-events-none]="!isUserModalOpen() || !editingUser()">
+  <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75" (click)="closeUserModal()"></div>
+    <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+      <form [formGroup]="editUserForm" (ngSubmit)="saveEditUser()">
+        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <h3 class="text-lg leading-6 font-medium text-gray-900 mb-1">Edit User</h3>
+          <p class="text-sm text-gray-500 mb-4">{{ editingUser()?.name }} ({{ editingUser()?.username }})</p>
+          <div class="space-y-4">
+            <!-- Role -->
+            <div>
+              <label for="editRoleId" class="block text-sm font-medium text-gray-700">Role</label>
+              <select id="editRoleId" formControlName="roleId"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                @for(role of roles(); track role.id) {
+                  <option [value]="role.id">{{ role.name }}</option>
+                }
+              </select>
+            </div>
+            <!-- Category Scope — shown when role needs it -->
+            @if(editUserNeedsCategory()) {
+              <div>
+                <label for="editCategory" class="block text-sm font-medium text-gray-700">Category Scope</label>
+                <select id="editCategory" formControlName="category"
+                  class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                  <option [value]="null">— None (sees all) —</option>
+                  @for(cat of ticketCategories; track cat) {
+                    <option [value]="cat">{{ cat }}</option>
+                  }
+                </select>
+                <p class="mt-1 text-xs text-gray-400">
+                  Admin and Support Agent users can be restricted to one ticket category.
+                </p>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+          <button type="submit" [disabled]="!editUserForm.valid || loading()"
+            class="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-blue-400">
+            @if(loading()) { <span>Saving...</span> } @else { <span>Save Changes</span> }
+          </button>
+          <button type="button" (click)="closeUserModal()"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     Add/Edit Role Modal
+══════════════════════════════════════════════════════════════ -->
+<div class="fixed z-20 inset-0 overflow-y-auto transition-opacity"
      [class.opacity-100]="isRoleModalOpen()"
      [class.pointer-events-auto]="isRoleModalOpen()"
-     [class.duration-200]="!isRoleModalOpen()"
-     [class.ease-in]="!isRoleModalOpen()"
      [class.opacity-0]="!isRoleModalOpen()"
      [class.pointer-events-none]="!isRoleModalOpen()">
   <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
     <div class="fixed inset-0 bg-gray-500 bg-opacity-75" (click)="closeRoleModal()"></div>
     <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full"
-         [class.ease-out]="isRoleModalOpen()"
-         [class.duration-300]="isRoleModalOpen()"
-         [class.scale-100]="isRoleModalOpen()"
-         [class.opacity-100]="isRoleModalOpen()"
-         [class.ease-in]="!isRoleModalOpen()"
-         [class.duration-200]="!isRoleModalOpen()"
-         [class.scale-95]="!isRoleModalOpen()"
-         [class.opacity-0]="!isRoleModalOpen()">
+    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
       <form [formGroup]="roleForm" (ngSubmit)="saveRole()">
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <h3 class="text-lg leading-6 font-medium text-gray-900">{{ editingRole() ? 'Edit Role' : 'Create New Role' }}</h3>
           <div class="mt-4 space-y-4">
             <div>
               <label for="roleName" class="block text-sm font-medium text-gray-700">Role Name</label>
-              <input type="text" id="roleName" formControlName="name" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+              <input type="text" id="roleName" formControlName="name"
+                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700">Screen Access</label>
@@ -264,9 +344,7 @@
                 @for (screen of availableScreens; track screen; let i = $index) {
                   <div class="relative flex items-start">
                     <div class="flex items-center h-5">
-                      <input
-                        [id]="'permission-' + i"
-                        type="checkbox"
+                      <input [id]="'permission-' + i" type="checkbox"
                         [checked]="selectedPermissions()[i]"
                         (change)="togglePermission(i, $any($event.target).checked)"
                         class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded">
@@ -281,18 +359,20 @@
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="submit" [disabled]="!roleForm.valid || loading()" class="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-blue-400">
+          <button type="submit" [disabled]="!roleForm.valid || loading()"
+            class="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-blue-400">
             @if(loading()) {
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
               </svg>
               <span>Saving...</span>
             } @else {
               <span>Save Role</span>
             }
           </button>
-          <button type="button" (click)="closeRoleModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+          <button type="button" (click)="closeRoleModal()"
+            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
             Cancel
           </button>
         </div>

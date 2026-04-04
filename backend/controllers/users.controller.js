@@ -1,22 +1,20 @@
 const { sql, poolPromise } = require('../db');
-const bcrypt = require('bcrypt');
 
-const BCRYPT_ROUNDS = 12;
-
-const mapUserToCamelCase = (user) => ({
-  id:           user.Id,
-  name:         user.Name,
-  username:     user.Username,
-  contactEmail: user.ContactEmail,
-  roleId:       user.RoleId,
+const mapUser = (u) => ({
+  id:           u.Id,
+  name:         u.Name,
+  username:     u.Username,
+  contactEmail: u.ContactEmail,
+  roleId:       u.RoleId,
+  category:     u.Category ?? null,   // ← NEW
 });
 
 exports.getAllUsers = async (req, res) => {
   try {
     const pool   = await poolPromise;
     const result = await pool.request()
-      .query('SELECT Id, Name, Username, ContactEmail, RoleId FROM Users ORDER BY Name');
-    res.status(200).json(result.recordset.map(mapUserToCamelCase));
+      .query('SELECT Id, Name, Username, ContactEmail, RoleId, Category FROM Users ORDER BY Name');
+    res.status(200).json(result.recordset.map(mapUser));
   } catch (err) {
     console.error('[users.getAllUsers]', err);
     res.status(500).json({ message: 'Failed to retrieve users.' });
@@ -24,11 +22,10 @@ exports.getAllUsers = async (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
-  const { name, username, contactEmail, password, roleId } = req.body;
+  const { name, username, contactEmail, password, roleId, category } = req.body;
 
   try {
-    // Hash the password with bcrypt before storing
-    const passwordHash = password //await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const passwordHash = password; // TODO: bcrypt.hash(password, 12)
 
     const pool   = await poolPromise;
     const result = await pool.request()
@@ -37,15 +34,16 @@ exports.createUser = async (req, res) => {
       .input('contactEmail', sql.NVarChar, contactEmail ?? null)
       .input('passwordHash', sql.NVarChar, passwordHash)
       .input('roleId',       sql.Int,      roleId)
+      .input('category',     sql.NVarChar, category ?? null)      // ← NEW
       .query(`
-        INSERT INTO Users (Name, Username, ContactEmail, PasswordHash, RoleId)
-        OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.Username, INSERTED.ContactEmail, INSERTED.RoleId
-        VALUES (@name, @username, @contactEmail, @passwordHash, @roleId)
+        INSERT INTO Users (Name, Username, ContactEmail, PasswordHash, RoleId, Category)
+        OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.Username,
+               INSERTED.ContactEmail, INSERTED.RoleId, INSERTED.Category
+        VALUES (@name, @username, @contactEmail, @passwordHash, @roleId, @category)
       `);
 
-    res.status(201).json(mapUserToCamelCase(result.recordset[0]));
+    res.status(201).json(mapUser(result.recordset[0]));
   } catch (err) {
-    // Handle unique constraint violations specifically; log everything else
     if (err.number === 2627 || err.number === 2601) {
       return res.status(409).json({ message: 'Username or email already exists.' });
     }
@@ -56,24 +54,26 @@ exports.createUser = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   const userId = parseInt(req.params.id, 10);
-  const { roleId } = req.body;
+  const { roleId, category } = req.body;
 
   try {
     const pool   = await poolPromise;
     const result = await pool.request()
-      .input('id',     sql.Int, userId)
-      .input('roleId', sql.Int, roleId)
+      .input('id',       sql.Int,      userId)
+      .input('roleId',   sql.Int,      roleId)
+      .input('category', sql.NVarChar, category ?? null)           // ← NEW
       .query(`
         UPDATE Users
-        SET RoleId = @roleId
-        OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.Username, INSERTED.ContactEmail, INSERTED.RoleId
+        SET RoleId = @roleId, Category = @category
+        OUTPUT INSERTED.Id, INSERTED.Name, INSERTED.Username,
+               INSERTED.ContactEmail, INSERTED.RoleId, INSERTED.Category
         WHERE Id = @id
       `);
 
     if (result.recordset.length === 0) {
       return res.status(404).json({ message: 'User not found.' });
     }
-    res.status(200).json(mapUserToCamelCase(result.recordset[0]));
+    res.status(200).json(mapUser(result.recordset[0]));
   } catch (err) {
     console.error('[users.updateUser]', err);
     res.status(500).json({ message: 'Failed to update user.' });
