@@ -1,4 +1,4 @@
-// src/components/layout/layout.component.ts  (UPDATED — Customer Entry added)
+// src/components/layout/layout.component.ts  (FIXED — sessionReady guards nav rendering)
 import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -23,28 +23,43 @@ export class LayoutComponent {
   sidebarOpen           = signal(false);
   pageTitle             = signal('Dashboard');
 
+  /**
+   * Expose sessionReady to the template so the sidebar renders a skeleton
+   * instead of empty nav links while restoreSession() is in progress.
+   */
+  sessionReady;
+
   canViewDashboard;
   canViewTickets;
   canViewUserManagement;
   canViewReports;
   canViewDispatch;
-  canViewCustomerEntry;  // ← NEW
+  canViewCustomerEntry;
 
   constructor(
-    public authService:        AuthService,
+    public authService:         AuthService,
     public notificationService: NotificationService,
-    public router:             Router,
+    public router:              Router,
   ) {
     this.user          = this.authService.currentUser;
     this.userRole      = this.authService.currentUserRole;
     this.notifications = this.notificationService.notifications;
     this.unreadCount   = this.notificationService.unreadCount;
 
+    // ── Expose session-ready flag to template ─────────────────────────────────
+    this.sessionReady = this.authService.sessionReady;
+
+    // ── Nav visibility computeds (depend on roles being loaded) ───────────────
     this.canViewDashboard      = computed(() => this.authService.hasPermission('Dashboard'));
     this.canViewTickets        = computed(() => this.authService.hasPermission('Tickets'));
     this.canViewUserManagement = computed(() => this.authService.hasPermission('User Management'));
     this.canViewReports        = computed(() => this.authService.hasPermission('Reports'));
-    this.canViewDispatch       = computed(() => this.authService.hasPermission('Dispatch') || this.authService.isAdmin() || this.authService.isManager() || this.authService.isSupport());
+    this.canViewDispatch       = computed(() =>
+      this.authService.hasPermission('Dispatch') ||
+      this.authService.isAdmin() ||
+      this.authService.isManager() ||
+      this.authService.isSupport()
+    );
     this.canViewCustomerEntry  = computed(() =>
       this.authService.hasPermission('Customer Entry') ||
       this.authService.isAdmin() ||
@@ -60,17 +75,17 @@ export class LayoutComponent {
   }
 
   getRouteTitle(url: string): string {
-    if (url.includes('/dashboard'))          return 'Dashboard';
-    if (url.includes('/tickets/'))           return 'Ticket Details';
-    if (url.includes('/tickets'))            return 'Tickets';
-    if (url.includes('/user-management'))    return 'User Management';
-    if (url.includes('/reports'))            return 'Reports';
-    if (url.match(/\/dispatch\/\d+/))        return 'Dispatch Entry';
-    if (url.includes('/dispatch/new'))       return 'New Dispatch Entry';
-    if (url.includes('/dispatch'))           return 'Online Dispatch Details';
-    if (url.match(/\/customer-entry\/\d+/)) return 'Customer Entry';
-    if (url.includes('/customer-entry/new')) return 'New Customer Entry';
-    if (url.includes('/customer-entry'))     return 'Online Customer Entry';
+    if (url.includes('/dashboard'))           return 'Dashboard';
+    if (url.includes('/tickets/'))            return 'Ticket Details';
+    if (url.includes('/tickets'))             return 'Tickets';
+    if (url.includes('/user-management'))     return 'User Management';
+    if (url.includes('/reports'))             return 'Reports';
+    if (url.match(/\/dispatch\/\d+/))         return 'Dispatch Entry';
+    if (url.includes('/dispatch/new'))        return 'New Dispatch Entry';
+    if (url.includes('/dispatch'))            return 'Online Dispatch Details';
+    if (url.match(/\/customer-entry\/\d+/))   return 'Customer Entry';
+    if (url.includes('/customer-entry/new'))  return 'New Customer Entry';
+    if (url.includes('/customer-entry'))      return 'Online Customer Entry';
     return 'Dashboard';
   }
 

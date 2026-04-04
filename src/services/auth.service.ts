@@ -110,6 +110,8 @@ export class AuthService {
     }
   }
 
+  readonly sessionReady = signal(false);
+
   async restoreSession(): Promise<void> {
     if (this.isLoggedIn()) {
       try {
@@ -119,6 +121,8 @@ export class AuthService {
         this.logout();
       }
     }
+    // Mark ready — nav and data render once this flips true
+    this.sessionReady.set(true);
   }
 
   logout(): void {
