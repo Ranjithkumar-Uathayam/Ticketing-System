@@ -1,13 +1,14 @@
-// src/components/reports/reports.component.ts  (UPDATED — category filter)
+// src/components/reports/reports.component.ts  (FIXED — category + all filters now reactive)
 import {
-  Component, ChangeDetectionStrategy, computed, signal,
+  Component, ChangeDetectionStrategy, computed,
   ViewChild, ElementRef, OnDestroy, effect, inject, Injector
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { toSignal }           from '@angular/core/rxjs-interop';
+import { CommonModule }        from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
-import { ApiService } from '../../services/api.service';
-import { Ticket, TicketStatus, TicketPriority, TicketCategory, TICKET_CATEGORIES, User } from '../../models';
-import { AuthService } from '../../services/auth.service';
+import { ApiService }          from '../../services/api.service';
+import { TicketStatus, TicketPriority, TicketCategory, TICKET_CATEGORIES, User } from '../../models';
+import { AuthService }         from '../../services/auth.service';
 
 declare var Chart: any;
 
@@ -30,12 +31,15 @@ export class ReportsComponent implements OnDestroy {
   priorities: TicketPriority[] = ['Low', 'Medium', 'High', 'Urgent'];
   categories: TicketCategory[] = TICKET_CATEGORIES;
 
-  // ── Category lock helpers ───────────────────────────────────────────────────
+  // ── Category lock helpers ──────────────────────────────────────────────────
   readonly isCategoryLocked  = computed(() => !!this.auth.lockedCategory());
   readonly canFilterCategory = computed(() => !this.isCategoryLocked());
-  readonly activeCategory    = computed<TicketCategory | null>(() =>
-    this.auth.lockedCategory() ?? (this.filterForm.value.category as TicketCategory | null)
-  );
+  readonly activeCategory    = computed<TicketCategory | null>(() => {
+    const locked = this.auth.lockedCategory();
+    if (locked) return locked;
+    const cat = this.filterValues()?.category;
+    return (cat as TicketCategory) || null;
+  });
 
   filterForm = new FormGroup({
     startDate:  new FormControl(''),
@@ -43,13 +47,25 @@ export class ReportsComponent implements OnDestroy {
     status:     new FormControl<TicketStatus | ''>(''),
     priority:   new FormControl<TicketPriority | ''>(''),
     assigneeId: new FormControl<number | ''>(''),
-    category:   new FormControl<TicketCategory | ''>(''),  // ← NEW
+    category:   new FormControl<TicketCategory | ''>(''),
+  });
+
+  /**
+   * KEY FIX: Convert filterForm.valueChanges (RxJS observable) to a signal.
+   * This makes filteredTickets() — a computed() — re-run automatically on
+   * every form change, including the category dropdown.
+   *
+   * Without this, computed() reads filterForm.value as a plain object snapshot
+   * and never knows when it changes.
+   */
+  readonly filterValues = toSignal(this.filterForm.valueChanges, {
+    initialValue: this.filterForm.value,
   });
 
   // ── Base scoped tickets (role/category lock applied first) ─────────────────
   private readonly scopedTickets = computed(() => {
-    const all        = this.apiService.tickets();
-    const locked     = this.auth.lockedCategory();
+    const all         = this.apiService.tickets();
+    const locked      = this.auth.lockedCategory();
     const currentUser = this.auth.currentUser();
     const isEmployee  = this.auth.isEmployee();
 
@@ -60,9 +76,10 @@ export class ReportsComponent implements OnDestroy {
     return list;
   });
 
+  // ── UI-filtered tickets — now fully reactive via filterValues signal ────────
   filteredTickets = computed(() => {
     const all     = this.scopedTickets();
-    const filters = this.filterForm.value;
+    const filters = this.filterValues();          // ← signal — tracked by computed()
     const locked  = this.auth.lockedCategory();
 
     return all.filter(ticket => {
@@ -76,12 +93,12 @@ export class ReportsComponent implements OnDestroy {
         if (createdAt > end) return false;
       }
 
-      if (filters.status   && ticket.status   !== filters.status)   return false;
-      if (filters.priority && ticket.priority !== filters.priority) return false;
+      if (filters.status     && ticket.status     !== filters.status)             return false;
+      if (filters.priority   && ticket.priority   !== filters.priority)           return false;
       if (filters.assigneeId && ticket.assigneeId !== Number(filters.assigneeId)) return false;
 
-      // Category filter: locked category takes precedence, else use form value
-      const catFilter = locked || filters.category;
+      // Category: locked category takes precedence over the form dropdown
+      const catFilter = locked || filters.category || '';
       if (catFilter && ticket.category !== catFilter) return false;
 
       return true;
@@ -120,11 +137,17 @@ export class ReportsComponent implements OnDestroy {
       type: 'bar',
       data: {
         labels: d.labels,
-        datasets: [{ label: 'Tickets by Category', data: d.data,
-          backgroundColor: 'rgba(27,47,110,0.18)', borderColor: '#1B2F6E', borderWidth: 1 }],
+        datasets: [{
+          label: 'Tickets by Category',
+          data: d.data,
+          backgroundColor: 'rgba(27,47,110,0.18)',
+          borderColor: '#1B2F6E',
+          borderWidth: 1,
+        }],
       },
       options: {
-        responsive: true, maintainAspectRatio: false,
+        responsive: true,
+        maintainAspectRatio: false,
         scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
         plugins: { legend: { display: false } },
       },
@@ -133,12 +156,16 @@ export class ReportsComponent implements OnDestroy {
 
   updateChart() {
     const d = this.reportChartData();
-    this.categoryChart.data.labels          = d.labels;
+    this.categoryChart.data.labels           = d.labels;
     this.categoryChart.data.datasets[0].data = d.data;
     this.categoryChart.update();
   }
 
-  getAssignee(id?: number): User | undefined { return this.users().find(u => u.id === id); }
+  getAssignee(id?: number): User | undefined {
+    return this.users().find(u => u.id === id);
+  }
 
-  exportToCsv() { alert('Export to CSV functionality coming soon!'); }
+  exportToCsv() {
+    alert('Export to CSV functionality coming soon!');
+  }
 }
