@@ -1,4 +1,3 @@
-// src/guards/auth.guard.ts  (UPDATED — customer-entry added)
 import { Injectable, Injector } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
@@ -17,6 +16,7 @@ const ROUTE_PERMISSIONS: Record<string, AppScreen> = {
   'reports':         'Reports',
   'dispatch':        'Dispatch',
   'customer-entry':  'Customer Entry',
+  'hw-inventory':    'HW Inventory',
 };
 
 @Injectable({ providedIn: 'root' })
@@ -41,7 +41,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     if (requiredPermission) {
       // Admins and Managers bypass the permission table for Dispatch & Customer Entry
       if (
-        (path === 'dispatch' || path === 'customer-entry') &&
+        (path === 'dispatch' || path === 'customer-entry' || path === 'hw-inventory') &&
         (this.authService.isAdmin() || this.authService.isManager())
       ) {
         return true;

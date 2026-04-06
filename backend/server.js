@@ -11,6 +11,7 @@ const roleRoutes         = require('./routes/roles.routes');
 const notificationRoutes = require('./routes/notifications.routes');
 const dispatchRoutes     = require('./routes/dispatch.routes');
 const customerEntryRoutes = require('./routes/customer-entry.routes');
+const hwInventoryRoutes = require('./routes/hw-inventory.routes');
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use('/api/roles',         roleRoutes);
 app.use('/api/notifications', notificationRoutes); 
 app.use('/api/dispatch',      dispatchRoutes);     
 app.use('/api/customer-entries', customerEntryRoutes);
+app.use('/api/hw-inventory', hwInventoryRoutes);
 
 app.get('/', (_req, res) => res.json({ message: 'Uathayam Ticketing & Dispatch API' }));
 

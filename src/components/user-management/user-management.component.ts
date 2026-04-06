@@ -33,9 +33,9 @@ export class UserManagementComponent {
   editingUser    = signal<User | null>(null);   // ← for category-edit modal
 
   availableScreens: AppScreen[] = [
-    'Dashboard', 'Tickets', 'User Management', 'Reports', 'Dispatch', 'Customer Entry',
+    'Dashboard', 'Tickets', 'User Management', 'Reports', 'Dispatch', 'Customer Entry', 'HW Inventory',
   ];
-  selectedPermissions = signal<boolean[]>(new Array(6).fill(false));
+  selectedPermissions = signal<boolean[]>(new Array(7).fill(false));
 
   ticketCategories: TicketCategory[] = TICKET_CATEGORIES;
 

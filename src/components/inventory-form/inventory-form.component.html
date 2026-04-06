@@ -1,0 +1,409 @@
+<!-- src/components/hw-inventory/hw-inventory-form.component.html -->
+<div class="min-h-screen p-4 md:p-6" style="background:#F4F6FB;">
+
+  <!-- Toast -->
+  @if(toast()) {
+    <div class="fixed top-5 right-5 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl text-sm font-semibold"
+         style="animation:slideIn .3s ease; min-width:260px;"
+         [style.background]="toast()!.type === 'success' ? '#16a34a' : '#DC2626'" style2="color:white">
+      @if(toast()!.type === 'success') {
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+      } @else {
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="white"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      }
+      <span class="text-white">{{ toast()!.msg }}</span>
+    </div>
+  }
+
+  <!-- Page Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-4">
+      <button (click)="cancel()" class="p-2 rounded-xl transition-all hover:scale-105"
+        style="background:rgba(27,47,110,0.07); color:#1B2F6E;">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      </button>
+      <div>
+        <h1 class="text-xl font-black" style="color:#1B2F6E;">
+          {{ isEdit() ? 'Edit' : 'Add New' }} Hardware Asset
+        </h1>
+        <p class="text-xs mt-0.5" style="color:rgba(27,47,110,0.45);">IT Hardware Inventory Management</p>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button (click)="reset()" type="button"
+        class="px-4 py-2 rounded-xl text-sm font-semibold"
+        style="background:rgba(27,47,110,0.07); color:#1B2F6E;">Reset</button>
+      <button (click)="save()" type="button" [disabled]="saving()"
+        class="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
+        style="background:#1B2F6E; color:#FDB515; box-shadow:0 4px 14px rgba(27,47,110,0.25);">
+        @if(saving()) {
+          <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/><path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" class="opacity-75"/></svg>
+          Saving…
+        } @else {
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          {{ isEdit() ? 'Update Asset' : 'Save Asset' }}
+        }
+      </button>
+    </div>
+  </div>
+
+  @if(loading()) {
+    <div class="flex items-center justify-center py-24">
+      <svg class="animate-spin w-8 h-8" fill="none" viewBox="0 0 24 24" style="color:#1B2F6E;">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" class="opacity-25"/>
+        <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" class="opacity-75"/>
+      </svg>
+    </div>
+  } @else {
+
+  <div class="space-y-5">
+
+    <!-- ═══════════════════════════════════════
+         SECTION 1: IDENTIFICATION
+    ════════════════════════════════════════ -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="px-5 py-4 flex items-center gap-3" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#FDB515">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+        </svg>
+        <h2 class="text-sm font-bold text-white">Asset Identification</h2>
+        <span class="text-xs ml-auto" style="color:rgba(253,181,21,0.6);">* Required fields</span>
+      </div>
+      <div class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- Asset ID -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Asset ID <span class="text-red-400">*</span></label>
+          <input type="text" placeholder="e.g. BBTSYS-127"
+            [value]="asset().assetId"
+            (input)="patch('assetId', $any($event.target).value)"
+            class="w-full text-sm font-semibold rounded-xl px-4 py-2.5 outline-none font-mono"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Category <span class="text-red-400">*</span></label>
+          <select [value]="asset().category" (change)="patch('category', $any($event.target).value)"
+            class="w-full text-sm font-semibold rounded-xl px-4 py-2.5 outline-none"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+            @for(c of categories; track c) { <option [value]="c">{{ c }}</option> }
+          </select>
+        </div>
+
+        <!-- Manufacturer -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Manufacturer <span class="text-red-400">*</span></label>
+          <input type="text" placeholder="e.g. Dell, Lenovo, HP"
+            [value]="asset().manufacturer"
+            (input)="patch('manufacturer', $any($event.target).value)"
+            class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+        </div>
+
+        <!-- Model -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Model <span class="text-red-400">*</span></label>
+          <input type="text" placeholder="e.g. OptiPlex 3060"
+            [value]="asset().model"
+            (input)="patch('model', $any($event.target).value)"
+            class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+        </div>
+
+        <!-- Serial Number -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Serial Number</label>
+          <input type="text" placeholder="Unique serial number"
+            [value]="asset().serialNumber"
+            (input)="patch('serialNumber', $any($event.target).value)"
+            class="w-full text-sm rounded-xl px-4 py-2.5 outline-none font-mono"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+        </div>
+
+        <!-- Status -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Status <span class="text-red-400">*</span></label>
+          <select [value]="asset().status" (change)="patch('status', $any($event.target).value)"
+            class="w-full text-sm font-semibold rounded-xl px-4 py-2.5 outline-none"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+            @for(s of statuses; track s) { <option [value]="s">{{ s }}</option> }
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SECTION 2: LOCATION & ASSIGNMENT
+    ════════════════════════════════════════ -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="px-5 py-4 flex items-center gap-3" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#FDB515">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <h2 class="text-sm font-bold text-white">Location &amp; Assignment</h2>
+      </div>
+      <div class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        <!-- Location (Branch) -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Branch / Location <span class="text-red-400">*</span></label>
+          <select [value]="asset().location" (change)="patch('location', $any($event.target).value)"
+            class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+            @for(l of locations; track l) { <option [value]="l">{{ l }}</option> }
+          </select>
+        </div>
+
+        <!-- Floor -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Floor</label>
+          <select [value]="asset().floor ?? ''" (change)="patch('floor', $any($event.target).value || null)"
+            class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+            <option value="">— Select Floor —</option>
+            @for(f of floors; track f) { <option [value]="f">{{ f }}</option> }
+          </select>
+        </div>
+
+        <!-- Department -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Department / Team</label>
+          <select [value]="asset().department ?? ''" (change)="patch('department', $any($event.target).value || null)"
+            class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+            <option value="">— Select Department —</option>
+            @for(d of departments; track d) { <option [value]="d">{{ d }}</option> }
+          </select>
+        </div>
+
+        <!-- Assigned To -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Assigned To (Employee)</label>
+          <input type="text" placeholder="Employee name"
+            [value]="asset().assignedTo ?? ''"
+            (input)="patch('assignedTo', $any($event.target).value || null)"
+            class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+        </div>
+
+        <!-- Place description (for printers/scanners) -->
+        @if(asset().category === 'Printer' || asset().category === 'Scanner') {
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Placement / Place Description</label>
+            <input type="text" placeholder="e.g. Reception desk, Server Room"
+              [value]="asset().place ?? ''"
+              (input)="patch('place', $any($event.target).value || null)"
+              class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+              style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+              onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+          </div>
+        }
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SECTION 3: TECHNICAL SPECS (Desktop/Laptop)
+    ════════════════════════════════════════ -->
+    @if(showComputeFields()) {
+      <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+        <div class="px-5 py-4 flex items-center gap-3" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#FDB515">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <h2 class="text-sm font-bold text-white">Technical Specifications</h2>
+        </div>
+        <div class="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+          <!-- Processor -->
+          <div class="lg:col-span-2">
+            <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Processor / CPU</label>
+            <input type="text" placeholder="e.g. Intel Core i3-8100 @ 3.60GHz"
+              [value]="asset().processor ?? ''"
+              (input)="patch('processor', $any($event.target).value || null)"
+              class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+              style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+              onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+          </div>
+
+          <!-- OS -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Operating System</label>
+            <select [value]="asset().os ?? ''" (change)="patch('os', $any($event.target).value || null)"
+              class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+              style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+              onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+              <option value="">— Select OS —</option>
+              @for(o of osVersions; track o) { <option [value]="o">{{ o }}</option> }
+            </select>
+          </div>
+
+          <!-- RAM -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">RAM (GB)</label>
+            <input type="text" placeholder="e.g. 4GB, 8GB, 16GB"
+              [value]="asset().ramGb ?? ''"
+              (input)="patch('ramGb', $any($event.target).value || null)"
+              class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+              style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+              onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+          </div>
+
+          <!-- HDD -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">HDD (GB/TB)</label>
+            <input type="text" placeholder="e.g. 500 GB, 1 TB"
+              [value]="asset().hddGbTb ?? ''"
+              (input)="patch('hddGbTb', $any($event.target).value || null)"
+              class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+              style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+              onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+          </div>
+
+          <!-- SSD -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">SSD (GB/TB)</label>
+            <input type="text" placeholder="e.g. 256GB NVMe, EVM25/128GB"
+              [value]="asset().ssdGbTb ?? ''"
+              (input)="patch('ssdGbTb', $any($event.target).value || null)"
+              class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+              style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+              onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+          </div>
+
+          <!-- IP Address -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">IP Address</label>
+            <input type="text" placeholder="e.g. 10.0.13.148"
+              [value]="asset().ipAddress ?? ''"
+              (input)="patch('ipAddress', $any($event.target).value || null)"
+              class="w-full text-sm rounded-xl px-4 py-2.5 outline-none font-mono"
+              style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+              onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+          </div>
+
+          <!-- Antivirus (Laptop only) -->
+          @if(asset().category === 'Laptop') {
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Antivirus Active</label>
+              <div class="flex gap-4 py-2.5">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="antivirus"
+                    [checked]="asset().antivirusActive === true"
+                    (change)="patch('antivirusActive', true)"
+                    class="accent-blue-700">
+                  <span class="text-sm font-semibold" style="color:#1B2F6E;">Yes</span>
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="antivirus"
+                    [checked]="asset().antivirusActive === false"
+                    (change)="patch('antivirusActive', false)"
+                    class="accent-blue-700">
+                  <span class="text-sm font-semibold" style="color:#1B2F6E;">No</span>
+                </label>
+              </div>
+            </div>
+          }
+
+        </div>
+      </div>
+    }
+
+    <!-- Printer/Scanner IP (when not compute) -->
+    @if(!showComputeFields()) {
+      <div class="bg-white rounded-2xl shadow-sm p-5" style="border:1px solid #E8EDF8;">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Network / IP Address (Mode)</label>
+          <input type="text" placeholder="e.g. 10.0.14.17"
+            [value]="asset().ipAddress ?? ''"
+            (input)="patch('ipAddress', $any($event.target).value || null)"
+            class="max-w-xs text-sm rounded-xl px-4 py-2.5 outline-none font-mono"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+        </div>
+      </div>
+    }
+
+    <!-- ═══════════════════════════════════════
+         SECTION 4: WARRANTY
+    ════════════════════════════════════════ -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+      <div class="px-5 py-4 flex items-center gap-3" style="background:#1B2F6E; border-bottom:2px solid #FDB515;">
+        <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#FDB515">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+        <h2 class="text-sm font-bold text-white">Warranty Information</h2>
+      </div>
+      <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <!-- Warranty Status -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Warranty Status</label>
+          <select [value]="asset().warrantyStatus" (change)="patch('warrantyStatus', $any($event.target).value)"
+            class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+            @for(w of warrantyStates; track w) { <option [value]="w">{{ w }}</option> }
+          </select>
+        </div>
+
+        <!-- Warranty Expiry Date -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-widest mb-1.5" style="color:rgba(27,47,110,0.5);">Warranty Expiry Date</label>
+          <input type="date"
+            [value]="asset().warrantyExpiry ?? ''"
+            (change)="patch('warrantyExpiry', $any($event.target).value || null)"
+            class="w-full text-sm rounded-xl px-4 py-2.5 outline-none"
+            style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+            onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         SECTION 5: REMARKS
+    ════════════════════════════════════════ -->
+    <div class="bg-white rounded-2xl shadow-sm p-5" style="border:1px solid #E8EDF8;">
+      <label class="block text-xs font-bold uppercase tracking-widest mb-2" style="color:rgba(27,47,110,0.5);">Remarks / Notes</label>
+      <textarea rows="3" placeholder="Any additional notes, repair history, known issues…"
+        [value]="asset().remarks ?? ''"
+        (input)="patch('remarks', $any($event.target).value || null)"
+        class="w-full text-sm rounded-xl px-4 py-3 outline-none resize-none"
+        style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;"
+        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'"></textarea>
+    </div>
+
+    <!-- Bottom action bar -->
+    <div class="flex justify-end gap-3">
+      <button (click)="cancel()"
+        class="px-6 py-2.5 rounded-xl text-sm font-semibold bg-white"
+        style="border:1.5px solid #E8EDF8; color:#1B2F6E;">Cancel</button>
+      <button (click)="save()" [disabled]="saving()"
+        class="flex items-center gap-2 px-8 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50"
+        style="background:#1B2F6E; color:#FDB515; box-shadow:0 4px 14px rgba(27,47,110,0.25);">
+        {{ saving() ? 'Saving…' : (isEdit() ? 'Update Asset' : 'Save Asset') }}
+      </button>
+    </div>
+
+  </div>
+
+  } <!-- /loading -->
+
+</div>
+
+<style>
+  @keyframes slideIn { from { transform:translateX(40px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+</style>

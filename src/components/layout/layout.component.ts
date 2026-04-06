@@ -1,4 +1,4 @@
-// src/components/layout/layout.component.ts  (FIXED — sessionReady guards nav rendering)
+// src/components/layout/layout.component.ts
 import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -23,10 +23,6 @@ export class LayoutComponent {
   sidebarOpen           = signal(false);
   pageTitle             = signal('Dashboard');
 
-  /**
-   * Expose sessionReady to the template so the sidebar renders a skeleton
-   * instead of empty nav links while restoreSession() is in progress.
-   */
   sessionReady;
 
   canViewDashboard;
@@ -35,6 +31,7 @@ export class LayoutComponent {
   canViewReports;
   canViewDispatch;
   canViewCustomerEntry;
+  canViewHwInventory;   // ← NEW
 
   constructor(
     public authService:         AuthService,
@@ -46,10 +43,8 @@ export class LayoutComponent {
     this.notifications = this.notificationService.notifications;
     this.unreadCount   = this.notificationService.unreadCount;
 
-    // ── Expose session-ready flag to template ─────────────────────────────────
     this.sessionReady = this.authService.sessionReady;
 
-    // ── Nav visibility computeds (depend on roles being loaded) ───────────────
     this.canViewDashboard      = computed(() => this.authService.hasPermission('Dashboard'));
     this.canViewTickets        = computed(() => this.authService.hasPermission('Tickets'));
     this.canViewUserManagement = computed(() => this.authService.hasPermission('User Management'));
@@ -62,6 +57,12 @@ export class LayoutComponent {
     );
     this.canViewCustomerEntry  = computed(() =>
       this.authService.hasPermission('Customer Entry') ||
+      this.authService.isAdmin() ||
+      this.authService.isManager()
+    );
+    // HW Inventory: visible to Admin, Manager, or anyone with explicit permission
+    this.canViewHwInventory    = computed(() =>
+      this.authService.hasPermission('HW Inventory') ||
       this.authService.isAdmin() ||
       this.authService.isManager()
     );
@@ -86,6 +87,9 @@ export class LayoutComponent {
     if (url.match(/\/customer-entry\/\d+/))   return 'Customer Entry';
     if (url.includes('/customer-entry/new'))  return 'New Customer Entry';
     if (url.includes('/customer-entry'))      return 'Online Customer Entry';
+    if (url.match(/\/hw-inventory\/\d+/))     return 'Edit Asset';
+    if (url.includes('/hw-inventory/new'))    return 'New Asset';
+    if (url.includes('/hw-inventory'))        return 'HW Inventory';
     return 'Dashboard';
   }
 
