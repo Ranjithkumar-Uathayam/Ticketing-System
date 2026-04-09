@@ -139,7 +139,7 @@
         <tbody class="divide-y" style="border-color: #F0F4FC;">
           @for(ticket of filteredTickets(); track ticket.id) {
             <tr class="hover:bg-amber-50/25 transition-colors group cursor-pointer" [routerLink]="['/tickets', ticket.id]">
-                <td class="px-3 py-3 text-xs whitespace-nowrap" style="color: rgba(27,47,110,0.45);">{{ ticket.createdAt ? (ticket.createdAt | date:'dd MMM yy') : '—' }}</td>
+                <td class="px-3 py-3 text-xs whitespace-nowrap" style="color: rgba(27,47,110,0.45);">{{ ticket.createdAt | date:'dd MMM yy hh:mm a':'UTC' }}</td>
                 <td class="px-3 py-3">
                     <div class="flex items-center gap-2">
                         <div class="w-1 h-7 rounded-full flex-shrink-0" [style.background]="ticket.status === 'New' ? '#94a3b8' : ticket.status === 'Open' ? '#FDB515' : ticket.status === 'In Progress' ? '#8b5cf6' : ticket.status === 'Resolved' ? '#22c55e' : ticket.status === 'Closed' ? '#6b7280' : '#06b6d4'"></div>
