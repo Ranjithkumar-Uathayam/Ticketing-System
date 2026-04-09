@@ -22,6 +22,7 @@ export class TicketDetailComponent implements OnInit {
   isNew = signal(false);
   loading = signal(false);
   uploadingScreenshot = signal(false);
+  previewScreenshot = signal<ScreenshotItem | null>(null);
 
   screenshots = signal<ScreenshotItem[]>([]);
 
@@ -222,6 +223,19 @@ export class TicketDetailComponent implements OnInit {
     this.ticketForm.controls.screenshotUrl.setValue(
       allScreenshots.length > 0 ? JSON.stringify(allScreenshots) : null
     );
+
+    const activePreview = this.previewScreenshot();
+    if (activePreview && allScreenshots.every(shot => shot.url !== activePreview.url)) {
+      this.previewScreenshot.set(null);
+    }
+  }
+
+  openScreenshotPreview(screenshot: ScreenshotItem) {
+    this.previewScreenshot.set(screenshot);
+  }
+
+  closeScreenshotPreview() {
+    this.previewScreenshot.set(null);
   }
 
   /** Download all screenshots one by one */
