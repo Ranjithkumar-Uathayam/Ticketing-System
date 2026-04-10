@@ -43,14 +43,14 @@ export class TicketListComponent implements OnInit {
     const all        = this.apiService.tickets();
     const locked     = this.auth.lockedCategory();
     const currentUser = this.auth.currentUser();
-    const isAdmin    = this.auth.isAdmin();
-    const isManager  = this.auth.isManager();
     const isEmployee = this.auth.isEmployee();
 
     let list = locked ? all.filter(t => t.category === locked) : all;
 
     if (isEmployee && currentUser) {
-      list = list.filter(t => t.assigneeId === currentUser.id);
+      list = list.filter(t =>
+        t.reporterId === currentUser.id || t.assigneeId === currentUser.id
+      );
     }
 
     return list;
