@@ -30,6 +30,26 @@ export class HwInventoryService {
     }
   }
 
+  async getById(id: number): Promise<HWAsset> {
+    this.loading.set(true);
+    try {
+      const asset = await firstValueFrom(
+        this.http.get<HWAsset>(`${API}/hw-inventory/${id}`)
+      );
+
+      this.assets.update(list => {
+        const exists = list.some(item => item.id === asset.id);
+        return exists
+          ? list.map(item => item.id === asset.id ? asset : item)
+          : [asset, ...list];
+      });
+
+      return asset;
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
   async create(asset: Omit<HWAsset, 'id' | 'createdAt' | 'updatedAt'>): Promise<HWAsset> {
     this.loading.set(true);
     try {

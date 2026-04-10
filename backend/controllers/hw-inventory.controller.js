@@ -133,8 +133,19 @@ exports.update = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const b  = req.body;
 
+  if (!b.assetId)      return res.status(400).json({ message: 'assetId is required.' });
+  if (!b.manufacturer) return res.status(400).json({ message: 'manufacturer is required.' });
+  if (!b.model)        return res.status(400).json({ message: 'model is required.' });
+
   try {
     const pool = await poolPromise;
+
+    const dupAsset = await pool.request()
+      .input('assetId', sql.NVarChar, b.assetId)
+      .input('id', sql.Int, id)
+      .query('SELECT Id FROM HwInventory WHERE AssetId = @assetId AND Id <> @id');
+    if (dupAsset.recordset.length > 0)
+      return res.status(409).json({ message: `Asset ID "${b.assetId}" already exists.` });
 
     // Uniqueness check (exclude self)
     if (b.serialNumber) {
@@ -148,6 +159,7 @@ exports.update = async (req, res) => {
 
     const result = await pool.request()
       .input('id',              sql.Int,      id)
+      .input('assetId',         sql.NVarChar, b.assetId)
       .input('category',        sql.NVarChar, b.category)
       .input('manufacturer',    sql.NVarChar, b.manufacturer)
       .input('model',           sql.NVarChar, b.model)
@@ -171,7 +183,7 @@ exports.update = async (req, res) => {
       .input('remarks',         sql.NVarChar, b.remarks          || null)
       .query(`
         UPDATE HwInventory SET
-          Category = @category, Manufacturer = @manufacturer, Model = @model,
+          AssetId = @assetId, Category = @category, Manufacturer = @manufacturer, Model = @model,
           SerialNumber = @serialNumber, Location = @location, Floor = @floor,
           Department = @department, AssignedTo = @assignedTo, Place = @place,
           Processor = @processor, RamGb = @ramGb, HddGbTb = @hddGbTb, SsdGbTb = @ssdGbTb,

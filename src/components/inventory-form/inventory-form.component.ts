@@ -55,9 +55,16 @@ export class HwInventoryFormComponent implements OnInit {
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');
     if (id && id !== 'new') {
+      const parsedId = Number(id);
+      if (!Number.isFinite(parsedId) || parsedId <= 0) {
+        this.flash('error', 'Invalid asset id.');
+        setTimeout(() => this.router.navigate(['/hw-inventory']), 1200);
+        return;
+      }
+
       this.isEdit.set(true);
-      this.editId.set(+id);
-      this.loadForEdit(+id);
+      this.editId.set(parsedId);
+      this.loadForEdit(parsedId);
     }
   }
 
@@ -65,13 +72,25 @@ export class HwInventoryFormComponent implements OnInit {
     this.loading.set(true);
     try {
       let rec = this.svc.assets().find(a => a.id === id);
-      if (!rec) { await this.svc.getAll(); rec = this.svc.assets().find(a => a.id === id); }
-      if (rec) {
-        const { id: _id, createdAt: _c, updatedAt: _u, ...data } = rec;
-        this.asset.set({ ...data, warrantyExpiry: data.warrantyExpiry?.split('T')[0] ?? data.warrantyExpiry });
-        this.showComputeFields.set(['Desktop','Laptop'].includes(data.category));
+      if (!rec) {
+        rec = await this.svc.getById(id);
       }
-    } finally { this.loading.set(false); }
+
+      const { id: _id, createdAt: _c, updatedAt: _u, ...data } = rec;
+      this.asset.set({
+        ...data,
+        warrantyExpiry: this.normalizeDateForInput(data.warrantyExpiry),
+      });
+      this.showComputeFields.set(['Desktop', 'Laptop'].includes(data.category));
+    } catch (err: any) {
+      const message = err?.status === 404
+        ? 'Asset not found.'
+        : 'Failed to load asset details.';
+      this.flash('error', message);
+      setTimeout(() => this.router.navigate(['/hw-inventory']), 1400);
+    } finally {
+      this.loading.set(false);
+    }
   }
 
   patch(field: keyof Omit<HWAsset,'id'|'createdAt'|'updatedAt'>, value: any) {
@@ -85,7 +104,7 @@ export class HwInventoryFormComponent implements OnInit {
   }
 
   async save() {
-    const a = this.asset();
+    const a = this.sanitizedAsset();
     if (!a.assetId.trim())    { this.flash('error','Asset ID is required.');    return; }
     if (!a.manufacturer.trim()){ this.flash('error','Manufacturer is required.'); return; }
     if (!a.model.trim())      { this.flash('error','Model is required.');        return; }
@@ -121,6 +140,32 @@ export class HwInventoryFormComponent implements OnInit {
 
   reset()  { this.asset.set(empty()); this.showComputeFields.set(true); }
   cancel() { this.router.navigate(['/hw-inventory']); }
+
+  private sanitizedAsset(): Omit<HWAsset,'id'|'createdAt'|'updatedAt'> {
+    const asset = this.asset();
+    return {
+      ...asset,
+      assetId: asset.assetId.trim(),
+      manufacturer: asset.manufacturer.trim(),
+      model: asset.model.trim(),
+      serialNumber: asset.serialNumber.trim(),
+      assignedTo: asset.assignedTo?.trim() || null,
+      department: asset.department?.trim() || null,
+      place: asset.place?.trim() || null,
+      processor: asset.processor?.trim() || null,
+      ramGb: asset.ramGb?.trim() || null,
+      hddGbTb: asset.hddGbTb?.trim() || null,
+      ssdGbTb: asset.ssdGbTb?.trim() || null,
+      ipAddress: asset.ipAddress?.trim() || null,
+      remarks: asset.remarks?.trim() || null,
+      warrantyExpiry: this.normalizeDateForInput(asset.warrantyExpiry),
+    };
+  }
+
+  private normalizeDateForInput(value?: string | null): string | null {
+    if (!value) return null;
+    return value.includes('T') ? value.split('T')[0] : value;
+  }
 
   private flash(type: 'success'|'error', msg: string) {
     this.toast.set({ type, msg });
