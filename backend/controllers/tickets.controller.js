@@ -32,7 +32,7 @@ exports.getAllTickets = async (req, res) => {
   const offset     = (page - 1) * limit;
 
   // Optional server-side filters
-  const { status, priority, assigneeId, reporterId } = req.query;
+  const { status, priority, assigneeId, reporterId, createdFrom, createdTo } = req.query;
 
   try {
     const pool    = await poolPromise;
@@ -45,6 +45,8 @@ exports.getAllTickets = async (req, res) => {
     if (priority)   { request.input('priority',   sql.NVarChar, priority);       where += ' AND Priority = @priority'; }
     if (assigneeId) { request.input('assigneeId', sql.Int, parseInt(assigneeId, 10)); where += ' AND AssigneeId = @assigneeId'; }
     if (reporterId) { request.input('reporterId', sql.Int, parseInt(reporterId, 10)); where += ' AND ReporterId = @reporterId'; }
+    if (createdFrom) { request.input('createdFrom', sql.DateTime2, new Date(createdFrom)); where += ' AND CreatedAt >= @createdFrom'; }
+    if (createdTo)   { request.input('createdTo',   sql.DateTime2, new Date(createdTo));   where += ' AND CreatedAt < @createdTo'; }
 
     const result = await request.query(`
       SELECT ${TICKET_COLUMNS}
@@ -60,6 +62,8 @@ exports.getAllTickets = async (req, res) => {
     if (priority)   countReq.input('priority',   sql.NVarChar, priority);
     if (assigneeId) countReq.input('assigneeId', sql.Int, parseInt(assigneeId, 10));
     if (reporterId) countReq.input('reporterId', sql.Int, parseInt(reporterId, 10));
+    if (createdFrom) countReq.input('createdFrom', sql.DateTime2, new Date(createdFrom));
+    if (createdTo)   countReq.input('createdTo',   sql.DateTime2, new Date(createdTo));
     const countResult = await countReq.query(`SELECT COUNT(*) AS Total FROM Tickets ${where}`);
     const total = countResult.recordset[0].Total;
 

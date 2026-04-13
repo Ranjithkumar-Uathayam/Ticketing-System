@@ -19,6 +19,8 @@ export interface TicketFilters {
   priority?:   string;
   assigneeId?: number;
   reporterId?: number;
+  createdFrom?: string;
+  createdTo?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -59,6 +61,8 @@ export class ApiService {
     if (filters.priority)   params = params.set('priority',   filters.priority);
     if (filters.assigneeId) params = params.set('assigneeId', String(filters.assigneeId));
     if (filters.reporterId) params = params.set('reporterId', String(filters.reporterId));
+    if (filters.createdFrom) params = params.set('createdFrom', filters.createdFrom);
+    if (filters.createdTo)   params = params.set('createdTo', filters.createdTo);
 
     const page = await firstValueFrom(
       this.http.get<TicketPage>(`${environment.apiUrl}/tickets`, { params })

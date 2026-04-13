@@ -65,17 +65,23 @@ export class TicketListComponent implements OnInit {
     const status   = this.filterStatus();
     const cat      = this.activeCategory();
 
-    const [yr, mo]     = monthStr.split('-').map(Number);
-    const monthStart   = new Date(yr, mo - 1, 1);
-    const monthEnd     = new Date(yr, mo, 1);
-    const prevStart    = new Date(yr, mo - 2, 1);
+    const [yr, mo]   = monthStr.split('-').map(Number);
+    const monthStart = new Date(yr, mo - 1, 1);
+    const monthEnd   = new Date(yr, mo, 1);
+    const prevStart  = new Date(yr, mo - 2, 1);
+    const now        = new Date();
+    const isCurrentMonth =
+      yr === now.getFullYear() && mo === now.getMonth() + 1;
 
     return all.filter(ticket => {
-      const created = ticket.createdAt ? new Date(ticket.createdAt) : null;
+      const created = this.parseTicketDate(ticket.createdAt);
       if (!created) return false;
 
       const inMonth    = created >= monthStart && created < monthEnd;
-      const carryOver  = created >= prevStart && created < monthStart && ticket.status !== 'Closed';
+      const carryOver  = isCurrentMonth &&
+        created >= prevStart &&
+        created < monthStart &&
+        ticket.status !== 'Closed';
       if (!inMonth && !carryOver) return false;
 
       if (status && ticket.status !== status) return false;
@@ -113,14 +119,17 @@ export class TicketListComponent implements OnInit {
 
   async ngOnInit() {
     try {
-      await this.apiService.getTickets();
+      await this.refreshTicketsForSelectedMonth();
       this.cdr.markForCheck();
     } catch (e) {
       console.log('Failed to refresh tickets', e);
     }
   }
 
-  setMonth(value: string)        { this.filterMonth.set(value); }
+  setMonth(value: string) {
+    this.filterMonth.set(value);
+    void this.refreshTicketsForSelectedMonth();
+  }
   setStatus(value: string)       { this.filterStatus.set(value as TicketStatus | ''); }
   setCategory(cat: TicketCategory | null) {
     if (!this.isCategoryLocked()) this.filterCategory.set(cat);
@@ -131,6 +140,7 @@ export class TicketListComponent implements OnInit {
     this.filterMonth.set(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
     this.filterStatus.set('');
     this.filterCategory.set(null);
+    void this.refreshTicketsForSelectedMonth();
   }
 
   get hasActiveFilters(): boolean {
@@ -146,4 +156,30 @@ export class TicketListComponent implements OnInit {
   getStatusClass(s?: TicketStatus | null)     { return s ? this.statusColors[s]   : 'bg-gray-100 text-gray-600'; }
 
   createNewTicket() { this.router.navigate(['/tickets/new']); }
+
+  private parseTicketDate(value?: string | null): Date | null {
+    if (!value) return null;
+
+    const normalized = value.replace(' ', 'T');
+    const date = new Date(normalized);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private async refreshTicketsForSelectedMonth(): Promise<void> {
+    const monthStr = this.filterMonth();
+    const [yr, mo] = monthStr.split('-').map(Number);
+    const monthStart = new Date(yr, mo - 1, 1);
+    const monthEnd = new Date(yr, mo, 1);
+    const prevStart = new Date(yr, mo - 2, 1);
+    const now = new Date();
+    const isCurrentMonth =
+      yr === now.getFullYear() && mo === now.getMonth() + 1;
+
+    await this.apiService.getTickets({
+      page: 1,
+      limit: 200,
+      createdFrom: (isCurrentMonth ? prevStart : monthStart).toISOString(),
+      createdTo: monthEnd.toISOString(),
+    });
+  }
 }
