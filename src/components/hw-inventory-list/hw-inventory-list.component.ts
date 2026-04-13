@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule }  from '@angular/forms';
 import { Router }       from '@angular/router';
 import { HwInventoryService } from '../../services/hw-inventory.service';
+import { HwLabelPrintService } from '../../services/hw-label-print.service';
 import {
   HWAsset, HWCategory, HWStatus, HWLocation, WarrantyStatus,
   HW_CATEGORIES, HW_STATUSES, HW_LOCATIONS, WARRANTY_STATUSES,
@@ -83,12 +84,29 @@ export class HwInventoryListComponent implements OnInit {
     });
   });
 
-  constructor(private svc: HwInventoryService, private router: Router) {}
+  constructor(
+    private svc: HwInventoryService,
+    private router: Router,
+    private labelPrinter: HwLabelPrintService,
+  ) {}
 
   ngOnInit() { this.svc.getAll(); }
 
   openAdd()         { this.router.navigate(['/hw-inventory/new']); }
   openEdit(id?: number) { this.router.navigate(['/hw-inventory', id ?? 'new']); }
+  async printLabel(asset: HWAsset) {
+    if (!asset.id) {
+      this.flash('error', 'Unable to print label for this asset.');
+      return;
+    }
+
+    try {
+      await this.labelPrinter.printLabel(asset.id);
+      this.flash('success', 'Label sent to printer.');
+    } catch (err: any) {
+      this.flash('error', err?.error?.message || 'Failed to print label.');
+    }
+  }
 
   requestDelete(id: number) { this.deleteId.set(id); }
   cancelDelete()            { this.deleteId.set(null); }

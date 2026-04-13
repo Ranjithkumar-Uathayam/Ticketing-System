@@ -1,5 +1,12 @@
 // backend/controllers/hw-inventory.controller.js
 const { sql, poolPromise } = require('../db');
+const { execFile } = require('child_process');
+const fs = require('fs/promises');
+const os = require('os');
+const path = require('path');
+
+const LABEL_PRINTER_NAME = process.env.HW_LABEL_PRINTER_NAME || 'TSC TTP-244 Pro';
+const RAW_PRINT_SCRIPT = path.join(__dirname, '..', 'scripts', 'send-raw-printer.ps1');
 
 const map = (r) => ({
   id:              r.Id,
@@ -27,6 +34,74 @@ const map = (r) => ({
   createdAt:       r.CreatedAt,
   updatedAt:       r.UpdatedAt,
 });
+
+const esc = (value = '') => String(value)
+  .replace(/\\/g, '\\\\')
+  .replace(/"/g, '\\"');
+
+const buildLabelTspl = (asset) => {
+  const rows = [
+    ['User', asset.assignedTo || '-'],
+    ['System', asset.assetId || '-'],
+    ['Dept', asset.department || '-'],
+    ['Model', asset.model || '-'],
+    ['SL No', asset.serialNumber || '-'],
+  ];
+
+  const lines = [
+    'SIZE 50 mm,38 mm',
+    'GAP 3 mm,0 mm',
+    'DENSITY 10',
+    'SPEED 2',
+    'DIRECTION 0',
+    'REFERENCE 0,0',
+    'CLS',
+    'TEXT 14,10,"2",0,1,1,"INFORMATION TECHNOLOGY"',
+    'TEXT 78,30,"2",0,1,1,"B and B Textiles"',
+    'BAR 18,62,364,1',
+  ];
+
+  let y = 76;
+  for (const [label, value] of rows) {
+    lines.push(`TEXT 16,${y},"2",0,1,1,"${esc(label)}"`);
+    lines.push(`TEXT 118,${y},"2",0,1,1,":"`);
+    lines.push(`TEXT 140,${y},"2",0,1,1,"${esc(value)}"`);
+    y += 22;
+  }
+
+  lines.push('PRINT 1,1');
+  return `${lines.join('\r\n')}\r\n`;
+};
+
+const sendRawLabelToPrinter = async (content, printerName) => {
+  const tempFile = path.join(os.tmpdir(), `hw-label-${Date.now()}.txt`);
+  await fs.writeFile(tempFile, Buffer.from(content, 'ascii'));
+
+  try {
+    await new Promise((resolve, reject) => {
+      execFile(
+        'powershell.exe',
+        [
+          '-NoProfile',
+          '-ExecutionPolicy', 'Bypass',
+          '-File', RAW_PRINT_SCRIPT,
+          '-PrinterName', printerName,
+          '-FilePath', tempFile,
+        ],
+        { windowsHide: true, timeout: 20000 },
+        (error, stdout, stderr) => {
+          if (error) {
+            reject(new Error(stderr || stdout || error.message));
+            return;
+          }
+          resolve();
+        }
+      );
+    });
+  } finally {
+    await fs.unlink(tempFile).catch(() => {});
+  }
+};
 
 // ── GET all ───────────────────────────────────────────────────────────────────
 exports.getAll = async (req, res) => {
@@ -215,5 +290,29 @@ exports.remove = async (req, res) => {
   } catch (err) {
     console.error('[hw-inventory.remove]', err);
     res.status(500).json({ message: 'Failed to delete asset', error: err.message });
+  }
+};
+
+exports.printLabel = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('id', sql.Int, id)
+      .query('SELECT * FROM HwInventory WHERE Id = @id');
+
+    if (!result.recordset[0]) {
+      return res.status(404).json({ message: 'Asset not found.' });
+    }
+
+    const asset = map(result.recordset[0]);
+    const tspl = buildLabelTspl(asset);
+
+    await sendRawLabelToPrinter(tspl, LABEL_PRINTER_NAME);
+    res.json({ message: `Label sent to printer ${LABEL_PRINTER_NAME}.` });
+  } catch (err) {
+    console.error('[hw-inventory.printLabel]', err);
+    res.status(500).json({ message: 'Failed to print label', error: err.message });
   }
 };
