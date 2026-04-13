@@ -57,15 +57,15 @@ const buildLabelTspl = (asset) => {
     'REFERENCE 0,0',
     'CLS',
     'TEXT 14,10,"2",0,1,1,"INFORMATION TECHNOLOGY"',
-    'TEXT 78,30,"2",0,1,1,"B and B Textiles"',
-    'BAR 18,62,364,1',
+    'TEXT 60,35,"2",0,1,1,"B and B Textiles"',
+    'BAR 18,70,364,2',
   ];
 
   let y = 76;
   for (const [label, value] of rows) {
     lines.push(`TEXT 16,${y},"2",0,1,1,"${esc(label)}"`);
-    lines.push(`TEXT 118,${y},"2",0,1,1,":"`);
-    lines.push(`TEXT 140,${y},"2",0,1,1,"${esc(value)}"`);
+    lines.push(`TEXT 130,${y},"2",0,1,1,":"`);
+    lines.push(`TEXT 160,${y},"2",0,1,1,"${esc(value)}"`);
     y += 22;
   }
 
