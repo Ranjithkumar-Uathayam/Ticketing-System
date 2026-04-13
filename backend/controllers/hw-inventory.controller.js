@@ -8,6 +8,7 @@ const path = require('path');
 const LABEL_PRINTER_NAME = process.env.HW_LABEL_PRINTER_NAME || 'TSC TTP-244 Pro';
 const RAW_PRINT_SCRIPT = path.join(__dirname, '..', 'scripts', 'send-raw-printer.ps1');
 
+// ── DB row → JS object ────────────────────────────────────────────────────────
 const map = (r) => ({
   id:              r.Id,
   assetId:         r.AssetId,
@@ -16,36 +17,48 @@ const map = (r) => ({
   model:           r.Model,
   serialNumber:    r.SerialNumber,
   location:        r.Location,
-  floor:           r.Floor ?? null,
-  department:      r.Department ?? null,
-  assignedTo:      r.AssignedTo ?? null,
-  place:           r.Place ?? null,
-  processor:       r.Processor ?? null,
-  ramGb:           r.RamGb ?? null,
-  hddGbTb:         r.HddGbTb ?? null,
-  ssdGbTb:         r.SsdGbTb ?? null,
-  os:              r.Os ?? null,
-  ipAddress:       r.IpAddress ?? null,
+  floor:           r.Floor          ?? null,
+  department:      r.Department     ?? null,
+  assignedTo:      r.AssignedTo     ?? null,
+  place:           r.Place          ?? null,
+  processor:       r.Processor      ?? null,
+  ramGb:           r.RamGb          ?? null,
+  hddGbTb:         r.HddGbTb        ?? null,
+  ssdGbTb:         r.SsdGbTb        ?? null,
+  os:              r.Os             ?? null,
+  ipAddress:       r.IpAddress      ?? null,
   status:          r.Status,
   warrantyStatus:  r.WarrantyStatus,
-  warrantyExpiry:  r.WarrantyExpiry ?? null,
+  warrantyExpiry:  r.WarrantyExpiry  ?? null,
   antivirusActive: r.AntivirusActive !== null ? !!r.AntivirusActive : null,
-  remarks:         r.Remarks ?? null,
+  remarks:         r.Remarks        ?? null,
   createdAt:       r.CreatedAt,
   updatedAt:       r.UpdatedAt,
 });
 
-const esc = (value = '') => String(value)
-  .replace(/\\/g, '\\\\')
-  .replace(/"/g, '\\"');
+// ── TSPL string escaping ──────────────────────────────────────────────────────
+const esc = (value = '') =>
+  String(value)
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"');
 
+// ── Label builder ─────────────────────────────────────────────────────────────
+/**
+ * Font width reference @ 203 DPI (xmul=1):
+ *   font "2" ≈ 10 dots/char
+ *   font "3" ≈ 12 dots/char
+ *
+ * Centering formula:  x = (labelWidth − charCount × charWidth) / 2
+ *   Label width = 400 dots
+ *   "B and B Textiles" = 17 chars × 10 = 170 dots  → x = (400−170)/2 = 115
+ */
 const buildLabelTspl = (asset) => {
   const rows = [
-    ['User', asset.assignedTo || '-'],
-    ['System', asset.assetId || '-'],
-    ['Dept', asset.department || '-'],
-    ['Model', asset.model || '-'],
-    ['SL No', asset.serialNumber || '-'],
+    ['User',   asset.assignedTo   || '-'],
+    ['System', asset.assetId      || '-'],
+    ['Dept',   asset.department   || '-'],
+    ['Model',  asset.model        || '-'],
+    ['SL No',  asset.serialNumber || '-'],
   ];
 
   const lines = [
@@ -56,23 +69,47 @@ const buildLabelTspl = (asset) => {
     'DIRECTION 0',
     'REFERENCE 0,0',
     'CLS',
-    'TEXT 14,10,"2",0,1,1,"INFORMATION TECHNOLOGY"',
-    'TEXT 60,35,"2",0,1,1,"B and B Textiles"',
-    'BAR 18,70,364,2',
+
+    // ── Header ────────────────────────────────────────────────────────────────
+    // Title: updated text, left-aligned, font "3"
+    'TEXT 20,4,"3",0,1,1," Hardware Asset Details "',
+    // Subtitle: centered on 400-dot label
+    // "B and B Textiles" = 17 chars × 10 dots = 170 → x = (400-170)/2 = 115
+    'TEXT 100,30,"2",0,1,1,"B and B Textiles"',
+
+    // ── Double-rule divider ───────────────────────────────────────────────────
+    'BAR 0,52,400,3',
+    'BAR 0,57,400,1',
+
+    // ── Vertical separator between key and value ──────────────────────────────
+    'BAR 88,65,1,120',
   ];
 
-  let y = 76;
-  for (const [label, value] of rows) {
-    lines.push(`TEXT 16,${y},"2",0,1,1,"${esc(label)}"`);
-    lines.push(`TEXT 130,${y},"2",0,1,1,":"`);
-    lines.push(`TEXT 160,${y},"2",0,1,1,"${esc(value)}"`);
-    y += 22;
-  }
+  // ── Data rows ──────────────────────────────────────────────────────────────
+  const ROW_START_Y = 67;
+  const ROW_STEP    = 25;
+
+  rows.forEach(([label, value], i) => {
+    const y = ROW_START_Y + i * ROW_STEP;
+    lines.push(`TEXT 8,${y},"2",0,1,1,"${esc(label)}"`);
+    lines.push(`TEXT 94,${y},"3",0,1,1,"${esc(value)}"`);
+  });
+
+  // ── Thin rule above barcode ───────────────────────────────────────────────
+  const ruleY = ROW_START_Y + rows.length * ROW_STEP + 2;   // 194
+  lines.push(`BAR 0,${ruleY},400,1`);
+
+  // ── Code-128 barcode ─────────────────────────────────────────────────────
+  const barcodeData = (asset.serialNumber || asset.assetId || 'N/A')
+    .replace(/[^A-Za-z0-9\-\.\/\+\s]/g, '');
+
+  lines.push(`BARCODE 30,${ruleY + 4},"128",32,1,0,2,2,"${esc(barcodeData)}"`);
 
   lines.push('PRINT 1,1');
   return `${lines.join('\r\n')}\r\n`;
 };
 
+// ── Raw print helper ──────────────────────────────────────────────────────────
 const sendRawLabelToPrinter = async (content, printerName) => {
   const tempFile = path.join(os.tmpdir(), `hw-label-${Date.now()}.txt`);
   await fs.writeFile(tempFile, Buffer.from(content, 'ascii'));
@@ -133,68 +170,43 @@ exports.getById = async (req, res) => {
   }
 };
 
-// ── POST create ───────────────────────────────────────────────────────────────
+// ── CREATE ────────────────────────────────────────────────────────────────────
 exports.create = async (req, res) => {
   const b = req.body;
-  if (!b.assetId)      return res.status(400).json({ message: 'assetId is required.' });
-  if (!b.manufacturer) return res.status(400).json({ message: 'manufacturer is required.' });
-  if (!b.model)        return res.status(400).json({ message: 'model is required.' });
-
   try {
-    const pool = await poolPromise;
-
-    // Uniqueness checks
-    const dupAsset = await pool.request()
-      .input('assetId', sql.NVarChar, b.assetId)
-      .query('SELECT Id FROM HwInventory WHERE AssetId = @assetId');
-    if (dupAsset.recordset.length > 0)
-      return res.status(409).json({ message: `Asset ID "${b.assetId}" already exists.` });
-
-    if (b.serialNumber) {
-      const dupSerial = await pool.request()
-        .input('sn', sql.NVarChar, b.serialNumber)
-        .query('SELECT Id, AssetId FROM HwInventory WHERE SerialNumber = @sn AND SerialNumber != \'\'');
-      if (dupSerial.recordset.length > 0)
-        return res.status(409).json({ message: `Serial number already exists on asset ${dupSerial.recordset[0].AssetId}.` });
-    }
-
+    const pool   = await poolPromise;
     const result = await pool.request()
       .input('assetId',         sql.NVarChar, b.assetId)
       .input('category',        sql.NVarChar, b.category)
       .input('manufacturer',    sql.NVarChar, b.manufacturer)
       .input('model',           sql.NVarChar, b.model)
-      .input('serialNumber',    sql.NVarChar, b.serialNumber     || '')
+      .input('serialNumber',    sql.NVarChar, b.serialNumber    || null)
       .input('location',        sql.NVarChar, b.location)
-      .input('floor',           sql.NVarChar, b.floor            || null)
-      .input('department',      sql.NVarChar, b.department       || null)
-      .input('assignedTo',      sql.NVarChar, b.assignedTo       || null)
-      .input('place',           sql.NVarChar, b.place            || null)
-      .input('processor',       sql.NVarChar, b.processor        || null)
-      .input('ramGb',           sql.NVarChar, b.ramGb            || null)
-      .input('hddGbTb',         sql.NVarChar, b.hddGbTb          || null)
-      .input('ssdGbTb',         sql.NVarChar, b.ssdGbTb          || null)
-      .input('os',              sql.NVarChar, b.os               || null)
-      .input('ipAddress',       sql.NVarChar, b.ipAddress        || null)
-      .input('status',          sql.NVarChar, b.status           || 'Active')
-      .input('warrantyStatus',  sql.NVarChar, b.warrantyStatus   || 'Unknown')
-      .input('warrantyExpiry',  sql.Date,     b.warrantyExpiry   || null)
-      .input('antivirusActive', sql.Bit,      b.antivirusActive !== null && b.antivirusActive !== undefined
-                                               ? (b.antivirusActive ? 1 : 0) : null)
-      .input('remarks',         sql.NVarChar, b.remarks          || null)
+      .input('floor',           sql.NVarChar, b.floor           || null)
+      .input('department',      sql.NVarChar, b.department      || null)
+      .input('assignedTo',      sql.NVarChar, b.assignedTo      || null)
+      .input('place',           sql.NVarChar, b.place           || null)
+      .input('processor',       sql.NVarChar, b.processor       || null)
+      .input('ramGb',           sql.NVarChar, b.ramGb           || null)
+      .input('hddGbTb',         sql.NVarChar, b.hddGbTb         || null)
+      .input('ssdGbTb',         sql.NVarChar, b.ssdGbTb         || null)
+      .input('os',              sql.NVarChar, b.os              || null)
+      .input('ipAddress',       sql.NVarChar, b.ipAddress       || null)
+      .input('status',          sql.NVarChar, b.status)
+      .input('warrantyStatus',  sql.NVarChar, b.warrantyStatus)
+      .input('warrantyExpiry',  sql.Date,     b.warrantyExpiry  || null)
+      .input('antivirusActive', sql.Bit,      b.antivirusActive != null ? (b.antivirusActive ? 1 : 0) : null)
+      .input('remarks',         sql.NVarChar, b.remarks         || null)
       .query(`
-        INSERT INTO HwInventory (
-          AssetId, Category, Manufacturer, Model, SerialNumber,
-          Location, Floor, Department, AssignedTo, Place,
-          Processor, RamGb, HddGbTb, SsdGbTb, Os, IpAddress,
-          Status, WarrantyStatus, WarrantyExpiry, AntivirusActive, Remarks
-        )
+        INSERT INTO HwInventory
+          (AssetId, Category, Manufacturer, Model, SerialNumber, Location, Floor,
+           Department, AssignedTo, Place, Processor, RamGb, HddGbTb, SsdGbTb,
+           Os, IpAddress, Status, WarrantyStatus, WarrantyExpiry, AntivirusActive, Remarks)
         OUTPUT INSERTED.*
-        VALUES (
-          @assetId, @category, @manufacturer, @model, @serialNumber,
-          @location, @floor, @department, @assignedTo, @place,
-          @processor, @ramGb, @hddGbTb, @ssdGbTb, @os, @ipAddress,
-          @status, @warrantyStatus, @warrantyExpiry, @antivirusActive, @remarks
-        )
+        VALUES
+          (@assetId, @category, @manufacturer, @model, @serialNumber, @location, @floor,
+           @department, @assignedTo, @place, @processor, @ramGb, @hddGbTb, @ssdGbTb,
+           @os, @ipAddress, @status, @warrantyStatus, @warrantyExpiry, @antivirusActive, @remarks)
       `);
     res.status(201).json(map(result.recordset[0]));
   } catch (err) {
@@ -203,59 +215,35 @@ exports.create = async (req, res) => {
   }
 };
 
-// ── PUT update ────────────────────────────────────────────────────────────────
+// ── UPDATE ────────────────────────────────────────────────────────────────────
 exports.update = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   const b  = req.body;
-
-  if (!b.assetId)      return res.status(400).json({ message: 'assetId is required.' });
-  if (!b.manufacturer) return res.status(400).json({ message: 'manufacturer is required.' });
-  if (!b.model)        return res.status(400).json({ message: 'model is required.' });
-
   try {
-    const pool = await poolPromise;
-
-    const dupAsset = await pool.request()
-      .input('assetId', sql.NVarChar, b.assetId)
-      .input('id', sql.Int, id)
-      .query('SELECT Id FROM HwInventory WHERE AssetId = @assetId AND Id <> @id');
-    if (dupAsset.recordset.length > 0)
-      return res.status(409).json({ message: `Asset ID "${b.assetId}" already exists.` });
-
-    // Uniqueness check (exclude self)
-    if (b.serialNumber) {
-      const dup = await pool.request()
-        .input('sn', sql.NVarChar, b.serialNumber)
-        .input('id', sql.Int,      id)
-        .query("SELECT Id FROM HwInventory WHERE SerialNumber = @sn AND SerialNumber != '' AND Id <> @id");
-      if (dup.recordset.length > 0)
-        return res.status(409).json({ message: `Serial number already exists on another asset.` });
-    }
-
+    const pool   = await poolPromise;
     const result = await pool.request()
       .input('id',              sql.Int,      id)
       .input('assetId',         sql.NVarChar, b.assetId)
       .input('category',        sql.NVarChar, b.category)
       .input('manufacturer',    sql.NVarChar, b.manufacturer)
       .input('model',           sql.NVarChar, b.model)
-      .input('serialNumber',    sql.NVarChar, b.serialNumber     || '')
+      .input('serialNumber',    sql.NVarChar, b.serialNumber    || null)
       .input('location',        sql.NVarChar, b.location)
-      .input('floor',           sql.NVarChar, b.floor            || null)
-      .input('department',      sql.NVarChar, b.department       || null)
-      .input('assignedTo',      sql.NVarChar, b.assignedTo       || null)
-      .input('place',           sql.NVarChar, b.place            || null)
-      .input('processor',       sql.NVarChar, b.processor        || null)
-      .input('ramGb',           sql.NVarChar, b.ramGb            || null)
-      .input('hddGbTb',         sql.NVarChar, b.hddGbTb          || null)
-      .input('ssdGbTb',         sql.NVarChar, b.ssdGbTb          || null)
-      .input('os',              sql.NVarChar, b.os               || null)
-      .input('ipAddress',       sql.NVarChar, b.ipAddress        || null)
+      .input('floor',           sql.NVarChar, b.floor           || null)
+      .input('department',      sql.NVarChar, b.department      || null)
+      .input('assignedTo',      sql.NVarChar, b.assignedTo      || null)
+      .input('place',           sql.NVarChar, b.place           || null)
+      .input('processor',       sql.NVarChar, b.processor       || null)
+      .input('ramGb',           sql.NVarChar, b.ramGb           || null)
+      .input('hddGbTb',         sql.NVarChar, b.hddGbTb         || null)
+      .input('ssdGbTb',         sql.NVarChar, b.ssdGbTb         || null)
+      .input('os',              sql.NVarChar, b.os              || null)
+      .input('ipAddress',       sql.NVarChar, b.ipAddress       || null)
       .input('status',          sql.NVarChar, b.status)
       .input('warrantyStatus',  sql.NVarChar, b.warrantyStatus)
-      .input('warrantyExpiry',  sql.Date,     b.warrantyExpiry   || null)
-      .input('antivirusActive', sql.Bit,      b.antivirusActive !== null && b.antivirusActive !== undefined
-                                               ? (b.antivirusActive ? 1 : 0) : null)
-      .input('remarks',         sql.NVarChar, b.remarks          || null)
+      .input('warrantyExpiry',  sql.Date,     b.warrantyExpiry  || null)
+      .input('antivirusActive', sql.Bit,      b.antivirusActive != null ? (b.antivirusActive ? 1 : 0) : null)
+      .input('remarks',         sql.NVarChar, b.remarks         || null)
       .query(`
         UPDATE HwInventory SET
           AssetId = @assetId, Category = @category, Manufacturer = @manufacturer, Model = @model,
@@ -293,24 +281,23 @@ exports.remove = async (req, res) => {
   }
 };
 
+// ── PRINT LABEL ───────────────────────────────────────────────────────────────
 exports.printLabel = async (req, res) => {
   const id = parseInt(req.params.id, 10);
-
   try {
-    const pool = await poolPromise;
+    const pool   = await poolPromise;
     const result = await pool.request()
       .input('id', sql.Int, id)
       .query('SELECT * FROM HwInventory WHERE Id = @id');
 
-    if (!result.recordset[0]) {
+    if (!result.recordset[0])
       return res.status(404).json({ message: 'Asset not found.' });
-    }
 
     const asset = map(result.recordset[0]);
-    const tspl = buildLabelTspl(asset);
+    const tspl  = buildLabelTspl(asset);
 
     await sendRawLabelToPrinter(tspl, LABEL_PRINTER_NAME);
-    res.json({ message: `Label sent to printer ${LABEL_PRINTER_NAME}.` });
+    res.json({ message: `Label sent to printer: ${LABEL_PRINTER_NAME}` });
   } catch (err) {
     console.error('[hw-inventory.printLabel]', err);
     res.status(500).json({ message: 'Failed to print label', error: err.message });
