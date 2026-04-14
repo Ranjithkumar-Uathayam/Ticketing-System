@@ -46,43 +46,31 @@
       <svg class="w-4 h-4 flex-shrink-0" style="color: rgba(27,47,110,0.4);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
       </svg>
-      <input type="month" [value]="filterMonth()" (change)="setMonth($any($event.target).value)"
-        class="text-sm rounded-xl px-3 py-2 outline-none font-medium"
-        style="border: 1.5px solid #E8EDF8; color: #1B2F6E; background: white;"
-        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+      <input type="month" [value]="filterMonth()"
+        (change)="filterMonth.set($any($event.target).value)"
+        class="text-sm font-medium rounded-xl px-2 py-1.5 outline-none"
+        style="border: 1.5px solid #E8EDF8; color: #1B2F6E; background: white;">
     </div>
 
     <!-- Status filter -->
-    <div class="flex items-center gap-2">
-      <svg class="w-4 h-4 flex-shrink-0" style="color: rgba(27,47,110,0.4);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
-      </svg>
-      <select [value]="filterStatus()" (change)="setStatus($any($event.target).value)"
-        class="text-sm rounded-xl px-3 py-2 outline-none font-medium"
-        style="border: 1.5px solid #E8EDF8; color: #1B2F6E; background: white;"
-        onfocus="this.style.borderColor='#FDB515'" onblur="this.style.borderColor='#E8EDF8'">
+    <div class="relative">
+      <select [value]="filterStatus()"
+        (change)="filterStatus.set($any($event.target).value)"
+        class="text-sm font-medium rounded-xl pl-3 pr-8 py-2 outline-none appearance-none cursor-pointer"
+        style="border: 1.5px solid #E8EDF8; color: #1B2F6E; background: white;">
         <option value="">All Statuses</option>
         @for(s of statuses; track s) {
           <option [value]="s">{{ s }}</option>
         }
       </select>
+      <svg class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style="color: rgba(27,47,110,0.4);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
     </div>
 
-    <!-- ── Category Filter ── -->
-    <!-- Locked badge — when user is pinned to one category -->
-    @if(isCategoryLocked()) {
-      <div class="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold"
-           style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:rgba(27,47,110,0.05);">
-        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-        </svg>
-        {{ auth.lockedCategory() }}
-      </div>
-    }
-    <!-- Category filter pills — Admin / Manager only -->
+    <!-- Category filter (hidden if locked) -->
     @if(canFilterCategory()) {
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-2">
         <button (click)="setCategory(null)"
           class="px-3 py-2 rounded-xl text-sm font-medium transition-all"
           [style.background]="activeCategory() === null ? '#1B2F6E' : 'white'"
@@ -118,7 +106,7 @@
     }
   </div>
 
-  <!-- Desktop Table -->
+  <!-- ── Desktop Table ── -->
   <div class="hidden md:block bg-white rounded-2xl shadow-sm" style="border: 1px solid #E8EDF8; overflow: hidden;">
     <div class="overflow-x-auto">
       <table class="w-full" style="min-width: 1000px;">
@@ -201,16 +189,8 @@
       </table>
     </div>
   </div>
-    <!-- Pagination (shared — place once after both table + cards sections) -->
-    <app-pagination
-        [currentPage]="currentPage()"
-        [totalItems]="filteredTickets().length"
-        [pageSize]="pageSize"
-        itemLabel="tickets"
-        (pageChange)="currentPage.set($event)">
-    </app-pagination>
 
-  <!-- Mobile Cards -->
+  <!-- ── Mobile Cards ── -->
   <div class="md:hidden space-y-3">
     @for(ticket of pagedTickets(); track ticket.id) {
       <div class="bg-white rounded-2xl shadow-sm p-4 hover:shadow-md transition-all" style="border: 1px solid #E8EDF8;">
@@ -251,14 +231,15 @@
       </div>
     }
   </div>
-  <!-- Pagination (shared — place once after both table + cards sections) -->
-    <app-pagination
-        [currentPage]="currentPage()"
-        [totalItems]="filteredTickets().length"
-        [pageSize]="pageSize"
-        itemLabel="tickets"
-        (pageChange)="currentPage.set($event)">
-    </app-pagination>
+
+  <!-- ── Pagination (single, shared by both desktop and mobile) ── -->
+  <app-pagination
+    [currentPage]="currentPage()"
+    [totalItems]="filteredTickets().length"
+    [pageSize]="pageSize"
+    itemLabel="tickets"
+    (pageChange)="currentPage.set($event)">
+  </app-pagination>
 
 </div>
 }
