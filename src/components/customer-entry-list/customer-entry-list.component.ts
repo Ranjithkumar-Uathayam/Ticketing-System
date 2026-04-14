@@ -1,17 +1,18 @@
-// src/components/customer-entry-list/customer-entry-list.component.ts
-import { Component, ChangeDetectionStrategy, signal, computed, OnInit } from '@angular/core';
+// src/components/customer-entry-list/customer-entry-list.component.ts  (UPDATED — pagination)
+import { Component, ChangeDetectionStrategy, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CustomerEntryService } from '../../services/customer-entry.service';
 import { AuthService } from '../../services/auth.service';
 import { CustomerEntry } from '../../customer-entry.models';
 import { FormsModule } from '@angular/forms';
+import { PaginationComponent } from '../shared/pagination.component';
 
 @Component({
   selector: 'app-customer-entry-list',
   templateUrl: './customer-entry-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginationComponent],
 })
 export class CustomerEntryListComponent implements OnInit {
   loading    = this.svc.loading;
@@ -21,10 +22,12 @@ export class CustomerEntryListComponent implements OnInit {
   expanded   = signal<number | null>(null);
   toast      = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
 
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  currentPage = signal(1);
+  readonly pageSize = 15;
+
   // Admins and Managers see everyone's entries; all others see only their own
-  canViewAll = computed(() =>
-    this.auth.isAdmin() || this.auth.isManager()
-  );
+  canViewAll = computed(() => this.auth.isAdmin() || this.auth.isManager());
 
   filtered = computed(() => {
     const currentUserId = this.auth.currentUser()?.id;
@@ -32,12 +35,10 @@ export class CustomerEntryListComponent implements OnInit {
 
     let list = this.svc.records();
 
-    // ── Scope: non-admins/managers only see their own entries ────────────────
     if (!viewAll && currentUserId) {
       list = list.filter(r => r.createdByUserId === currentUserId);
     }
 
-    // ── Search by name / employee ID ─────────────────────────────────────────
     const q = this.searchTerm().toLowerCase();
     if (q) {
       list = list.filter(r =>
@@ -46,14 +47,23 @@ export class CustomerEntryListComponent implements OnInit {
       );
     }
 
-    // ── Date filter ──────────────────────────────────────────────────────────
     const d = this.filterDate();
-    if (d) {
-      list = list.filter(r => r.entryDate?.startsWith(d));
-    }
+    if (d) list = list.filter(r => r.entryDate?.startsWith(d));
 
     return list;
   });
+
+  // ── Paginated slice ─────────────────────────────────────────────────────────
+  pagedEntries = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filtered().slice(start, start + this.pageSize);
+  });
+
+  // Reset to page 1 whenever filters change
+  private resetEffect = effect(() => {
+    this.searchTerm(); this.filterDate();
+    this.currentPage.set(1);
+  }, { allowSignalWrites: true });
 
   constructor(
     private svc:    CustomerEntryService,
@@ -87,7 +97,6 @@ export class CustomerEntryListComponent implements OnInit {
     }
   }
 
-  /** Sum of all Qty fields for quick overview badge */
   totalQty(r: CustomerEntry): number {
     return (r.avcQty ?? 0) + (r.pvcQty ?? 0) + (r.emailWhatsappQty ?? 0)
          + (r.exchangePickupQty ?? 0) + (r.exchangeCallQty ?? 0) + (r.exchangeOrderReplacementQty ?? 0)

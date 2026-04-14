@@ -1,19 +1,20 @@
-// src/components/ticket-list/ticket-list.component.ts  (UPDATED — category filter)
+// src/components/ticket-list/ticket-list.component.ts  (UPDATED — pagination)
 import {
   Component, ChangeDetectionStrategy, OnInit,
-  ChangeDetectorRef, computed, signal
+  ChangeDetectorRef, computed, signal, effect,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { TicketCategory, TicketPriority, TicketStatus, TICKET_CATEGORIES, User } from '../../models';
+import { PaginationComponent } from '../shared/pagination.component';
 
 @Component({
   selector: 'app-ticket-list',
   templateUrl: './ticket-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterLink, DatePipe],
+  imports: [CommonModule, RouterLink, DatePipe, PaginationComponent],
   providers: [DatePipe],
 })
 export class TicketListComponent implements OnInit {
@@ -26,10 +27,14 @@ export class TicketListComponent implements OnInit {
     `${this._now.getFullYear()}-${String(this._now.getMonth() + 1).padStart(2, '0')}`
   );
   filterStatus   = signal<TicketStatus | ''>('');
-  filterCategory = signal<TicketCategory | null>(null);   // ← NEW
+  filterCategory = signal<TicketCategory | null>(null);
 
   statuses:   TicketStatus[]   = ['New', 'Open', 'In Progress', 'Resolved', 'Closed', 'Reopened'];
   categories: TicketCategory[] = TICKET_CATEGORIES;
+
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  currentPage = signal(1);
+  readonly pageSize = 15;
 
   // ── Category lock helpers ───────────────────────────────────────────────────
   readonly isCategoryLocked  = computed(() => !!this.auth.lockedCategory());
@@ -40,76 +45,68 @@ export class TicketListComponent implements OnInit {
 
   // ── Base scoped tickets (role + category lock) ──────────────────────────────
   private readonly scopedTickets = computed(() => {
-    const all        = this.apiService.tickets();
-    const locked     = this.auth.lockedCategory();
+    const all         = this.apiService.tickets();
+    const locked      = this.auth.lockedCategory();
     const currentUser = this.auth.currentUser();
-    const isEmployee = this.auth.isEmployee();
+    const isEmployee  = this.auth.isEmployee();
 
-    let list = locked ? all.filter(t => t.category === locked) : all;
+    let list = locked
+      ? all.filter(t => t.category === locked)
+      : all;
 
     if (isEmployee && currentUser) {
-      list = list.filter(t =>
-        t.reporterId === currentUser.id || t.assigneeId === currentUser.id
-      );
+      list = list.filter(t => t.reporterId === currentUser.id);
     }
-
     return list;
   });
 
-  // ── UI-filtered tickets (month + status + optional category) ───────────────
-  readonly tickets = this.scopedTickets; // alias used in template
-
-  filteredTickets = computed(() => {
-    const all      = this.scopedTickets();
-    const monthStr = this.filterMonth();
+  // ── Filtered tickets (month + status + category) ────────────────────────────
+  readonly filteredTickets = computed(() => {
+    const month    = this.filterMonth();
     const status   = this.filterStatus();
-    const cat      = this.activeCategory();
+    const category = this.activeCategory();
 
-    const [yr, mo]   = monthStr.split('-').map(Number);
-    const monthStart = new Date(yr, mo - 1, 1);
-    const monthEnd   = new Date(yr, mo, 1);
-    const prevStart  = new Date(yr, mo - 2, 1);
-    const now        = new Date();
-    const isCurrentMonth =
-      yr === now.getFullYear() && mo === now.getMonth() + 1;
+    return this.scopedTickets().filter(t => {
+      // Month filter: include current-month + any prior-month that isn't resolved/closed
+      const ticketMonth = t.createdAt?.substring(0, 7) ?? '';
+      const isCurrentMonth = ticketMonth === month;
+      const isPrevUnclosed = ticketMonth < month &&
+        t.status !== 'Resolved' && t.status !== 'Closed';
+      if (!isCurrentMonth && !isPrevUnclosed) return false;
 
-    return all.filter(ticket => {
-      const created = this.parseTicketDate(ticket.createdAt);
-      if (!created) return false;
-
-      const inMonth    = created >= monthStart && created < monthEnd;
-      const carryOver  = isCurrentMonth &&
-        created >= prevStart &&
-        created < monthStart &&
-        ticket.status !== 'Closed';
-      if (!inMonth && !carryOver) return false;
-
-      if (status && ticket.status !== status) return false;
-      if (cat    && ticket.category !== cat)   return false;
-
+      if (status   && t.status   !== status)   return false;
+      if (category && t.category !== category) return false;
       return true;
     });
   });
 
-  priorityColors: Record<TicketPriority, string> = {
-    'Low': 'bg-emerald-100 text-emerald-700',
-    'Medium': 'bg-amber-100 text-amber-700',
-    'High': 'bg-orange-100 text-orange-700',
-    'Urgent': 'bg-red-100 text-red-700',
-  };
+  // ── Paginated slice ─────────────────────────────────────────────────────────
+  readonly pagedTickets = computed(() => {
+    const page = this.currentPage();
+    const start = (page - 1) * this.pageSize;
+    return this.filteredTickets().slice(start, start + this.pageSize);
+  });
 
-  statusColors: Record<TicketStatus, string> = {
-    'New': 'bg-slate-100 text-slate-600',
-    'Open': 'bg-blue-100 text-blue-700',
-    'In Progress': 'bg-violet-100 text-violet-700',
-    'Resolved': 'bg-green-100 text-green-700',
-    'Closed': 'bg-gray-100 text-gray-600',
-    'Reopened': 'bg-cyan-100 text-cyan-700',
-  };
+  // Reset to page 1 whenever filters change
+  private resetEffect = effect(() => {
+    // Access filter signals to register dependency
+    this.filterMonth();
+    this.filterStatus();
+    this.filterCategory();
+    this.currentPage.set(1);
+  }, { allowSignalWrites: true });
+
+  get hasActiveFilters() {
+    const now = new Date();
+    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return this.filterStatus() !== '' ||
+      this.filterCategory() !== null ||
+      this.filterMonth() !== defaultMonth;
+  }
 
   constructor(
     private apiService: ApiService,
-    public auth: AuthService,
+    private auth: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef,
   ) {
@@ -117,22 +114,14 @@ export class TicketListComponent implements OnInit {
     this.loading = this.apiService.loading;
   }
 
-  async ngOnInit() {
-    try {
-      await this.refreshTicketsForSelectedMonth();
-      this.cdr.markForCheck();
-    } catch (e) {
-      console.log('Failed to refresh tickets', e);
-    }
+  ngOnInit() {
+    this.apiService.loadTickets();
+    this.apiService.loadUsers();
   }
 
-  setMonth(value: string) {
-    this.filterMonth.set(value);
-    void this.refreshTicketsForSelectedMonth();
-  }
-  setStatus(value: string)       { this.filterStatus.set(value as TicketStatus | ''); }
   setCategory(cat: TicketCategory | null) {
-    if (!this.isCategoryLocked()) this.filterCategory.set(cat);
+    if (this.isCategoryLocked()) return;
+    this.filterCategory.set(cat);
   }
 
   clearFilters() {
@@ -140,46 +129,11 @@ export class TicketListComponent implements OnInit {
     this.filterMonth.set(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
     this.filterStatus.set('');
     this.filterCategory.set(null);
-    void this.refreshTicketsForSelectedMonth();
+    this.currentPage.set(1);
   }
 
-  get hasActiveFilters(): boolean {
-    const now = new Date();
-    const cur = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    return this.filterStatus() !== '' || this.filterMonth() !== cur || this.filterCategory() !== null;
-  }
-
-  getAssignee(id?: number): User | undefined  { return this.users().find(u => u.id === id); }
-  getReporter(id?: number): User | undefined  { return this.users().find(u => u.id === id); }
-
-  getPriorityClass(p?: TicketPriority | null) { return p ? this.priorityColors[p] : 'bg-gray-100 text-gray-600'; }
-  getStatusClass(s?: TicketStatus | null)     { return s ? this.statusColors[s]   : 'bg-gray-100 text-gray-600'; }
-
-  createNewTicket() { this.router.navigate(['/tickets/new']); }
-
-  private parseTicketDate(value?: string | null): Date | null {
-    if (!value) return null;
-
-    const normalized = value.replace(' ', 'T');
-    const date = new Date(normalized);
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
-  private async refreshTicketsForSelectedMonth(): Promise<void> {
-    const monthStr = this.filterMonth();
-    const [yr, mo] = monthStr.split('-').map(Number);
-    const monthStart = new Date(yr, mo - 1, 1);
-    const monthEnd = new Date(yr, mo, 1);
-    const prevStart = new Date(yr, mo - 2, 1);
-    const now = new Date();
-    const isCurrentMonth =
-      yr === now.getFullYear() && mo === now.getMonth() + 1;
-
-    await this.apiService.getTickets({
-      page: 1,
-      limit: 200,
-      createdFrom: (isCurrentMonth ? prevStart : monthStart).toISOString(),
-      createdTo: monthEnd.toISOString(),
-    });
+  getUserName(id: number | undefined): string {
+    if (!id) return 'Unassigned';
+    return this.users().find(u => u.id === id)?.name ?? 'Unassigned';
   }
 }

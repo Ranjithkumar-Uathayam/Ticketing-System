@@ -1,7 +1,7 @@
-// src/components/reports/reports.component.ts  (FIXED — category + all filters now reactive)
+// src/components/reports/reports.component.ts  (UPDATED — pagination)
 import {
-  Component, ChangeDetectionStrategy, computed,
-  ViewChild, ElementRef, OnDestroy, effect, inject, Injector
+  Component, ChangeDetectionStrategy, computed, signal,
+  ViewChild, ElementRef, OnDestroy, effect, inject, Injector,
 } from '@angular/core';
 import { toSignal }           from '@angular/core/rxjs-interop';
 import { CommonModule }        from '@angular/common';
@@ -9,6 +9,7 @@ import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ApiService }          from '../../services/api.service';
 import { TicketStatus, TicketPriority, TicketCategory, TICKET_CATEGORIES, User } from '../../models';
 import { AuthService }         from '../../services/auth.service';
+import { PaginationComponent } from '../shared/pagination.component';
 
 declare var Chart: any;
 
@@ -16,7 +17,7 @@ declare var Chart: any;
   selector: 'app-reports',
   templateUrl: './reports.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PaginationComponent],
 })
 export class ReportsComponent implements OnDestroy {
   users;
@@ -30,6 +31,10 @@ export class ReportsComponent implements OnDestroy {
   statuses:   TicketStatus[]   = ['Open', 'In Progress', 'Resolved', 'Closed', 'Reopened'];
   priorities: TicketPriority[] = ['Low', 'Medium', 'High', 'Urgent'];
   categories: TicketCategory[] = TICKET_CATEGORIES;
+
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  currentPage = signal(1);
+  readonly pageSize = 20;
 
   // ── Category lock helpers ──────────────────────────────────────────────────
   readonly isCategoryLocked  = computed(() => !!this.auth.lockedCategory());
@@ -50,19 +55,11 @@ export class ReportsComponent implements OnDestroy {
     category:   new FormControl<TicketCategory | ''>(''),
   });
 
-  /**
-   * KEY FIX: Convert filterForm.valueChanges (RxJS observable) to a signal.
-   * This makes filteredTickets() — a computed() — re-run automatically on
-   * every form change, including the category dropdown.
-   *
-   * Without this, computed() reads filterForm.value as a plain object snapshot
-   * and never knows when it changes.
-   */
   readonly filterValues = toSignal(this.filterForm.valueChanges, {
     initialValue: this.filterForm.value,
   });
 
-  // ── Base scoped tickets (role/category lock applied first) ─────────────────
+  // ── Base scoped tickets ────────────────────────────────────────────────────
   private readonly scopedTickets = computed(() => {
     const all         = this.apiService.tickets();
     const locked      = this.auth.lockedCategory();
@@ -76,33 +73,36 @@ export class ReportsComponent implements OnDestroy {
     return list;
   });
 
-  // ── UI-filtered tickets — now fully reactive via filterValues signal ────────
+  // ── UI-filtered tickets ────────────────────────────────────────────────────
   filteredTickets = computed(() => {
     const all     = this.scopedTickets();
-    const filters = this.filterValues();          // ← signal — tracked by computed()
+    const filters = this.filterValues();
     const locked  = this.auth.lockedCategory();
+
+    // Reset page when filters change
+    this.currentPage.set(1);
 
     return all.filter(ticket => {
       const createdAt = new Date(ticket.createdAt);
-
       if (filters.startDate && createdAt < new Date(filters.startDate)) return false;
-
       if (filters.endDate) {
         const end = new Date(filters.endDate);
         end.setDate(end.getDate() + 1);
         if (createdAt > end) return false;
       }
-
       if (filters.status     && ticket.status     !== filters.status)             return false;
       if (filters.priority   && ticket.priority   !== filters.priority)           return false;
       if (filters.assigneeId && ticket.assigneeId !== Number(filters.assigneeId)) return false;
-
-      // Category: locked category takes precedence over the form dropdown
       const catFilter = locked || filters.category || '';
       if (catFilter && ticket.category !== catFilter) return false;
-
       return true;
     });
+  });
+
+  // ── Paginated slice ────────────────────────────────────────────────────────
+  pagedTickets = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredTickets().slice(start, start + this.pageSize);
   });
 
   reportChartData = computed(() => {
@@ -127,45 +127,49 @@ export class ReportsComponent implements OnDestroy {
 
   ngOnDestroy() { this.categoryChart?.destroy(); }
 
-  setCategory(cat: TicketCategory | '') {
-    if (!this.isCategoryLocked()) this.filterForm.patchValue({ category: cat });
-  }
-
-  createChart(canvas: ElementRef<HTMLCanvasElement>) {
-    const d = this.reportChartData();
-    this.categoryChart = new Chart(canvas.nativeElement, {
-      type: 'bar',
-      data: {
-        labels: d.labels,
-        datasets: [{
-          label: 'Tickets by Category',
-          data: d.data,
-          backgroundColor: 'rgba(27,47,110,0.18)',
-          borderColor: '#1B2F6E',
-          borderWidth: 1,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-        plugins: { legend: { display: false } },
-      },
-    });
-  }
-
-  updateChart() {
-    const d = this.reportChartData();
-    this.categoryChart.data.labels           = d.labels;
-    this.categoryChart.data.datasets[0].data = d.data;
-    this.categoryChart.update();
-  }
-
-  getAssignee(id?: number): User | undefined {
+  getAssignee(id: number | undefined): User | undefined {
     return this.users().find(u => u.id === id);
   }
 
   exportToCsv() {
-    alert('Export to CSV functionality coming soon!');
+    const tickets = this.filteredTickets();
+    const header  = ['ID', 'Title', 'Category', 'Status', 'Priority', 'Assignee', 'Created At'];
+    const rows = tickets.map(t => [
+      t.id,
+      `"${t.title}"`,
+      t.category ?? '',
+      t.status,
+      t.priority,
+      this.getAssignee(t.assigneeId)?.name ?? 'Unassigned',
+      new Date(t.createdAt).toLocaleDateString(),
+    ]);
+    const csv  = [header, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'report.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private createChart(el: ElementRef<HTMLCanvasElement>) {
+    const data = this.reportChartData();
+    this.categoryChart = new Chart(el.nativeElement, {
+      type: 'doughnut',
+      data: {
+        labels:   data.labels,
+        datasets: [{ data: data.data, backgroundColor: ['#1B2F6E', '#FDB515', '#22c55e', '#ef4444', '#8b5cf6'] }],
+      },
+      options: { responsive: true, maintainAspectRatio: false },
+    });
+  }
+
+  private updateChart() {
+    if (!this.categoryChart) return;
+    const data = this.reportChartData();
+    this.categoryChart.data.labels   = data.labels;
+    this.categoryChart.data.datasets[0].data = data.data;
+    this.categoryChart.update();
   }
 }

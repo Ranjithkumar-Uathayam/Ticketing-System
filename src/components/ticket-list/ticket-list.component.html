@@ -137,7 +137,7 @@
           </tr>
         </thead>
         <tbody class="divide-y" style="border-color: #F0F4FC;">
-          @for(ticket of filteredTickets(); track ticket.id) {
+          @for(ticket of pagedTickets(); track ticket.id) {
             <tr class="hover:bg-amber-50/25 transition-colors group cursor-pointer" [routerLink]="['/tickets', ticket.id]">
                 <td class="px-3 py-3 text-xs whitespace-nowrap" style="color: rgba(27,47,110,0.45);">{{ ticket.createdAt | date:'dd MMM yy hh:mm a':'UTC' }}</td>
                 <td class="px-3 py-3">
@@ -201,10 +201,18 @@
       </table>
     </div>
   </div>
+    <!-- Pagination (shared — place once after both table + cards sections) -->
+    <app-pagination
+        [currentPage]="currentPage()"
+        [totalItems]="filteredTickets().length"
+        [pageSize]="pageSize"
+        itemLabel="tickets"
+        (pageChange)="currentPage.set($event)">
+    </app-pagination>
 
   <!-- Mobile Cards -->
   <div class="md:hidden space-y-3">
-    @for(ticket of filteredTickets(); track ticket.id) {
+    @for(ticket of pagedTickets(); track ticket.id) {
       <div class="bg-white rounded-2xl shadow-sm p-4 hover:shadow-md transition-all" style="border: 1px solid #E8EDF8;">
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-start gap-3 min-w-0">
@@ -243,6 +251,14 @@
       </div>
     }
   </div>
+  <!-- Pagination (shared — place once after both table + cards sections) -->
+    <app-pagination
+        [currentPage]="currentPage()"
+        [totalItems]="filteredTickets().length"
+        [pageSize]="pageSize"
+        itemLabel="tickets"
+        (pageChange)="currentPage.set($event)">
+    </app-pagination>
 
 </div>
 }

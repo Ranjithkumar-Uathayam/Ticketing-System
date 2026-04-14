@@ -1,5 +1,5 @@
-// src/components/hw-inventory/hw-inventory-list.component.ts
-import { Component, ChangeDetectionStrategy, computed, signal, OnInit } from '@angular/core';
+// src/components/hw-inventory-list/hw-inventory-list.component.ts  (UPDATED — pagination)
+import { Component, ChangeDetectionStrategy, computed, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule }  from '@angular/forms';
 import { Router }       from '@angular/router';
@@ -9,12 +9,13 @@ import {
   HWAsset, HWCategory, HWStatus, HWLocation, WarrantyStatus,
   HW_CATEGORIES, HW_STATUSES, HW_LOCATIONS, WARRANTY_STATUSES,
 } from '../../hw-inventory.models';
+import { PaginationComponent } from '../shared/pagination.component';
 
 @Component({
   selector: 'app-hw-inventory-list',
   templateUrl: './hw-inventory-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginationComponent],
 })
 export class HwInventoryListComponent implements OnInit {
   loading     = this.svc.loading;
@@ -34,9 +35,13 @@ export class HwInventoryListComponent implements OnInit {
   readonly locations      = HW_LOCATIONS;
   readonly warrantyStates = WARRANTY_STATUSES;
 
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  currentPage = signal(1);
+  readonly pageSize = 20;
+
   // ── Summary stats ──────────────────────────────────────────────────────────
   summary = computed(() => {
-    const all = this.svc.assets();
+    const all   = this.svc.assets();
     const today = new Date();
     const in90  = new Date(today.getTime() + 90 * 86400_000);
     return {
@@ -84,6 +89,28 @@ export class HwInventoryListComponent implements OnInit {
     });
   });
 
+  // ── Paginated slice ─────────────────────────────────────────────────────────
+  pagedAssets = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filtered().slice(start, start + this.pageSize);
+  });
+
+  get hasFilters(): boolean {
+    return this.searchTerm() !== '' ||
+      this.filterCategory() !== '' ||
+      this.filterStatus()   !== '' ||
+      this.filterLocation() !== '' ||
+      this.filterWarranty() !== '' ||
+      this.showOnlyExpiring();
+  }
+
+  // Reset to page 1 whenever filters change
+  private resetEffect = effect(() => {
+    this.searchTerm(); this.filterCategory(); this.filterStatus();
+    this.filterLocation(); this.filterWarranty(); this.showOnlyExpiring();
+    this.currentPage.set(1);
+  }, { allowSignalWrites: true });
+
   constructor(
     private svc: HwInventoryService,
     private router: Router,
@@ -92,14 +119,11 @@ export class HwInventoryListComponent implements OnInit {
 
   ngOnInit() { this.svc.getAll(); }
 
-  openAdd()         { this.router.navigate(['/hw-inventory/new']); }
+  openAdd()             { this.router.navigate(['/hw-inventory/new']); }
   openEdit(id?: number) { this.router.navigate(['/hw-inventory', id ?? 'new']); }
-  async printLabel(asset: HWAsset) {
-    if (!asset.id) {
-      this.flash('error', 'Unable to print label for this asset.');
-      return;
-    }
 
+  async printLabel(asset: HWAsset) {
+    if (!asset.id) { this.flash('error', 'Unable to print label for this asset.'); return; }
     try {
       await this.labelPrinter.printLabel(asset.id);
       this.flash('success', 'Label sent to printer.');
@@ -131,56 +155,7 @@ export class HwInventoryListComponent implements OnInit {
     this.filterLocation.set('');
     this.filterWarranty.set('');
     this.showOnlyExpiring.set(false);
-  }
-
-  get hasFilters(): boolean {
-    return !!(this.searchTerm() || this.filterCategory() || this.filterStatus() ||
-              this.filterLocation() || this.filterWarranty() || this.showOnlyExpiring());
-  }
-
-  statusStyle(s: HWStatus): string {
-    const m: Record<HWStatus, string> = {
-      'Active':    'background:#F0FDF4; color:#15803d;',
-      'Spare':     'background:#EFF6FF; color:#1d4ed8;',
-      'Faulty':    'background:#FEF2F2; color:#DC2626;',
-      'In Repair': 'background:#FFF7ED; color:#c2410c;',
-      'Disposed':  'background:#F1F5F9; color:#64748b;',
-      'New':       'background:#F0F9FF; color:#0284c7;',
-    };
-    return m[s] ?? '';
-  }
-
-  warrantyStyle(w: WarrantyStatus): string {
-    const m: Record<WarrantyStatus, string> = {
-      'In Warranty':     'background:#ECFDF5; color:#059669;',
-      'Out of Warranty': 'background:#FFF7ED; color:#c2410c;',
-      'Expired':         'background:#FEF2F2; color:#DC2626;',
-      'Unknown':         'background:#F1F5F9; color:#64748b;',
-    };
-    return m[w] ?? '';
-  }
-
-  categoryIcon(c: HWCategory): string {
-    const m: Record<HWCategory, string> = {
-      Desktop: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-      Laptop:  'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-      Printer: 'M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z',
-      Scanner: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z',
-      Other:   'M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18',
-    };
-    return m[c];
-  }
-
-  formatDate(d?: string | null): string {
-    if (!d) return '—';
-    return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
-  }
-
-  isExpiringSoon(a: HWAsset): boolean {
-    if (!a.warrantyExpiry || a.warrantyStatus !== 'In Warranty') return false;
-    const exp  = new Date(a.warrantyExpiry);
-    const in90 = new Date(Date.now() + 90 * 86400_000);
-    return exp >= new Date() && exp <= in90;
+    this.currentPage.set(1);
   }
 
   private flash(type: 'success' | 'error', msg: string) {

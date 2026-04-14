@@ -229,7 +229,7 @@
             </tr>
           </thead>
           <tbody class="divide-y" style="border-color:#F0F4FC;">
-            @for(asset of filtered(); track asset.id) {
+            @for(asset of pagedAssets(); track asset.id) {
               <tr class="hover:bg-amber-50/20 transition-colors group"
                   [style.background]="isExpiringSoon(asset) ? 'rgba(254,215,170,0.08)' : 'white'">
 
@@ -336,6 +336,14 @@
         </table>
       </div>
     </div>
+    <!-- Pagination -->
+    <app-pagination
+        [currentPage]="currentPage()"
+        [totalItems]="filtered().length"
+        [pageSize]="pageSize"
+        itemLabel="assets"
+        (pageChange)="currentPage.set($event)">
+    </app-pagination>
   }
 
 </div>

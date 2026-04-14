@@ -93,7 +93,7 @@
 
   <!-- ── Records ───────────────────────────────────────────────────────── -->
   <div class="space-y-3">
-    @for(rec of filtered(); track rec.id) {
+    @for(rec of pagedEntries(); track rec.id) {
       <div class="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer transition-all hover:shadow-md"
            style="border:1px solid #E8EDF8;"
            (click)="toggleExpand(rec.id!)">
@@ -234,6 +234,14 @@
       </div>
     }
   </div>
+    <!-- Pagination -->
+    <app-pagination
+        [currentPage]="currentPage()"
+        [totalItems]="filtered().length"
+        [pageSize]="pageSize"
+        itemLabel="entries"
+        (pageChange)="currentPage.set($event)">
+    </app-pagination>
 
   } <!-- /else loading -->
 

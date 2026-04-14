@@ -1,19 +1,31 @@
 <!-- src/components/user-management/user-management.component.html -->
 <div class="space-y-6">
-  <!-- Tab Navigation -->
+
+  <!-- ── Tab Navigation ── -->
   <div class="bg-white shadow rounded-lg">
     <div class="border-b border-gray-200">
       <nav class="-mb-px flex space-x-8 px-6" aria-label="Tabs">
         <button (click)="selectTab('users')" type="button"
           [class]="activeTab() === 'users' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
           class="group inline-flex items-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-          <svg class="w-5 h-5 mr-2" [class]="activeTab() === 'users' ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+          <svg class="w-5 h-5 mr-2"
+            [class]="activeTab() === 'users' ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+          </svg>
           <span>Users</span>
         </button>
+
         <button (click)="selectTab('roles')" type="button"
           [class]="activeTab() === 'roles' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
           class="group inline-flex items-center whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-          <svg class="w-5 h-5 mr-2" [class]="activeTab() === 'roles' ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" /></svg>
+          <svg class="w-5 h-5 mr-2"
+            [class]="activeTab() === 'roles' ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'"
+            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/>
+          </svg>
           <span>Roles &amp; Permissions</span>
         </button>
       </nav>
@@ -21,17 +33,41 @@
   </div>
 
   <div class="mt-6">
-    <!-- ── Users Panel ── -->
+
+    <!-- ══════════════════════════════════════════════════════
+         USERS PANEL
+    ══════════════════════════════════════════════════════ -->
     @if (activeTab() === 'users') {
       <div id="users-panel">
-        <div class="flex justify-end mb-4">
-          <button (click)="openUserModal()" type="button"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            Add User
-          </button>
+
+        <!-- Toolbar: search + Add button -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <!-- Search -->
+          <div class="relative w-full sm:w-72">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" placeholder="Search by name or username…"
+              [value]="userSearch()"
+              (input)="userSearch.set($any($event.target).value)"
+              class="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+          </div>
+
+          <!-- Count + Add -->
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-gray-500">
+              {{ filteredUsers().length }} user{{ filteredUsers().length !== 1 ? 's' : '' }}
+            </span>
+            <button (click)="openUserModal()" type="button"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              Add User
+            </button>
+          </div>
         </div>
 
-        <!-- Users Desktop Table -->
+        <!-- ── Users Desktop Table ── -->
         <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg hidden md:block">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
@@ -43,11 +79,12 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              @for (user of users(); track user.id) {
+              @for (user of pagedUsers(); track user.id) {
                 <tr class="hover:bg-gray-50">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center gap-3">
-                      <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0" style="background:#1B2F6E; color:#FDB515;">
+                      <div class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        style="background:#1B2F6E; color:#FDB515;">
                         {{ user.name.charAt(0).toUpperCase() }}
                       </div>
                       <div>
@@ -62,7 +99,7 @@
                   <td class="px-6 py-4 whitespace-nowrap">
                     @if(user.category) {
                       <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                            [style]="getCategoryBadgeStyle(user.category)">
+                        [style]="getCategoryBadgeStyle(user.category)">
                         {{ user.category }}
                       </span>
                     } @else {
@@ -76,51 +113,87 @@
                     </button>
                   </td>
                 </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="px-6 py-10 text-center text-sm text-gray-500">
+                    No users match your search.
+                  </td>
+                </tr>
               }
             </tbody>
           </table>
         </div>
 
-        <!-- Users Mobile Cards -->
+        <!-- ── Users Mobile Cards ── -->
         <div class="md:hidden space-y-4">
-          @for(user of users(); track user.id) {
+          @for(user of pagedUsers(); track user.id) {
             <div class="bg-white rounded-lg shadow p-4">
               <div class="flex justify-between items-center">
-                <div>
-                  <p class="font-semibold text-gray-800">{{ user.name }}</p>
-                  <p class="text-sm text-gray-500">{{ user.username }}</p>
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
+                    style="background:#1B2F6E; color:#FDB515;">
+                    {{ user.name.charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-800 text-sm">{{ user.name }}</p>
+                    <p class="text-xs text-gray-500">{{ user.username }}</p>
+                  </div>
                 </div>
-                <button (click)="openEditUserModal(user)" class="text-blue-600 font-semibold text-sm">Edit</button>
+                <button (click)="openEditUserModal(user)"
+                  class="text-blue-600 font-semibold text-sm">Edit</button>
               </div>
               <div class="mt-3 pt-3 border-t flex items-center justify-between">
                 <div>
                   <p class="text-xs font-medium text-gray-500">ROLE</p>
-                  <p class="text-sm font-semibold text-gray-700 mt-0.5">{{ getRoleById(user.roleId)?.name ?? '—' }}</p>
+                  <p class="text-sm font-semibold text-gray-700 mt-0.5">
+                    {{ getRoleById(user.roleId)?.name ?? '—' }}
+                  </p>
                 </div>
                 @if(user.category) {
                   <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                        [style]="getCategoryBadgeStyle(user.category)">
+                    [style]="getCategoryBadgeStyle(user.category)">
                     {{ user.category }}
                   </span>
                 }
               </div>
             </div>
+          } @empty {
+            <div class="bg-white rounded-lg shadow p-8 text-center text-sm text-gray-500">
+              No users match your search.
+            </div>
           }
         </div>
+
+        <!-- ── Users Pagination ── -->
+        <app-pagination
+          [currentPage]="usersPage()"
+          [totalItems]="filteredUsers().length"
+          [pageSize]="usersPageSize"
+          itemLabel="users"
+          (pageChange)="usersPage.set($event)">
+        </app-pagination>
+
       </div>
     }
 
-    <!-- ── Roles Panel ── -->
+    <!-- ══════════════════════════════════════════════════════
+         ROLES PANEL
+    ══════════════════════════════════════════════════════ -->
     @if (activeTab() === 'roles') {
       <div id="roles-panel">
-        <div class="flex justify-end mb-4">
+
+        <!-- Toolbar -->
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-sm text-gray-500">
+            {{ roles().length }} role{{ roles().length !== 1 ? 's' : '' }}
+          </span>
           <button (click)="openRoleModal()" type="button"
             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
             Create Role
           </button>
         </div>
 
-        <!-- Roles Desktop Table -->
+        <!-- ── Roles Desktop Table ── -->
         <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg hidden md:block">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
@@ -131,46 +204,69 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-              @for(role of roles(); track role.id) {
+              @for(role of pagedRoles(); track role.id) {
                 <tr class="hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ role.name }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    {{ role.name }}
+                  </td>
                   <td class="px-6 py-4">
                     <div class="flex flex-wrap gap-2">
                       @for(permission of role.permissions; track permission) {
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{ permission }}</span>
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          {{ permission }}
+                        </span>
                       }
                     </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button (click)="openRoleModal(role)" class="text-blue-600 hover:text-blue-900">Edit</button>
+                    <button (click)="openRoleModal(role)"
+                      class="text-blue-600 hover:text-blue-900">Edit</button>
                   </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="3" class="px-6 py-10 text-center text-sm text-gray-500">No roles found.</td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
 
-        <!-- Roles Mobile Cards -->
+        <!-- ── Roles Mobile Cards ── -->
         <div class="md:hidden space-y-4">
-          @for(role of roles(); track role.id) {
+          @for(role of pagedRoles(); track role.id) {
             <div class="bg-white rounded-lg shadow p-4">
               <div class="flex justify-between items-center">
                 <p class="font-semibold text-gray-800">{{ role.name }}</p>
-                <button (click)="openRoleModal(role)" class="text-blue-600 font-semibold text-sm">Edit</button>
+                <button (click)="openRoleModal(role)"
+                  class="text-blue-600 font-semibold text-sm">Edit</button>
               </div>
               <div class="mt-4 pt-4 border-t">
                 <p class="text-xs font-medium text-gray-500">PERMISSIONS</p>
                 <div class="flex flex-wrap gap-2 mt-2">
                   @for(permission of role.permissions; track permission) {
-                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{{ permission }}</span>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      {{ permission }}
+                    </span>
                   }
                 </div>
               </div>
             </div>
           }
         </div>
+
+        <!-- ── Roles Pagination ── -->
+        <app-pagination
+          [currentPage]="rolesPage()"
+          [totalItems]="roles().length"
+          [pageSize]="rolesPageSize"
+          itemLabel="roles"
+          (pageChange)="rolesPage.set($event)">
+        </app-pagination>
+
       </div>
     }
+
   </div>
 </div>
 
@@ -191,21 +287,29 @@
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Create New User</h3>
           <div class="space-y-4">
+
+            <!-- Name -->
             <div>
               <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
               <input type="text" id="name" formControlName="name"
                 class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
+
+            <!-- Username -->
             <div>
               <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
               <input type="text" id="username" formControlName="username"
                 class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
+
+            <!-- Password -->
             <div>
               <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
               <input type="password" id="password" formControlName="password"
                 class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
+
+            <!-- Role -->
             <div>
               <label for="roleId" class="block text-sm font-medium text-gray-700">Role</label>
               <select id="roleId" formControlName="roleId"
@@ -216,6 +320,7 @@
                 }
               </select>
             </div>
+
             <!-- Category Scope — only for roles that need it -->
             @if(newUserNeedsCategory()) {
               <div>
@@ -227,9 +332,12 @@
                     <option [value]="cat">{{ cat }}</option>
                   }
                 </select>
-                <p class="mt-1 text-xs text-gray-400">Restrict this user to only see tickets in this category.</p>
+                <p class="mt-1 text-xs text-gray-400">
+                  Restrict this user to only see tickets in this category.
+                </p>
               </div>
             }
+
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
@@ -271,8 +379,11 @@
       <form [formGroup]="editUserForm" (ngSubmit)="saveEditUser()">
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
           <h3 class="text-lg leading-6 font-medium text-gray-900 mb-1">Edit User</h3>
-          <p class="text-sm text-gray-500 mb-4">{{ editingUser()?.name }} ({{ editingUser()?.username }})</p>
+          <p class="text-sm text-gray-500 mb-4">
+            {{ editingUser()?.name }} ({{ editingUser()?.username }})
+          </p>
           <div class="space-y-4">
+
             <!-- Role -->
             <div>
               <label for="editRoleId" class="block text-sm font-medium text-gray-700">Role</label>
@@ -283,6 +394,7 @@
                 }
               </select>
             </div>
+
             <!-- Category Scope — shown when role needs it -->
             @if(editUserNeedsCategory()) {
               <div>
@@ -299,12 +411,21 @@
                 </p>
               </div>
             }
+
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
           <button type="submit" [disabled]="!editUserForm.valid || loading()"
             class="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm disabled:bg-blue-400">
-            @if(loading()) { <span>Saving...</span> } @else { <span>Save Changes</span> }
+            @if(loading()) {
+              <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              <span>Saving...</span>
+            } @else {
+              <span>Save Changes</span>
+            }
           </button>
           <button type="button" (click)="closeUserModal()"
             class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
@@ -318,7 +439,7 @@
 
 
 <!-- ══════════════════════════════════════════════════════════════
-     Add/Edit Role Modal
+     CREATE / EDIT Role Modal
 ══════════════════════════════════════════════════════════════ -->
 <div class="fixed z-20 inset-0 overflow-y-auto transition-opacity"
      [class.opacity-100]="isRoleModalOpen()"
@@ -331,13 +452,19 @@
     <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
       <form [formGroup]="roleForm" (ngSubmit)="saveRole()">
         <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <h3 class="text-lg leading-6 font-medium text-gray-900">{{ editingRole() ? 'Edit Role' : 'Create New Role' }}</h3>
+          <h3 class="text-lg leading-6 font-medium text-gray-900">
+            {{ editingRole() ? 'Edit Role' : 'Create New Role' }}
+          </h3>
           <div class="mt-4 space-y-4">
+
+            <!-- Role Name -->
             <div>
               <label for="roleName" class="block text-sm font-medium text-gray-700">Role Name</label>
               <input type="text" id="roleName" formControlName="name"
                 class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
             </div>
+
+            <!-- Screen Permissions -->
             <div>
               <label class="block text-sm font-medium text-gray-700">Screen Access</label>
               <div class="mt-2 space-y-2">
@@ -356,6 +483,7 @@
                 }
               </div>
             </div>
+
           </div>
         </div>
         <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">

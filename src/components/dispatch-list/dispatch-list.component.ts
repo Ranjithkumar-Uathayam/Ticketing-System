@@ -1,16 +1,17 @@
-// src/components/dispatch-list/dispatch-list.component.ts
-import { Component, ChangeDetectionStrategy, signal, computed, OnInit } from '@angular/core';
+// src/components/dispatch-list/dispatch-list.component.ts  (UPDATED — pagination)
+import { Component, ChangeDetectionStrategy, signal, computed, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DispatchService } from '../../services/dispatch.service';
 import { DispatchPdfService } from '../../services/dispatch-pdf.service';
 import { DispatchRecord } from '../../dispatch.models';
+import { PaginationComponent } from '../shared/pagination.component';
 
 @Component({
   selector: 'app-dispatch-list',
   templateUrl: './dispatch-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, PaginationComponent],
 })
 export class DispatchListComponent implements OnInit {
   loading  = this.svc.loading;
@@ -19,7 +20,7 @@ export class DispatchListComponent implements OnInit {
   confirmDelete = signal<number | null>(null);
   toast    = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
 
-  // Search / filter
+  // ── Search / filter ─────────────────────────────────────────────────────────
   searchDate = signal('');
 
   filtered = computed(() => {
@@ -28,10 +29,25 @@ export class DispatchListComponent implements OnInit {
     return this.records().filter(r => r.dispatchDate?.includes(q));
   });
 
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  currentPage = signal(1);
+  readonly pageSize = 20;
+
+  pagedRecords = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filtered().slice(start, start + this.pageSize);
+  });
+
+  // Reset to page 1 when filter changes
+  private resetEffect = effect(() => {
+    this.searchDate();
+    this.currentPage.set(1);
+  }, { allowSignalWrites: true });
+
   constructor(
     private svc: DispatchService,
     private pdf: DispatchPdfService,
-    private router: Router
+    private router: Router,
   ) {}
 
   ngOnInit() { this.svc.getAll(); }
@@ -60,8 +76,6 @@ export class DispatchListComponent implements OnInit {
     }
   }
 
-  // ── PDF actions ──────────────────────────────────────────────────────────
-
   downloadEntry(rec: DispatchRecord, event: Event) {
     event.stopPropagation();
     this.pdf.printEntry(rec);
@@ -76,8 +90,6 @@ export class DispatchListComponent implements OnInit {
     this.pdf.printReport(recs, label);
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
   totalDispatched(rec: DispatchRecord) {
     return rec.dispatchItems?.reduce((s, r) => s + (r.quantity || 0), 0) ?? 0;
   }
@@ -85,13 +97,14 @@ export class DispatchListComponent implements OnInit {
   totalCUS(rec: DispatchRecord)     { return rec.returnItems?.reduce((s, r) => s + (r.cus || 0), 0) ?? 0; }
   totalReturns(rec: DispatchRecord) { return this.totalRTO(rec) + this.totalCUS(rec); }
 
-  formatDate(d: string) {
-    if (!d) return '';
-    return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  isGroupStart(items: any[], i: number): boolean {
+    return i === 0 || items[i].channel !== items[i - 1].channel;
   }
 
-  isGroupStart(rows: any[], i: number): boolean {
-    return i === 0 || rows[i].channel !== rows[i - 1].channel;
+  formatDate(dateStr?: string): string {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   private flash(type: 'success' | 'error', msg: string) {

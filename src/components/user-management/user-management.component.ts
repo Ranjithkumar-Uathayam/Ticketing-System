@@ -1,9 +1,10 @@
-// src/components/user-management/user-management.component.ts  (UPDATED — category field)
-import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
+// src/components/user-management/user-management.component.ts  (UPDATED — pagination)
+import { Component, ChangeDetectionStrategy, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { User, Role, AppScreen, TicketCategory, TICKET_CATEGORIES, USER_ROLES } from '../../models';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { PaginationComponent } from '../shared/pagination.component';
 
 /** Roles that can be assigned a category scope */
 const CATEGORY_SCOPED_ROLES = [
@@ -18,7 +19,7 @@ const CATEGORY_SCOPED_ROLES = [
   templateUrl: './user-management.component.html',
   styleUrls: ['./user-management.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PaginationComponent],
 })
 export class UserManagementComponent {
   users;
@@ -26,11 +27,11 @@ export class UserManagementComponent {
   loading    = signal(false);
   apiLoading;
 
-  activeTab      = signal<'users' | 'roles'>('users');
+  activeTab       = signal<'users' | 'roles'>('users');
   isUserModalOpen = signal(false);
   isRoleModalOpen = signal(false);
-  editingRole    = signal<Role | null>(null);
-  editingUser    = signal<User | null>(null);   // ← for category-edit modal
+  editingRole     = signal<Role | null>(null);
+  editingUser     = signal<User | null>(null);
 
   availableScreens: AppScreen[] = [
     'Dashboard', 'Tickets', 'User Management', 'Reports', 'Dispatch', 'Customer Entry', 'HW Inventory',
@@ -39,26 +40,60 @@ export class UserManagementComponent {
 
   ticketCategories: TicketCategory[] = TICKET_CATEGORIES;
 
-  // ── Create user form ────────────────────────────────────────────────────────
+  // ── Search / filter ─────────────────────────────────────────────────────────
+  userSearch = signal('');
+
+  filteredUsers = computed(() => {
+    const q = this.userSearch().toLowerCase();
+    if (!q) return this.users();
+    return this.users().filter(u =>
+      u.name.toLowerCase().includes(q) ||
+      u.username.toLowerCase().includes(q)
+    );
+  });
+
+  // ── Pagination — Users tab ──────────────────────────────────────────────────
+  usersPage = signal(1);
+  readonly usersPageSize = 15;
+
+  pagedUsers = computed(() => {
+    const start = (this.usersPage() - 1) * this.usersPageSize;
+    return this.filteredUsers().slice(start, start + this.usersPageSize);
+  });
+
+  // ── Pagination — Roles tab ──────────────────────────────────────────────────
+  rolesPage = signal(1);
+  readonly rolesPageSize = 15;
+
+  pagedRoles = computed(() => {
+    const start = (this.rolesPage() - 1) * this.rolesPageSize;
+    return this.roles().slice(start, start + this.rolesPageSize);
+  });
+
+  // Reset users page when search changes
+  private resetUsersPage = effect(() => {
+    this.userSearch();
+    this.usersPage.set(1);
+  }, { allowSignalWrites: true });
+
+  // ── Forms ───────────────────────────────────────────────────────────────────
   newUserForm = new FormGroup({
     name:     new FormControl('', Validators.required),
     username: new FormControl('', Validators.required),
     password: new FormControl('', [Validators.required, Validators.minLength(8)]),
     roleId:   new FormControl<number | null>(null, Validators.required),
-    category: new FormControl<TicketCategory | null>(null),  // ← NEW
+    category: new FormControl<TicketCategory | null>(null),
   });
 
   roleForm = new FormGroup({
     name: new FormControl('', Validators.required),
   });
 
-  // ── Edit user category modal form ───────────────────────────────────────────
   editUserForm = new FormGroup({
     roleId:   new FormControl<number | null>(null, Validators.required),
     category: new FormControl<TicketCategory | null>(null),
   });
 
-  // ── Computed: does the currently selected role need a category? ─────────────
   newUserNeedsCategory = computed(() => {
     const roleId   = this.newUserForm.value.roleId;
     const roleName = this.roles().find(r => r.id === roleId)?.name ?? '';
@@ -72,12 +107,13 @@ export class UserManagementComponent {
   });
 
   constructor(private apiService: ApiService) {
-    this.users     = this.apiService.users;
-    this.roles     = this.apiService.roles;
+    this.users      = this.apiService.users;
+    this.roles      = this.apiService.roles;
     this.apiLoading = this.apiService.loading;
   }
 
   getRoleById(id: number)  { return this.roles().find(r => r.id === id); }
+
   getCategoryBadgeStyle(c?: TicketCategory | null) {
     if (!c) return '';
     const map: Record<TicketCategory, string> = {
@@ -88,19 +124,17 @@ export class UserManagementComponent {
     return map[c] ?? '';
   }
 
-  // ─── Tab ────────────────────────────────────────────────────────────────────
   selectTab(tab: 'users' | 'roles' | EventTarget | null) {
     const v = (typeof tab === 'string') ? tab : (tab as HTMLSelectElement)?.value;
     if (v === 'users' || v === 'roles') this.activeTab.set(v);
   }
 
-  // ─── Create user modal ───────────────────────────────────────────────────────
   openUserModal() {
     this.newUserForm.reset({ roleId: this.roles()[0]?.id ?? null, category: null });
     this.isUserModalOpen.set(true);
   }
 
-  closeUserModal() { this.isUserModalOpen.set(false); }
+  closeUserModal() { this.isUserModalOpen.set(false); this.editingUser.set(null); }
 
   async createUser() {
     if (this.newUserForm.invalid) return;
@@ -122,11 +156,10 @@ export class UserManagementComponent {
     }
   }
 
-  // ─── Edit user modal (role + category) ──────────────────────────────────────
   openEditUserModal(user: User) {
     this.editingUser.set(user);
     this.editUserForm.patchValue({ roleId: user.roleId, category: user.category ?? null });
-    this.isUserModalOpen.set(true);   // reuse modal flag
+    this.isUserModalOpen.set(true);
   }
 
   async saveEditUser() {
@@ -149,42 +182,42 @@ export class UserManagementComponent {
     }
   }
 
-  // ─── Quick role change (inline) ─────────────────────────────────────────────
-  async onUserRoleChange(user: User, event: Event) {
-    const newRoleId = +(event.target as HTMLSelectElement).value;
-    await this.apiService.updateUser({ ...user, roleId: newRoleId });
-  }
-
-  // ─── Role modal ─────────────────────────────────────────────────────────────
-  openRoleModal(role: Role | null = null) {
-    this.editingRole.set(role);
-    this.roleForm.reset();
+  openRoleModal(role?: Role) {
+    this.editingRole.set(role ?? null);
     if (role) {
       this.roleForm.patchValue({ name: role.name });
-      this.selectedPermissions.set(this.availableScreens.map(s => role.permissions.includes(s)));
+      const perms = new Array(7).fill(false);
+      role.permissions.forEach(p => {
+        const i = this.availableScreens.indexOf(p);
+        if (i >= 0) perms[i] = true;
+      });
+      this.selectedPermissions.set(perms);
     } else {
-      this.selectedPermissions.set(new Array(this.availableScreens.length).fill(false));
+      this.roleForm.reset();
+      this.selectedPermissions.set(new Array(7).fill(false));
     }
     this.isRoleModalOpen.set(true);
   }
 
-  togglePermission(i: number, checked: boolean) {
-    const p = [...this.selectedPermissions()];
-    p[i] = checked;
-    this.selectedPermissions.set(p);
-  }
-
   closeRoleModal() { this.isRoleModalOpen.set(false); this.editingRole.set(null); }
+
+  togglePermission(index: number, checked: boolean) {
+    const perms = [...this.selectedPermissions()];
+    perms[index] = checked;
+    this.selectedPermissions.set(perms);
+  }
 
   async saveRole() {
     if (this.roleForm.invalid) return;
     this.loading.set(true);
-    const permissions = this.availableScreens.filter((_, i) => this.selectedPermissions()[i]);
-    const roleData    = { name: this.roleForm.getRawValue().name!, permissions };
     try {
-      const cur = this.editingRole();
-      if (cur) await this.apiService.updateRole({ ...cur, ...roleData });
-      else      await this.apiService.createRole(roleData);
+      const permissions = this.availableScreens.filter((_, i) => this.selectedPermissions()[i]);
+      const role = this.editingRole();
+      if (role) {
+        await this.apiService.updateRole({ ...role, name: this.roleForm.value.name!, permissions });
+      } else {
+        await this.apiService.createRole({ name: this.roleForm.value.name!, permissions } as any);
+      }
       this.closeRoleModal();
     } catch (err) {
       console.error('Failed to save role', err);
