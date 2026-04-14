@@ -197,25 +197,28 @@ export class TicketDetailComponent implements OnInit {
     }
   }
 
-  async onScreenshotUpload(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-
-    try {
-      this.uploadingScreenshot.set(true);
-      const base64 = await this.fileToBase64(file);
-      const newScreenshot: ScreenshotItem = { url: base64, fileName: file.name };
-      this.screenshots.update(prev => [...prev, newScreenshot]);
-
-      const allScreenshots = this.screenshots();
-      this.ticketForm.controls.screenshotUrl.setValue(JSON.stringify(allScreenshots));
-      this.ticketForm.controls.screenshotFileName.setValue(file.name);
-    } catch (err) {
-      console.error('Screenshot upload failed', err);
-    } finally {
-      this.uploadingScreenshot.set(false);
+    async onScreenshotUpload(event: Event) {
+        const input = event.target as HTMLInputElement;
+        const file  = input.files?.[0];
+        if (!file) return;
+    
+        try {
+        this.uploadingScreenshot.set(true);
+        const base64 = await this.fileToBase64(file);
+        const newScreenshot: ScreenshotItem = { url: base64, fileName: file.name };
+        this.screenshots.update(prev => [...prev, newScreenshot]);
+    
+        const allScreenshots = this.screenshots();
+        this.ticketForm.controls.screenshotUrl.setValue(JSON.stringify(allScreenshots));
+        this.ticketForm.controls.screenshotFileName.setValue(file.name);
+        } catch (err) {
+        console.error('Screenshot upload failed', err);
+        } finally {
+        this.uploadingScreenshot.set(false);
+        // Reset the input so the same file can be re-selected if needed
+        input.value = '';
+        }
     }
-  }
 
   removeScreenshot(index: number) {
     this.screenshots.update(prev => prev.filter((_, i) => i !== index));

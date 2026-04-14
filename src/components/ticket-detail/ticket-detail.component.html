@@ -238,16 +238,27 @@
             </button>
           }
 
-          <!-- Upload Area -->
-          <label class="flex items-center gap-3 cursor-pointer rounded-xl p-4 transition-all group" style="border: 2px dashed #C7D0E8;" onmouseenter="this.style.borderColor='#FDB515'; this.style.background='rgba(253,181,21,0.04)'" onmouseleave="this.style.borderColor='#C7D0E8'; this.style.background='transparent'">
-            <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors" style="background: rgba(253,181,21,0.12);">
-              <svg class="w-5 h-5" style="color: #FDB515;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+          <!-- Upload Area — no file size restriction -->
+          <label class="flex items-center gap-3 cursor-pointer rounded-xl p-4 transition-all group"
+            style="border: 2px dashed #C7D0E8;"
+            onmouseenter="this.style.borderColor='#FDB515'; this.style.background='rgba(253,181,21,0.04)'"
+            onmouseleave="this.style.borderColor='#C7D0E8'; this.style.background='transparent'">
+            <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors"
+              style="background: rgba(253,181,21,0.12);">
+              <svg class="w-5 h-5" style="color: #FDB515;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
             </div>
             <div>
-              <p class="text-sm font-semibold" style="color: #1B2F6E;">{{ uploadingScreenshot() ? 'Uploading...' : 'Upload Screenshot' }}</p>
-              <p class="text-xs text-slate-400">PNG, JPG, GIF up to 10MB</p>
+              <p class="text-sm font-semibold" style="color: #1B2F6E;">
+                {{ uploadingScreenshot() ? 'Uploading...' : 'Upload Screenshot' }}
+              </p>
+              <p class="text-xs text-slate-400">PNG, JPG, GIF, WEBP — any size</p>
             </div>
-            <input type="file" accept="image/*" class="hidden" (change)="onScreenshotUpload($event)" [disabled]="uploadingScreenshot()">
+            <input type="file" accept="image/*" class="hidden"
+              (change)="onScreenshotUpload($event)"
+              [disabled]="uploadingScreenshot()">
           </label>
         </div>
 
