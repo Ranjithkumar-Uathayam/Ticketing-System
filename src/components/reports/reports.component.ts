@@ -1,9 +1,9 @@
-// src/components/reports/reports.component.ts  (UPDATED — pagination)
+// src/components/reports/reports.component.ts
 import {
   Component, ChangeDetectionStrategy, computed, signal,
-  ViewChild, ElementRef, OnDestroy, effect, inject, Injector,
+  ViewChild, ElementRef, OnInit, OnDestroy, effect, inject, Injector,
 } from '@angular/core';
-import { toSignal }           from '@angular/core/rxjs-interop';
+import { toSignal }            from '@angular/core/rxjs-interop';
 import { CommonModule }        from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl } from '@angular/forms';
 import { ApiService }          from '../../services/api.service';
@@ -19,7 +19,7 @@ declare var Chart: any;
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, ReactiveFormsModule, PaginationComponent],
 })
-export class ReportsComponent implements OnDestroy {
+export class ReportsComponent implements OnInit, OnDestroy {
   users;
   loading;
 
@@ -55,6 +55,7 @@ export class ReportsComponent implements OnDestroy {
     category:   new FormControl<TicketCategory | ''>(''),
   });
 
+  // Convert RxJS observable to signal so computed() reacts to form changes
   readonly filterValues = toSignal(this.filterForm.valueChanges, {
     initialValue: this.filterForm.value,
   });
@@ -74,13 +75,12 @@ export class ReportsComponent implements OnDestroy {
   });
 
   // ── UI-filtered tickets ────────────────────────────────────────────────────
+  // NOTE: do NOT write signals (e.g. currentPage.set) inside computed() —
+  // use a separate effect() for side-effects on filter change.
   filteredTickets = computed(() => {
     const all     = this.scopedTickets();
     const filters = this.filterValues();
     const locked  = this.auth.lockedCategory();
-
-    // Reset page when filters change
-    this.currentPage.set(1);
 
     return all.filter(ticket => {
       const createdAt = new Date(ticket.createdAt);
@@ -98,6 +98,13 @@ export class ReportsComponent implements OnDestroy {
       return true;
     });
   });
+
+  // ── Reset page to 1 whenever filters change (effect, not computed) ──────────
+  private resetPage = effect(() => {
+    // reading filterValues registers the dependency
+    this.filterValues();
+    this.currentPage.set(1);
+  }, { allowSignalWrites: true });
 
   // ── Paginated slice ────────────────────────────────────────────────────────
   pagedTickets = computed(() => {
@@ -125,8 +132,15 @@ export class ReportsComponent implements OnDestroy {
     }, { injector: this.injector });
   }
 
+  // ── Load data on init ──────────────────────────────────────────────────────
+  ngOnInit() {
+    this.apiService.getTickets();
+    this.apiService.getUsers();
+  }
+
   ngOnDestroy() { this.categoryChart?.destroy(); }
 
+  // ── Helpers ───────────────────────────────────────────────────────────────
   getAssignee(id: number | undefined): User | undefined {
     return this.users().find(u => u.id === id);
   }
@@ -159,7 +173,10 @@ export class ReportsComponent implements OnDestroy {
       type: 'doughnut',
       data: {
         labels:   data.labels,
-        datasets: [{ data: data.data, backgroundColor: ['#1B2F6E', '#FDB515', '#22c55e', '#ef4444', '#8b5cf6'] }],
+        datasets: [{
+          data: data.data,
+          backgroundColor: ['#1B2F6E', '#FDB515', '#22c55e', '#ef4444', '#8b5cf6'],
+        }],
       },
       options: { responsive: true, maintainAspectRatio: false },
     });
@@ -168,8 +185,8 @@ export class ReportsComponent implements OnDestroy {
   private updateChart() {
     if (!this.categoryChart) return;
     const data = this.reportChartData();
-    this.categoryChart.data.labels   = data.labels;
-    this.categoryChart.data.datasets[0].data = data.data;
+    this.categoryChart.data.labels            = data.labels;
+    this.categoryChart.data.datasets[0].data  = data.data;
     this.categoryChart.update();
   }
 }

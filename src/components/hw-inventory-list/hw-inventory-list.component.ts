@@ -1,9 +1,9 @@
-// src/components/hw-inventory-list/hw-inventory-list.component.ts  (UPDATED — pagination)
+// src/components/hw-inventory-list/hw-inventory-list.component.ts
 import { Component, ChangeDetectionStrategy, computed, signal, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule }  from '@angular/forms';
 import { Router }       from '@angular/router';
-import { HwInventoryService } from '../../services/hw-inventory.service';
+import { HwInventoryService }  from '../../services/hw-inventory.service';
 import { HwLabelPrintService } from '../../services/hw-label-print.service';
 import {
   HWAsset, HWCategory, HWStatus, HWLocation, WarrantyStatus,
@@ -18,9 +18,9 @@ import { PaginationComponent } from '../shared/pagination.component';
   imports: [CommonModule, FormsModule, PaginationComponent],
 })
 export class HwInventoryListComponent implements OnInit {
-  loading     = this.svc.loading;
-  deleteId    = signal<number | null>(null);
-  toast       = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
+  loading  = this.svc.loading;
+  deleteId = signal<number | null>(null);
+  toast    = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   // ── Filters ────────────────────────────────────────────────────────────────
   searchTerm       = signal('');
@@ -70,17 +70,17 @@ export class HwInventoryListComponent implements OnInit {
     const loc  = this.filterLocation();
     const war  = this.filterWarranty();
     const exp  = this.showOnlyExpiring();
-
     const today = new Date();
     const in90  = new Date(today.getTime() + 90 * 86400_000);
 
     return this.svc.assets().filter(a => {
-      if (q && ![a.assetId, a.manufacturer, a.model, a.serialNumber, a.assignedTo ?? '',
-                 a.department ?? '', a.ipAddress ?? ''].some(v => v.toLowerCase().includes(q))) return false;
-      if (cat  && a.category        !== cat)  return false;
-      if (stat && a.status          !== stat)  return false;
-      if (loc  && a.location        !== loc)   return false;
-      if (war  && a.warrantyStatus  !== war)   return false;
+      if (q && ![a.assetId, a.manufacturer, a.model, a.serialNumber,
+                 a.assignedTo ?? '', a.department ?? '', a.ipAddress ?? '']
+                .some(v => v.toLowerCase().includes(q))) return false;
+      if (cat  && a.category       !== cat)  return false;
+      if (stat && a.status         !== stat)  return false;
+      if (loc  && a.location       !== loc)   return false;
+      if (war  && a.warrantyStatus !== war)   return false;
       if (exp  && a.warrantyExpiry) {
         const d = new Date(a.warrantyExpiry);
         if (!(d >= today && d <= in90)) return false;
@@ -96,16 +96,16 @@ export class HwInventoryListComponent implements OnInit {
   });
 
   get hasFilters(): boolean {
-    return this.searchTerm() !== '' ||
-      this.filterCategory() !== '' ||
-      this.filterStatus()   !== '' ||
-      this.filterLocation() !== '' ||
-      this.filterWarranty() !== '' ||
-      this.showOnlyExpiring();
+    return this.searchTerm()       !== '' ||
+           this.filterCategory()   !== '' ||
+           this.filterStatus()     !== '' ||
+           this.filterLocation()   !== '' ||
+           this.filterWarranty()   !== '' ||
+           this.showOnlyExpiring();
   }
 
-  // Reset to page 1 whenever filters change
-  private resetEffect = effect(() => {
+  // Reset page when filters change (effect, not inside computed)
+  private resetPage = effect(() => {
     this.searchTerm(); this.filterCategory(); this.filterStatus();
     this.filterLocation(); this.filterWarranty(); this.showOnlyExpiring();
     this.currentPage.set(1);
@@ -119,9 +119,11 @@ export class HwInventoryListComponent implements OnInit {
 
   ngOnInit() { this.svc.getAll(); }
 
+  // ── Navigation ──────────────────────────────────────────────────────────────
   openAdd()             { this.router.navigate(['/hw-inventory/new']); }
   openEdit(id?: number) { this.router.navigate(['/hw-inventory', id ?? 'new']); }
 
+  // ── Print label ─────────────────────────────────────────────────────────────
   async printLabel(asset: HWAsset) {
     if (!asset.id) { this.flash('error', 'Unable to print label for this asset.'); return; }
     try {
@@ -132,6 +134,7 @@ export class HwInventoryListComponent implements OnInit {
     }
   }
 
+  // ── Delete ──────────────────────────────────────────────────────────────────
   requestDelete(id: number) { this.deleteId.set(id); }
   cancelDelete()            { this.deleteId.set(null); }
 
@@ -148,6 +151,7 @@ export class HwInventoryListComponent implements OnInit {
     }
   }
 
+  // ── Filter reset ────────────────────────────────────────────────────────────
   clearFilters() {
     this.searchTerm.set('');
     this.filterCategory.set('');
@@ -156,6 +160,54 @@ export class HwInventoryListComponent implements OnInit {
     this.filterWarranty.set('');
     this.showOnlyExpiring.set(false);
     this.currentPage.set(1);
+  }
+
+  // ── Template helper methods (used in HTML) ──────────────────────────────────
+
+  isExpiringSoon(asset: HWAsset): boolean {
+    if (!asset.warrantyExpiry || asset.warrantyStatus !== 'In Warranty') return false;
+    const today = new Date();
+    const in90  = new Date(today.getTime() + 90 * 86400_000);
+    const exp   = new Date(asset.warrantyExpiry);
+    return exp >= today && exp <= in90;
+  }
+
+  formatDate(dateStr?: string | null): string {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+    });
+  }
+
+  statusStyle(status: HWStatus): string {
+    const map: Record<string, string> = {
+      'Active':    'background:#D1FAE5; color:#065F46;',
+      'Spare':     'background:#DBEAFE; color:#1e40af;',
+      'Faulty':    'background:#FEE2E2; color:#991B1B;',
+      'In Repair': 'background:#FEF3C7; color:#92400E;',
+      'Retired':   'background:#F3F4F6; color:#374151;',
+    };
+    return map[status] ?? 'background:#F3F4F6; color:#374151;';
+  }
+
+  warrantyStyle(status: WarrantyStatus): string {
+    const map: Record<string, string> = {
+      'In Warranty':  'background:#D1FAE5; color:#065F46;',
+      'Out of Warranty': 'background:#FEE2E2; color:#991B1B;',
+      'Unknown':      'background:#F3F4F6; color:#374151;',
+    };
+    return map[status] ?? 'background:#F3F4F6; color:#374151;';
+  }
+
+  categoryIcon(cat: HWCategory): string {
+    const icons: Record<string, string> = {
+      Desktop: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
+      Laptop:  'M3 7h18M3 7a2 2 0 00-2 2v6a2 2 0 002 2h18a2 2 0 002-2V9a2 2 0 00-2-2M3 7V5a2 2 0 012-2h14a2 2 0 012 2v2M1 17h22',
+      Printer: 'M6 9V4h12v5M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v6H6v-6z',
+      Scanner: 'M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18',
+    };
+    return icons[cat] ?? icons['Desktop'];
   }
 
   private flash(type: 'success' | 'error', msg: string) {
