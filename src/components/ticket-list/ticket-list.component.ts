@@ -115,8 +115,8 @@ export class TicketListComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.apiService.loadTickets();
-    this.apiService.loadUsers();
+    this.apiService.getTickets();
+    this.apiService.getUsers();
   }
 
   setCategory(cat: TicketCategory | null) {
