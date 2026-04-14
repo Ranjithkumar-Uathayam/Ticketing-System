@@ -1,4 +1,4 @@
-// src/components/ticket-list/ticket-list.component.ts  (UPDATED — pagination)
+// src/components/ticket-list/ticket-list.component.ts
 import {
   Component, ChangeDetectionStrategy, OnInit,
   ChangeDetectorRef, computed, signal, effect,
@@ -23,7 +23,7 @@ export class TicketListComponent implements OnInit {
 
   // ── Filter signals ──────────────────────────────────────────────────────────
   private _now = new Date();
-  filterMonth    = signal<string>(
+  filterMonth  = signal<string>(
     `${this._now.getFullYear()}-${String(this._now.getMonth() + 1).padStart(2, '0')}`
   );
   filterStatus   = signal<TicketStatus | ''>('');
@@ -50,63 +50,94 @@ export class TicketListComponent implements OnInit {
     const currentUser = this.auth.currentUser();
     const isEmployee  = this.auth.isEmployee();
 
-    let list = locked
-      ? all.filter(t => t.category === locked)
-      : all;
+    let list = locked ? all.filter(t => t.category === locked) : all;
 
     if (isEmployee && currentUser) {
-      list = list.filter(t => t.reporterId === currentUser.id);
+      list = list.filter(t =>
+        t.reporterId === currentUser.id || t.assigneeId === currentUser.id
+      );
     }
     return list;
   });
 
-  // ── Filtered tickets (month + status + category) ────────────────────────────
-  readonly filteredTickets = computed(() => {
-    const month    = this.filterMonth();
+  // ── UI-filtered tickets — uses proper Date-based month window ───────────────
+  filteredTickets = computed(() => {
+    const all      = this.scopedTickets();
+    const monthStr = this.filterMonth();
     const status   = this.filterStatus();
-    const category = this.activeCategory();
+    const cat      = this.activeCategory();
 
-    return this.scopedTickets().filter(t => {
-      // Month filter: include current-month + any prior-month that isn't resolved/closed
-      const ticketMonth = t.createdAt?.substring(0, 7) ?? '';
-      const isCurrentMonth = ticketMonth === month;
-      const isPrevUnclosed = ticketMonth < month &&
-        t.status !== 'Resolved' && t.status !== 'Closed';
-      if (!isCurrentMonth && !isPrevUnclosed) return false;
+    const [yr, mo]   = monthStr.split('-').map(Number);
+    const monthStart = new Date(yr, mo - 1, 1);
+    const monthEnd   = new Date(yr, mo, 1);
+    const prevStart  = new Date(yr, mo - 2, 1);
+    const now        = new Date();
+    const isCurrentMonth =
+      yr === now.getFullYear() && mo === now.getMonth() + 1;
 
-      if (status   && t.status   !== status)   return false;
-      if (category && t.category !== category) return false;
+    return all.filter(ticket => {
+      const created = this.parseTicketDate(ticket.createdAt);
+      if (!created) return false;
+
+      const inMonth   = created >= monthStart && created < monthEnd;
+      const carryOver = isCurrentMonth &&
+        created >= prevStart &&
+        created < monthStart &&
+        ticket.status !== 'Closed';
+
+      if (!inMonth && !carryOver) return false;
+      if (status && ticket.status   !== status) return false;
+      if (cat    && ticket.category !== cat)     return false;
+
       return true;
     });
   });
 
   // ── Paginated slice ─────────────────────────────────────────────────────────
-  readonly pagedTickets = computed(() => {
-    const page = this.currentPage();
-    const start = (page - 1) * this.pageSize;
+  pagedTickets = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
     return this.filteredTickets().slice(start, start + this.pageSize);
   });
 
-  // Reset to page 1 whenever filters change
-  private resetEffect = effect(() => {
-    // Access filter signals to register dependency
+  // ── Reset to page 1 whenever any filter changes ─────────────────────────────
+  private resetPage = effect(() => {
     this.filterMonth();
     this.filterStatus();
     this.filterCategory();
     this.currentPage.set(1);
   }, { allowSignalWrites: true });
 
-  get hasActiveFilters() {
+  // ── Badge colour maps ───────────────────────────────────────────────────────
+  priorityColors: Record<TicketPriority, string> = {
+    Low:    'bg-emerald-100 text-emerald-700',
+    Medium: 'bg-amber-100 text-amber-700',
+    High:   'bg-orange-100 text-orange-700',
+    Urgent: 'bg-red-100 text-red-700',
+  };
+
+  statusColors: Record<TicketStatus, string> = {
+    New:           'bg-slate-100 text-slate-600',
+    Open:          'bg-blue-100 text-blue-700',
+    'In Progress': 'bg-violet-100 text-violet-700',
+    Resolved:      'bg-green-100 text-green-700',
+    Closed:        'bg-gray-100 text-gray-600',
+    Reopened:      'bg-cyan-100 text-cyan-700',
+  };
+
+  get hasActiveFilters(): boolean {
     const now = new Date();
-    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    return this.filterStatus() !== '' ||
+    const defaultMonth =
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return (
+      this.filterStatus()   !== ''   ||
       this.filterCategory() !== null ||
-      this.filterMonth() !== defaultMonth;
+      this.filterMonth()    !== defaultMonth
+    );
   }
 
   constructor(
     private apiService: ApiService,
-    private auth: AuthService,
+    public  auth: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef,
   ) {
@@ -119,21 +150,52 @@ export class TicketListComponent implements OnInit {
     this.apiService.getUsers();
   }
 
+  // ── Navigation ──────────────────────────────────────────────────────────────
+  createNewTicket() {
+    this.router.navigate(['/tickets', 'new']);
+  }
+
+  // ── Category filter toggle ──────────────────────────────────────────────────
   setCategory(cat: TicketCategory | null) {
     if (this.isCategoryLocked()) return;
     this.filterCategory.set(cat);
   }
 
+  // ── Reset all filters ───────────────────────────────────────────────────────
   clearFilters() {
     const now = new Date();
-    this.filterMonth.set(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+    this.filterMonth.set(
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    );
     this.filterStatus.set('');
     this.filterCategory.set(null);
     this.currentPage.set(1);
   }
 
-  getUserName(id: number | undefined): string {
-    if (!id) return 'Unassigned';
-    return this.users().find(u => u.id === id)?.name ?? 'Unassigned';
+  // ── User lookup helpers ─────────────────────────────────────────────────────
+  getAssignee(id: number | undefined): User | undefined {
+    if (!id) return undefined;
+    return this.users().find(u => u.id === id);
+  }
+
+  getReporter(id: number | undefined): User | undefined {
+    if (!id) return undefined;
+    return this.users().find(u => u.id === id);
+  }
+
+  // ── Badge class helpers ─────────────────────────────────────────────────────
+  getStatusClass(status: TicketStatus): string {
+    return this.statusColors[status] ?? 'bg-gray-100 text-gray-600';
+  }
+
+  getPriorityClass(priority: TicketPriority): string {
+    return this.priorityColors[priority] ?? 'bg-gray-100 text-gray-600';
+  }
+
+  // ── Safe date parser — handles ISO strings & MSSQL datetime2 ───────────────
+  parseTicketDate(raw: string | undefined | null): Date | null {
+    if (!raw) return null;
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
   }
 }
