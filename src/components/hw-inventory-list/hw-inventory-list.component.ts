@@ -130,7 +130,7 @@ export class HwInventoryListComponent implements OnInit {
       await this.labelPrinter.printLabel(asset.id);
       this.flash('success', 'Label sent to printer.');
     } catch (err: any) {
-      this.flash('error', err?.error?.message || 'Failed to print label.');
+      this.flash('error', err?.message || err?.error?.message || 'Failed to print label.');
     }
   }
 

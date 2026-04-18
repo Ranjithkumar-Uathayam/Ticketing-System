@@ -109,6 +109,13 @@ const buildLabelTspl = (asset) => {
   return `${lines.join('\r\n')}\r\n`;
 };
 
+const buildLabelPrintJob = (asset) => ({
+  printerName: LABEL_PRINTER_NAME,
+  jobName: `HW Label ${asset.assetId || asset.id || ''}`.trim(),
+  encoding: 'ascii',
+  content: buildLabelTspl(asset),
+});
+
 // ── Raw print helper ──────────────────────────────────────────────────────────
 const sendRawLabelToPrinter = async (content, printerName) => {
   const tempFile = path.join(os.tmpdir(), `hw-label-${Date.now()}.txt`);
@@ -301,5 +308,25 @@ exports.printLabel = async (req, res) => {
   } catch (err) {
     console.error('[hw-inventory.printLabel]', err);
     res.status(500).json({ message: 'Failed to print label', error: err.message });
+  }
+};
+
+exports.getLabelPrintJob = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const pool   = await poolPromise;
+    const result = await pool.request()
+      .input('id', sql.Int, id)
+      .query('SELECT * FROM HwInventory WHERE Id = @id');
+
+    if (!result.recordset[0]) {
+      return res.status(404).json({ message: 'Asset not found.' });
+    }
+
+    const asset = map(result.recordset[0]);
+    res.json(buildLabelPrintJob(asset));
+  } catch (err) {
+    console.error('[hw-inventory.getLabelPrintJob]', err);
+    res.status(500).json({ message: 'Failed to prepare label print job', error: err.message });
   }
 };

@@ -3,4 +3,6 @@ export const environment = {
   production: false,
 //   apiUrl: "https://vms.uathayam.in:4300/TICKETING-API/api"
   apiUrl: 'http://localhost:3001/api',
+  hwLabelPrintMode: 'server' as const,
+  hwLabelAgentUrl: 'http://127.0.0.1:17951',
 };
