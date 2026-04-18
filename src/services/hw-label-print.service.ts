@@ -57,4 +57,20 @@ export class HwLabelPrintService {
 
     return 'Failed to reach the local print agent.';
   }
+
+  async printLabels(assetIds: number[]): Promise<{ successCount: number; failedIds: number[] }> {
+    const failedIds: number[] = [];
+    let successCount = 0;
+
+    for (const assetId of assetIds) {
+      try {
+        await this.printLabel(assetId);
+        successCount += 1;
+      } catch {
+        failedIds.push(assetId);
+      }
+    }
+
+    return { successCount, failedIds };
+  }
 }

@@ -21,6 +21,8 @@ export class HwInventoryListComponent implements OnInit {
   loading  = this.svc.loading;
   deleteId = signal<number | null>(null);
   toast    = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
+  printingBulk = signal(false);
+  selectedAssetIds = signal<Set<number>>(new Set());
 
   // ── Filters ────────────────────────────────────────────────────────────────
   searchTerm       = signal('');
@@ -38,6 +40,17 @@ export class HwInventoryListComponent implements OnInit {
   // ── Pagination ──────────────────────────────────────────────────────────────
   currentPage = signal(1);
   readonly pageSize = 20;
+  readonly selectedCount = computed(() => this.selectedAssetIds().size);
+
+  readonly allPagedSelected = computed(() => {
+    const paged = this.pagedAssets().filter(asset => !!asset.id);
+    return paged.length > 0 && paged.every(asset => this.selectedAssetIds().has(asset.id!));
+  });
+
+  readonly allFilteredSelected = computed(() => {
+    const filtered = this.filtered().filter(asset => !!asset.id);
+    return filtered.length > 0 && filtered.every(asset => this.selectedAssetIds().has(asset.id!));
+  });
 
   // ── Summary stats ──────────────────────────────────────────────────────────
   summary = computed(() => {
@@ -111,6 +124,15 @@ export class HwInventoryListComponent implements OnInit {
     this.currentPage.set(1);
   }, { allowSignalWrites: true });
 
+  private pruneSelection = effect(() => {
+    const validIds = new Set(this.svc.assets().map(asset => asset.id).filter((id): id is number => !!id));
+    const next = new Set(Array.from(this.selectedAssetIds()).filter(id => validIds.has(id)));
+
+    if (next.size !== this.selectedAssetIds().size) {
+      this.selectedAssetIds.set(next);
+    }
+  }, { allowSignalWrites: true });
+
   constructor(
     private svc: HwInventoryService,
     private router: Router,
@@ -131,6 +153,76 @@ export class HwInventoryListComponent implements OnInit {
       this.flash('success', 'Label sent to printer.');
     } catch (err: any) {
       this.flash('error', err?.message || err?.error?.message || 'Failed to print label.');
+    }
+  }
+
+  isSelected(assetId?: number | null): boolean {
+    return !!assetId && this.selectedAssetIds().has(assetId);
+  }
+
+  toggleAssetSelection(assetId: number, checked: boolean) {
+    const next = new Set(this.selectedAssetIds());
+    if (checked) {
+      next.add(assetId);
+    } else {
+      next.delete(assetId);
+    }
+    this.selectedAssetIds.set(next);
+  }
+
+  toggleSelectAllOnPage(checked: boolean) {
+    const next = new Set(this.selectedAssetIds());
+    for (const asset of this.pagedAssets()) {
+      if (!asset.id) continue;
+      if (checked) {
+        next.add(asset.id);
+      } else {
+        next.delete(asset.id);
+      }
+    }
+    this.selectedAssetIds.set(next);
+  }
+
+  toggleSelectAllFiltered(checked: boolean) {
+    const next = new Set(this.selectedAssetIds());
+    for (const asset of this.filtered()) {
+      if (!asset.id) continue;
+      if (checked) {
+        next.add(asset.id);
+      } else {
+        next.delete(asset.id);
+      }
+    }
+    this.selectedAssetIds.set(next);
+  }
+
+  clearSelection() {
+    this.selectedAssetIds.set(new Set());
+  }
+
+  async bulkPrintSelected() {
+    const assetIds = Array.from(this.selectedAssetIds());
+    if (assetIds.length === 0) {
+      this.flash('error', 'Select at least one asset to print labels.');
+      return;
+    }
+
+    this.printingBulk.set(true);
+    try {
+      const result = await this.labelPrinter.printLabels(assetIds);
+
+      if (result.failedIds.length === 0) {
+        this.flash('success', `${result.successCount} label${result.successCount !== 1 ? 's' : ''} sent to printer.`);
+        this.clearSelection();
+        return;
+      }
+
+      const successPart = result.successCount > 0
+        ? `${result.successCount} label${result.successCount !== 1 ? 's' : ''} printed, `
+        : '';
+      this.flash('error', `${successPart}${result.failedIds.length} failed. Please check the local print agent and printer.`);
+    } finally {
+      this.printingBulk.set(false);
     }
   }
 

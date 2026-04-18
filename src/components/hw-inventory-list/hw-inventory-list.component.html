@@ -193,6 +193,53 @@
     </div>
   </div>
 
+  @if(filtered().length > 0) {
+    <div class="bg-white rounded-2xl p-4 mb-5 flex flex-wrap gap-3 items-center shadow-sm" style="border:1px solid #E8EDF8;">
+      <div class="text-sm font-semibold" style="color:#1B2F6E;">
+        {{ selectedCount() }} selected
+      </div>
+
+      <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold" style="color:#1B2F6E;">
+        <input
+          type="checkbox"
+          class="rounded border-slate-300"
+          [checked]="allPagedSelected()"
+          (change)="toggleSelectAllOnPage($any($event.target).checked)">
+        Select page
+      </label>
+
+      <label class="flex items-center gap-2 cursor-pointer select-none text-xs font-semibold" style="color:#1B2F6E;">
+        <input
+          type="checkbox"
+          class="rounded border-slate-300"
+          [checked]="allFilteredSelected()"
+          (change)="toggleSelectAllFiltered($any($event.target).checked)">
+        Select filtered
+      </label>
+
+      <button
+        (click)="bulkPrintSelected()"
+        [disabled]="selectedCount() === 0 || printingBulk()"
+        class="px-4 py-2.5 rounded-xl text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        style="background:#1B2F6E; color:#FDB515;">
+        {{ printingBulk() ? 'Printing...' : 'Bulk Print Labels' }}
+      </button>
+
+      @if(selectedCount() > 0) {
+        <button
+          (click)="clearSelection()"
+          class="px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
+          style="background:rgba(27,47,110,0.07); color:#1B2F6E;">
+          Clear Selection
+        </button>
+      }
+
+      <div class="text-xs ml-auto" style="color:rgba(27,47,110,0.45);">
+        Bulk printing allows you to generate labels for multiple hardware assets at once.
+      </div>
+    </div>
+  }
+
   <!-- ── Assets Table ── -->
   @if(loading()) {
     <div class="flex items-center justify-center py-24">
@@ -215,6 +262,7 @@
         <table class="w-full" style="min-width:1100px;">
           <thead>
             <tr style="background:#F8F9FC; border-bottom:2px solid #E8EDF8;">
+              <th class="px-4 py-3 text-center text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4); min-width:60px;">Select</th>
               <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4); min-width:80px;">Type</th>
               <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4); min-width:130px;">Asset ID</th>
               <th class="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4); min-width:150px;">Model / Mfr.</th>
@@ -232,6 +280,15 @@
             @for(asset of pagedAssets(); track asset.id) {
               <tr class="hover:bg-amber-50/20 transition-colors group"
                   [style.background]="isExpiringSoon(asset) ? 'rgba(254,215,170,0.08)' : 'white'">
+
+                <td class="px-4 py-3 text-center">
+                  <input
+                    type="checkbox"
+                    class="rounded border-slate-300"
+                    [checked]="isSelected(asset.id)"
+                    [disabled]="!asset.id"
+                    (change)="toggleAssetSelection(asset.id!, $any($event.target).checked)">
+                </td>
 
                 <!-- Category icon -->
                 <td class="px-4 py-3">
