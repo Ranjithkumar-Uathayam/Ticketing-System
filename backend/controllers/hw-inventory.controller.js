@@ -57,7 +57,7 @@ const buildLabelTspl = (asset) => {
     ['User',   asset.assignedTo   || '-'],
     ['System', asset.assetId      || '-'],
     ['Dept',   asset.department   || '-'],
-    ['Model',  asset.model        || '-'],
+    ['Model',  `${asset.manufacturer || ''} / ${asset.model || ''}`.trim() || '-'],,
     ['SL No',  asset.serialNumber || '-'],
   ];
 
