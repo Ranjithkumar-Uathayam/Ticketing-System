@@ -54,10 +54,10 @@ const esc = (value = '') =>
  */
 const buildLabelTspl = (asset) => {
   const rows = [
-    ['User',   asset.assignedTo   || '-'],
+    ['User',   ''  || '-'], //asset.assignedTo
     ['System', asset.assetId      || '-'],
     ['Dept',   asset.department   || '-'],
-    ['Model',  `${asset.manufacturer || ''} / ${asset.model || ''}`.trim() || '-'],,
+    ['Model',  `${asset.manufacturer || ''}/${asset.model.trim() || ''}`.trim() || '-'],,
     ['SL No',  asset.serialNumber || '-'],
   ];
 
