@@ -68,9 +68,9 @@ export class TicketListComponent implements OnInit {
     const cat      = this.activeCategory();
 
     const [yr, mo]   = monthStr.split('-').map(Number);
-    const monthStart = new Date(yr, mo - 1, 1);
-    const monthEnd   = new Date(yr, mo, 1);
-    const prevStart  = new Date(yr, mo - 2, 1);
+    const monthStart = new Date(Date.UTC(yr, mo - 1, 1));
+    const monthEnd   = new Date(Date.UTC(yr, mo, 1));
+    const prevStart  = new Date(Date.UTC(yr, mo - 2, 1));
     const now        = new Date();
     const isCurrentMonth =
       yr === now.getFullYear() && mo === now.getMonth() + 1;

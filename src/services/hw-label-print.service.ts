@@ -3,6 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../environments/environment';
 
+// @ts-ignore – qz-tray ships no TypeScript declarations
+import qz from 'qz-tray';
+
 interface LabelPrintJob {
   printerName: string;
   jobName: string;
@@ -16,6 +19,8 @@ interface LocalPrintAgentResponse {
 
 @Injectable({ providedIn: 'root' })
 export class HwLabelPrintService {
+  private qzSecurityReady = false;
+
   constructor(private http: HttpClient) {}
 
   async printLabel(assetId: number): Promise<void> {
@@ -26,6 +31,12 @@ export class HwLabelPrintService {
       return;
     }
 
+    if (environment.hwLabelPrintMode === 'qz-tray') {
+      await this.printViaQzTray(assetId);
+      return;
+    }
+
+    // local-agent mode
     const job = await firstValueFrom(
       this.http.post<LabelPrintJob>(
         `${environment.apiUrl}/hw-inventory/${assetId}/label-print-job`,
@@ -43,6 +54,39 @@ export class HwLabelPrintService {
     } catch (error: any) {
       throw new Error(this.getAgentErrorMessage(error));
     }
+  }
+
+  private async printViaQzTray(assetId: number): Promise<void> {
+    const job = await firstValueFrom(
+      this.http.post<LabelPrintJob>(
+        `${environment.apiUrl}/hw-inventory/${assetId}/label-print-job`,
+        {}
+      )
+    );
+
+    if (!this.qzSecurityReady) {
+      // Unsigned mode – QZ Tray will prompt the user once to allow printing.
+      // Replace these with real certificate + signature for silent production use.
+      qz.security.setCertificatePromise((resolve: (cert: string) => void) => resolve(''));
+      qz.security.setSignaturePromise(
+        () => (resolve: (sig: string) => void) => resolve('')
+      );
+      this.qzSecurityReady = true;
+    }
+
+    if (!qz.websocket.isActive()) {
+      await qz.websocket.connect().catch(() => {
+        throw new Error(
+          'QZ Tray is not running on this PC. Install and start QZ Tray, then try again.'
+        );
+      });
+    }
+
+    const printerName = job.printerName || 'TSC TTP-244 Pro';
+    const config = qz.configs.create(printerName);
+    const data = [{ type: 'raw', format: 'plain', data: job.content }];
+
+    await qz.print(config, data);
   }
 
   private getAgentErrorMessage(error: any): string {
