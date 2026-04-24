@@ -6,7 +6,31 @@ const os = require('os');
 const path = require('path');
 
 const LABEL_PRINTER_NAME = process.env.HW_LABEL_PRINTER_NAME || 'TSC TTP-244 Pro';
-const RAW_PRINT_SCRIPT = path.join(__dirname, '..', 'scripts', 'send-raw-printer.ps1');
+
+const BUNDLED_SCRIPT_PATH = path.join(__dirname, '..', 'scripts', 'send-raw-printer.ps1');
+let _resolvedScriptPath = null;
+
+const getRealScriptPath = async () => {
+  if (_resolvedScriptPath) return _resolvedScriptPath;
+
+  const isPackaged =
+    typeof process.pkg !== 'undefined' ||
+    __dirname.replace(/\\/g, '/').includes('/snapshot/');
+
+  if (!isPackaged) {
+    // Development / plain node — path is already real
+    _resolvedScriptPath = BUNDLED_SCRIPT_PATH;
+    return _resolvedScriptPath;
+  }
+
+  // Packaged build: extract the bundled script to a real temp path
+  const dest = path.join(os.tmpdir(), 'send-raw-printer.ps1');
+  const content = await fs.readFile(BUNDLED_SCRIPT_PATH, 'utf8');
+  await fs.writeFile(dest, content, 'utf8');
+  _resolvedScriptPath = dest;
+  console.log('[hw-inventory] Extracted print script to:', dest);
+  return _resolvedScriptPath;
+};
 
 // ── DB row → JS object ────────────────────────────────────────────────────────
 const map = (r) => ({
@@ -43,22 +67,13 @@ const esc = (value = '') =>
     .replace(/"/g, '\\"');
 
 // ── Label builder ─────────────────────────────────────────────────────────────
-/**
- * Font width reference @ 203 DPI (xmul=1):
- *   font "2" ≈ 10 dots/char
- *   font "3" ≈ 12 dots/char
- *
- * Centering formula:  x = (labelWidth − charCount × charWidth) / 2
- *   Label width = 400 dots
- *   "B and B Textiles" = 17 chars × 10 = 170 dots  → x = (400−170)/2 = 115
- */
 const buildLabelTspl = (asset) => {
   const rows = [
-    ['User',   ''  || '-'], //asset.assignedTo
-    ['System', asset.assetId      || '-'],
-    ['Dept',   asset.department   || '-'],
-    ['Model',  `${asset.manufacturer || ''}/${asset.model.trim() || ''}`.trim() || '-'],,
-    ['SL No',  asset.serialNumber || '-'],
+    ['User',   asset.assignedTo    || '-'],
+    ['System', asset.assetId       || '-'],
+    ['Dept',   asset.department    || '-'],
+    ['Model',  `${asset.manufacturer || ''}/${(asset.model || '').trim()}`.trim() || '-'],
+    ['SL No',  asset.serialNumber  || '-'],
   ];
 
   const lines = [
@@ -71,10 +86,7 @@ const buildLabelTspl = (asset) => {
     'CLS',
 
     // ── Header ────────────────────────────────────────────────────────────────
-    // Title: updated text, left-aligned, font "3"
     'TEXT 20,4,"3",0,1,1," Hardware Asset Details "',
-    // Subtitle: centered on 400-dot label
-    // "B and B Textiles" = 17 chars × 10 dots = 170 → x = (400-170)/2 = 115
     'TEXT 100,30,"2",0,1,1,"B and B Textiles"',
 
     // ── Double-rule divider ───────────────────────────────────────────────────
@@ -96,7 +108,7 @@ const buildLabelTspl = (asset) => {
   });
 
   // ── Thin rule above barcode ───────────────────────────────────────────────
-  const ruleY = ROW_START_Y + rows.length * ROW_STEP + 2;   // 194
+  const ruleY = ROW_START_Y + rows.length * ROW_STEP + 2;
   lines.push(`BAR 0,${ruleY},400,1`);
 
   // ── Code-128 barcode ─────────────────────────────────────────────────────
@@ -104,8 +116,8 @@ const buildLabelTspl = (asset) => {
     .replace(/[^A-Za-z0-9\-\.\/\+\s]/g, '');
 
   lines.push(`BARCODE 30,${ruleY + 4},"128",32,1,0,2,2,"${esc(barcodeData)}"`);
-
   lines.push('PRINT 1,1');
+
   return `${lines.join('\r\n')}\r\n`;
 };
 
@@ -121,6 +133,9 @@ const sendRawLabelToPrinter = async (content, printerName) => {
   const tempFile = path.join(os.tmpdir(), `hw-label-${Date.now()}.txt`);
   await fs.writeFile(tempFile, Buffer.from(content, 'ascii'));
 
+  // Resolve script to a real on-disk path (handles pkg packaging)
+  const scriptPath = await getRealScriptPath();
+
   try {
     await new Promise((resolve, reject) => {
       execFile(
@@ -128,7 +143,7 @@ const sendRawLabelToPrinter = async (content, printerName) => {
         [
           '-NoProfile',
           '-ExecutionPolicy', 'Bypass',
-          '-File', RAW_PRINT_SCRIPT,
+          '-File', scriptPath,
           '-PrinterName', printerName,
           '-FilePath', tempFile,
         ],
@@ -185,8 +200,8 @@ exports.create = async (req, res) => {
     const result = await pool.request()
       .input('assetId',         sql.NVarChar, b.assetId)
       .input('category',        sql.NVarChar, b.category)
-      .input('manufacturer',    sql.NVarChar, b.manufacturer)
-      .input('model',           sql.NVarChar, b.model)
+      .input('manufacturer',    sql.NVarChar, b.manufacturer    || null)
+      .input('model',           sql.NVarChar, b.model           || null)
       .input('serialNumber',    sql.NVarChar, b.serialNumber    || null)
       .input('location',        sql.NVarChar, b.location)
       .input('floor',           sql.NVarChar, b.floor           || null)
@@ -205,15 +220,17 @@ exports.create = async (req, res) => {
       .input('antivirusActive', sql.Bit,      b.antivirusActive != null ? (b.antivirusActive ? 1 : 0) : null)
       .input('remarks',         sql.NVarChar, b.remarks         || null)
       .query(`
-        INSERT INTO HwInventory
-          (AssetId, Category, Manufacturer, Model, SerialNumber, Location, Floor,
-           Department, AssignedTo, Place, Processor, RamGb, HddGbTb, SsdGbTb,
-           Os, IpAddress, Status, WarrantyStatus, WarrantyExpiry, AntivirusActive, Remarks)
+        INSERT INTO HwInventory (
+          AssetId, Category, Manufacturer, Model, SerialNumber, Location, Floor,
+          Department, AssignedTo, Place, Processor, RamGb, HddGbTb, SsdGbTb,
+          Os, IpAddress, Status, WarrantyStatus, WarrantyExpiry, AntivirusActive, Remarks
+        )
         OUTPUT INSERTED.*
-        VALUES
-          (@assetId, @category, @manufacturer, @model, @serialNumber, @location, @floor,
-           @department, @assignedTo, @place, @processor, @ramGb, @hddGbTb, @ssdGbTb,
-           @os, @ipAddress, @status, @warrantyStatus, @warrantyExpiry, @antivirusActive, @remarks)
+        VALUES (
+          @assetId, @category, @manufacturer, @model, @serialNumber, @location, @floor,
+          @department, @assignedTo, @place, @processor, @ramGb, @hddGbTb, @ssdGbTb,
+          @os, @ipAddress, @status, @warrantyStatus, @warrantyExpiry, @antivirusActive, @remarks
+        )
       `);
     res.status(201).json(map(result.recordset[0]));
   } catch (err) {
@@ -232,8 +249,8 @@ exports.update = async (req, res) => {
       .input('id',              sql.Int,      id)
       .input('assetId',         sql.NVarChar, b.assetId)
       .input('category',        sql.NVarChar, b.category)
-      .input('manufacturer',    sql.NVarChar, b.manufacturer)
-      .input('model',           sql.NVarChar, b.model)
+      .input('manufacturer',    sql.NVarChar, b.manufacturer    || null)
+      .input('model',           sql.NVarChar, b.model           || null)
       .input('serialNumber',    sql.NVarChar, b.serialNumber    || null)
       .input('location',        sql.NVarChar, b.location)
       .input('floor',           sql.NVarChar, b.floor           || null)
@@ -288,7 +305,7 @@ exports.remove = async (req, res) => {
   }
 };
 
-// ── PRINT LABEL ───────────────────────────────────────────────────────────────
+// ── PRINT LABEL (server-side mode) ────────────────────────────────────────────
 exports.printLabel = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
@@ -311,6 +328,7 @@ exports.printLabel = async (req, res) => {
   }
 };
 
+// ── GET LABEL PRINT JOB (client-agent mode) ───────────────────────────────────
 exports.getLabelPrintJob = async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
@@ -319,9 +337,8 @@ exports.getLabelPrintJob = async (req, res) => {
       .input('id', sql.Int, id)
       .query('SELECT * FROM HwInventory WHERE Id = @id');
 
-    if (!result.recordset[0]) {
+    if (!result.recordset[0])
       return res.status(404).json({ message: 'Asset not found.' });
-    }
 
     const asset = map(result.recordset[0]);
     res.json(buildLabelPrintJob(asset));
