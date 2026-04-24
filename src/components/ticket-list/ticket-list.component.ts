@@ -68,9 +68,9 @@ export class TicketListComponent implements OnInit {
     const cat      = this.activeCategory();
 
     const [yr, mo]   = monthStr.split('-').map(Number);
-    const monthStart = new Date(Date.UTC(yr, mo - 1, 1));
-    const monthEnd   = new Date(Date.UTC(yr, mo, 1));
-    const prevStart  = new Date(Date.UTC(yr, mo - 2, 1));
+    const monthStart = new Date(yr, mo - 1, 1);
+    const monthEnd   = new Date(yr, mo, 1);
+    const prevStart  = new Date(yr, mo - 2, 1);
     const now        = new Date();
     const isCurrentMonth =
       yr === now.getFullYear() && mo === now.getMonth() + 1;
@@ -146,8 +146,31 @@ export class TicketListComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.apiService.getTickets();
     this.apiService.getUsers();
+    this.loadMonthTickets(this.filterMonth());
+  }
+
+  // ── Month change: update signal + re-fetch from API ─────────────────────────
+  onMonthChange(value: string): void {
+    this.filterMonth.set(value);
+    this.loadMonthTickets(value);
+  }
+
+  // ── Fetch tickets for a month window from the API ───────────────────────────
+  private loadMonthTickets(monthStr: string): void {
+    const [yr, mo] = monthStr.split('-').map(Number);
+    // Include previous month so carryover (unclosed prev-month tickets) works
+    const fromDate = new Date(yr, mo - 2, 1); // 1st of previous month
+    const toDate   = new Date(yr, mo, 1);     // 1st of month AFTER selected (exclusive)
+    this.apiService.getTickets({
+      createdFrom: this.toLocalDateStr(fromDate),
+      createdTo:   this.toLocalDateStr(toDate),
+      limit: 1000,
+    });
+  }
+
+  private toLocalDateStr(d: Date): string {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
   // ── Navigation ──────────────────────────────────────────────────────────────
@@ -164,12 +187,12 @@ export class TicketListComponent implements OnInit {
   // ── Reset all filters ───────────────────────────────────────────────────────
   clearFilters() {
     const now = new Date();
-    this.filterMonth.set(
-      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    );
+    const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    this.filterMonth.set(monthStr);
     this.filterStatus.set('');
     this.filterCategory.set(null);
     this.currentPage.set(1);
+    this.loadMonthTickets(monthStr);
   }
 
   // ── User lookup helpers ─────────────────────────────────────────────────────

@@ -28,7 +28,7 @@ const mapTicketToCamelCase = (t) => ({
 // GET /api/tickets?page=1&limit=50&status=Open&priority=High&assigneeId=5
 exports.getAllTickets = async (req, res) => {
   const page       = Math.max(1, parseInt(req.query.page,  10) || 1);
-  const limit      = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
+  const limit      = Math.min(1000, Math.max(1, parseInt(req.query.limit, 10) || 50));
   const offset     = (page - 1) * limit;
 
   // Optional server-side filters
