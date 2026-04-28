@@ -215,10 +215,14 @@ export class TicketListComponent implements OnInit {
     return this.priorityColors[priority] ?? 'bg-gray-100 text-gray-600';
   }
 
-  // ── Safe date parser — handles ISO strings & MSSQL datetime2 ───────────────
+  // ── Safe date parser — handles MSSQL datetime2 local-time strings ──────────
+  // Backend stores LOCAL time (e.g. "2026-04-28 17:08:47.0000000").
+  // Parse parts manually into new Date(y,m,d,h,min,s) to guarantee the exact
+  // wall-clock values are used as local time — no timezone shift ever applied.
   parseTicketDate(raw: string | undefined | null): Date | null {
     if (!raw) return null;
-    const d = new Date(raw);
-    return isNaN(d.getTime()) ? null : d;
+    const m = raw.trim().match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+    if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
   }
 }

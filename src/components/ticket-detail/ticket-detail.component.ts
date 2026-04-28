@@ -332,4 +332,11 @@ export class TicketDetailComponent implements OnInit {
   cancel() {
     this.router.navigate(['/tickets']);
   }
+
+  parseTicketDate(raw: string | undefined | null): Date | null {
+    if (!raw) return null;
+    const m = raw.trim().match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+    if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+  }
 }

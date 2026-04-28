@@ -373,11 +373,11 @@
             <div class="space-y-2">
               <div class="flex justify-between text-xs">
                 <span style="color: rgba(27,47,110,0.5);">Created</span>
-                <span class="font-semibold" style="color: #1B2F6E;">{{ ticket()?.createdAt | date:'mediumDate' }}</span>
+                <span class="font-semibold" style="color: #1B2F6E;">{{ parseTicketDate(ticket()?.createdAt) | date:'mediumDate' }}</span>
               </div>
               <div class="flex justify-between text-xs">
                 <span style="color: rgba(27,47,110,0.5);">Updated</span>
-                <span class="font-semibold" style="color: #1B2F6E;">{{ ticket()?.updatedAt | date:'mediumDate' }}</span>
+                <span class="font-semibold" style="color: #1B2F6E;">{{ parseTicketDate(ticket()?.updatedAt) | date:'mediumDate' }}</span>
               </div>
               <div class="flex justify-between text-xs">
                 <span style="color: rgba(27,47,110,0.5);">Ticket ID</span>
