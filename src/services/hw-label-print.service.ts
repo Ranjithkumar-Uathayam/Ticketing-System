@@ -75,18 +75,39 @@ export class HwLabelPrintService {
     }
 
     if (!qz.websocket.isActive()) {
-      await qz.websocket.connect().catch(() => {
+      try {
+        await qz.websocket.connect();
+      } catch {
         throw new Error(
           'QZ Tray is not running on this PC. Install and start QZ Tray, then try again.'
         );
-      });
+      }
     }
 
     const printerName = job.printerName || 'TSC TTP-244 Pro';
+
+    // Verify the printer is known to QZ Tray before submitting the job.
+    // qz.print() resolves as soon as the Windows spooler accepts the job and
+    // does NOT reject on a wrong printer name – it just silently drops the job.
+    // printers.find() rejects immediately if the name has no match, giving the
+    // user an actionable error instead of a silent no-print success.
+    try {
+      await qz.printers.find(printerName);
+    } catch {
+      throw new Error(
+        `Printer "${printerName}" was not found on this PC. ` +
+        `Check that it is installed in Windows with that exact name.`
+      );
+    }
+
     const config = qz.configs.create(printerName);
     const data = [{ type: 'raw', format: 'plain', data: job.content }];
 
-    await qz.print(config, data);
+    try {
+      await qz.print(config, data);
+    } catch (err: any) {
+      throw new Error(err?.message || 'QZ Tray failed to send the job to the printer.');
+    }
   }
 
   private getAgentErrorMessage(error: any): string {
