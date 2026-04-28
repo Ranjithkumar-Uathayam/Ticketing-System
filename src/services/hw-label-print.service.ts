@@ -86,13 +86,15 @@ export class HwLabelPrintService {
 
     const printerName = job.printerName || 'TSC TTP-244 Pro';
 
-    // Verify the printer is known to QZ Tray before submitting the job.
-    // qz.print() resolves as soon as the Windows spooler accepts the job and
-    // does NOT reject on a wrong printer name – it just silently drops the job.
-    // printers.find() rejects immediately if the name has no match, giving the
-    // user an actionable error instead of a silent no-print success.
+    let resolvedPrinterName: string;
     try {
-      await qz.printers.find(printerName);
+        console.log("printerName",printerName)
+      const found = await qz.printers.find(printerName);
+      console.log(found)
+      resolvedPrinterName = Array.isArray(found) ? found[0] : found;
+      if (!resolvedPrinterName) {
+        throw new Error('no match');
+      }
     } catch {
       throw new Error(
         `Printer "${printerName}" was not found on this PC. ` +
@@ -100,7 +102,14 @@ export class HwLabelPrintService {
       );
     }
 
-    const config = qz.configs.create(printerName);
+    // forceRaw: true sends the job as Windows RAW document type, bypassing the
+    // print driver. Required for TSPL/ZPL thermal printers — without it QZ Tray
+    // uses the standard JPS pipeline and the printer commands are never executed.
+    const config = qz.configs.create(resolvedPrinterName, {
+      forceRaw: true,
+      jobName: job.jobName || 'HW Label',
+    });
+
     const data = [{ type: 'raw', format: 'plain', data: job.content }];
 
     try {
