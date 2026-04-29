@@ -14,13 +14,13 @@ export const OS_VERSIONS: OSVersion[]           = ['Windows 10', 'Windows 11', '
  
 export const HW_DEPARTMENTS = [
   'Accessories', 'Accounts', 'Admin', 'AO', 'AP CC', 'B2B', 'B2B CC', 'Billing',
-  'CAD', 'Cashier', 'Cashier Assist', 'Common PC', 'Designer', 'Dhoti', 'Dispatch',
+  'CAD', 'Cashier', 'Cashier Assist', 'Common', 'Designer', 'Dhoti', 'Dispatch',
   'EDP', 'Ecommerce', 'Electrical Team', 'Fabric', 'Factory Manager', 'Garments',
-  'GM', 'Greige', 'HR', 'HR Manager', 'HR Team', 'IE', 'ISO', 'IT Manager',
+  'GM', 'Greige', 'HR', 'HR Team', 'IE', 'ISO', 'IT',
   'IT-HW', 'Internal Audit', 'Inventory', 'KA CC', 'KA-AP-TS CC', 'KL CC', 'LAB',
   'MIS', 'MMD', 'Meeting Room', 'OTC', 'Online', 'Online CC', 'Readymade',
-  'Reception', 'Sample Team', 'Security', 'Security Room', 'TN CC', 'TS CC',
-  'Transport', 'Warehouse',
+  'Reception', 'Sample Team', 'Security', 'TN CC', 'TS CC',
+  'Transport', 'Warehouse','Retail','ADVT'
 ] as const;
  
 export interface HWAsset {

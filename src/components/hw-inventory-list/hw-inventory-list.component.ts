@@ -3,8 +3,9 @@ import { Component, ChangeDetectionStrategy, computed, signal, OnInit, effect } 
 import { CommonModule } from '@angular/common';
 import { FormsModule }  from '@angular/forms';
 import { Router }       from '@angular/router';
-import { HwInventoryService }  from '../../services/hw-inventory.service';
-import { HwLabelPrintService } from '../../services/hw-label-print.service';
+import { HwInventoryService }       from '../../services/hw-inventory.service';
+import { HwLabelPrintService }      from '../../services/hw-label-print.service';
+import { HwInventoryExportService } from '../../services/hw-inventory-export.service';
 import {
   HWAsset, HWCategory, HWStatus, HWLocation, WarrantyStatus,
   HW_CATEGORIES, HW_STATUSES, HW_LOCATIONS, WARRANTY_STATUSES,
@@ -137,9 +138,25 @@ export class HwInventoryListComponent implements OnInit {
     private svc: HwInventoryService,
     private router: Router,
     private labelPrinter: HwLabelPrintService,
+    private exportSvc: HwInventoryExportService,
   ) {}
 
   ngOnInit() { this.svc.getAll(); }
+
+  // ── Export / Print ──────────────────────────────────────────────────────────
+  exportExcel() {
+    const assets = this.selectedCount() > 0
+      ? this.svc.assets().filter(a => a.id != null && this.selectedAssetIds().has(a.id!))
+      : this.filtered();
+    this.exportSvc.exportToExcel(assets);
+  }
+
+  printPdf() {
+    const assets = this.selectedCount() > 0
+      ? this.svc.assets().filter(a => a.id != null && this.selectedAssetIds().has(a.id!))
+      : this.filtered();
+    this.exportSvc.printReport(assets);
+  }
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   openAdd()             { this.router.navigate(['/hw-inventory/new']); }
