@@ -231,6 +231,15 @@
         Select filtered
       </label>
 
+      <select
+        [(ngModel)]="includeUserOnLabel"
+        class="px-3 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer"
+        style="background:#fff; color:#1B2F6E; border-color:#1B2F6E;"
+        title="Choose whether to print the User field on the label">
+        <option value="include">Include User</option>
+        <option value="exclude">Exclude User</option>
+      </select>
+
       <button
         (click)="bulkPrintSelected()"
         [disabled]="selectedCount() === 0 || printingBulk()"

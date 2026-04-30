@@ -7,6 +7,7 @@ const { authenticate } = require('../middleware/auth.middleware');
 router.use(authenticate);
 
 router.get('/',       ctrl.getAll);
+router.post('/qz-sign', ctrl.signQzRequest);    // must be before /:id routes
 router.get('/:id',    ctrl.getById);
 router.post('/:id/label-print-job', ctrl.getLabelPrintJob);
 router.post('/:id/print-label', ctrl.printLabel);

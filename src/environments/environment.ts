@@ -4,6 +4,9 @@ export const environment = {
   apiUrl: "https://vms.uathayam.in:4300/TICKETING-API/api",
 //   apiUrl: 'http://localhost:3001/api',
 //   hwLabelPrintMode: 'server' as 'server' | 'local-agent' | 'qz-tray',
-hwLabelPrintMode: 'qz-tray',
+  hwLabelPrintMode: 'qz-tray',
   hwLabelAgentUrl: 'http://127.0.0.1:17951',
+  hwLabelPrinterName: 'TSC TTP-244 Pro',
+  // Paste the content of qz-certificate.pem here after running setup-qz-cert commands in .env
+  qzCertificate: '',
 };

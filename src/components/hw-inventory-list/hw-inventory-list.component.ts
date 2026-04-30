@@ -22,8 +22,9 @@ export class HwInventoryListComponent implements OnInit {
   loading  = this.svc.loading;
   deleteId = signal<number | null>(null);
   toast    = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
-  printingBulk = signal(false);
-  selectedAssetIds = signal<Set<number>>(new Set());
+  printingBulk       = signal(false);
+  includeUserOnLabel = 'include';
+  selectedAssetIds   = signal<Set<number>>(new Set());
 
   // ── Filters ────────────────────────────────────────────────────────────────
   searchTerm       = signal('');
@@ -166,7 +167,7 @@ export class HwInventoryListComponent implements OnInit {
   async printLabel(asset: HWAsset) {
     if (!asset.id) { this.flash('error', 'Unable to print label for this asset.'); return; }
     try {
-      await this.labelPrinter.printLabel(asset.id);
+      await this.labelPrinter.printLabel(asset, this.includeUserOnLabel === 'include');
       this.flash('success', 'Label sent to printer.');
     } catch (err: any) {
       this.flash('error', err?.message || err?.error?.message || 'Failed to print label.');
@@ -218,15 +219,17 @@ export class HwInventoryListComponent implements OnInit {
   }
 
   async bulkPrintSelected() {
-    const assetIds = Array.from(this.selectedAssetIds());
-    if (assetIds.length === 0) {
+    const assets = this.svc.assets().filter(
+      a => a.id != null && this.selectedAssetIds().has(a.id!)
+    );
+    if (assets.length === 0) {
       this.flash('error', 'Select at least one asset to print labels.');
       return;
     }
 
     this.printingBulk.set(true);
     try {
-      const result = await this.labelPrinter.printLabels(assetIds);
+      const result = await this.labelPrinter.printLabels(assets, this.includeUserOnLabel === 'include');
 
       if (result.failedIds.length === 0) {
         this.flash('success', `${result.successCount} label${result.successCount !== 1 ? 's' : ''} sent to printer.`);

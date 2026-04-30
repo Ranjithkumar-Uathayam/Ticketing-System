@@ -1,6 +1,7 @@
 // backend/controllers/hw-inventory.controller.js
 const { sql, poolPromise } = require('../db');
 const { execFile } = require('child_process');
+const crypto = require('crypto');
 const fs = require('fs/promises');
 const os = require('os');
 const path = require('path');
@@ -67,14 +68,17 @@ const esc = (value = '') =>
     .replace(/"/g, '\\"');
 
 // ── Label builder ─────────────────────────────────────────────────────────────
-const buildLabelTspl = (asset) => {
+const buildLabelTspl = (asset, includeUser = true) => {
   const rows = [
-    ['User',   asset.assignedTo    || '-'],
+    ...(includeUser ? [['User', asset.assignedTo || '-']] : []),
     ['System', asset.assetId       || '-'],
     ['Dept',   asset.department    || '-'],
     ['Model',  `${asset.manufacturer || ''}/${(asset.model || '').trim()}`.trim() || '-'],
     ['SL No',  asset.serialNumber  || '-'],
   ];
+
+  const ROW_START_Y = 67;
+  const ROW_STEP    = 25;
 
   const lines = [
     'SIZE 50 mm,38 mm',
@@ -94,13 +98,10 @@ const buildLabelTspl = (asset) => {
     'BAR 0,57,400,1',
 
     // ── Vertical separator between key and value ──────────────────────────────
-    'BAR 88,65,1,120',
+    `BAR 88,65,1,${rows.length * ROW_STEP}`,
   ];
 
   // ── Data rows ──────────────────────────────────────────────────────────────
-  const ROW_START_Y = 67;
-  const ROW_STEP    = 25;
-
   rows.forEach(([label, value], i) => {
     const y = ROW_START_Y + i * ROW_STEP;
     lines.push(`TEXT 8,${y},"2",0,1,1,"${esc(label)}"`);
@@ -121,11 +122,11 @@ const buildLabelTspl = (asset) => {
   return `${lines.join('\r\n')}\r\n`;
 };
 
-const buildLabelPrintJob = (asset) => ({
+const buildLabelPrintJob = (asset, includeUser = true) => ({
   printerName: LABEL_PRINTER_NAME,
   jobName: `HW Label ${asset.assetId || asset.id || ''}`.trim(),
   encoding: 'ascii',
-  content: buildLabelTspl(asset),
+  content: buildLabelTspl(asset, includeUser),
 });
 
 // ── Raw print helper ──────────────────────────────────────────────────────────
@@ -308,6 +309,7 @@ exports.remove = async (req, res) => {
 // ── PRINT LABEL (server-side mode) ────────────────────────────────────────────
 exports.printLabel = async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  const includeUser = req.body?.includeUser !== false;
   try {
     const pool   = await poolPromise;
     const result = await pool.request()
@@ -318,7 +320,7 @@ exports.printLabel = async (req, res) => {
       return res.status(404).json({ message: 'Asset not found.' });
 
     const asset = map(result.recordset[0]);
-    const tspl  = buildLabelTspl(asset);
+    const tspl  = buildLabelTspl(asset, includeUser);
 
     await sendRawLabelToPrinter(tspl, LABEL_PRINTER_NAME);
     res.json({ message: `Label sent to printer: ${LABEL_PRINTER_NAME}` });
@@ -331,6 +333,7 @@ exports.printLabel = async (req, res) => {
 // ── GET LABEL PRINT JOB (client-agent mode) ───────────────────────────────────
 exports.getLabelPrintJob = async (req, res) => {
   const id = parseInt(req.params.id, 10);
+  const includeUser = req.body?.includeUser !== false;
   try {
     const pool   = await poolPromise;
     const result = await pool.request()
@@ -341,9 +344,30 @@ exports.getLabelPrintJob = async (req, res) => {
       return res.status(404).json({ message: 'Asset not found.' });
 
     const asset = map(result.recordset[0]);
-    res.json(buildLabelPrintJob(asset));
+    res.json(buildLabelPrintJob(asset, includeUser));
   } catch (err) {
     console.error('[hw-inventory.getLabelPrintJob]', err);
     res.status(500).json({ message: 'Failed to prepare label print job', error: err.message });
+  }
+};
+
+// ── QZ TRAY REQUEST SIGNING ───────────────────────────────────────────────────
+exports.signQzRequest = (req, res) => {
+  const { request } = req.body || {};
+  if (!request) {
+    return res.status(400).json({ message: 'request field is required.' });
+  }
+  const privateKey = (process.env.QZ_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  if (!privateKey) {
+    return res.status(503).json({ message: 'QZ signing key not configured on server.' });
+  }
+  try {
+    const sign = crypto.createSign('SHA512');
+    sign.update(request);
+    const signature = sign.sign(privateKey, 'base64');
+    res.json({ signature });
+  } catch (err) {
+    console.error('[hw-inventory.signQzRequest]', err);
+    res.status(500).json({ message: 'Failed to sign QZ request', error: err.message });
   }
 };

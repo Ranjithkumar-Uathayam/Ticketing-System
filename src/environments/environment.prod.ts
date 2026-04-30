@@ -5,4 +5,7 @@ export const environment = {
 //   apiUrl: 'http://localhost:3001/api',
   hwLabelPrintMode: 'qz-tray',
   hwLabelAgentUrl: 'http://127.0.0.1:17951',
+  hwLabelPrinterName: 'TSC TTP-244 Pro',
+  // Paste the content of qz-certificate.pem here after running setup-qz-cert commands in .env
+  qzCertificate: '',
 };
