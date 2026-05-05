@@ -236,7 +236,7 @@ exports.create = async (req, res) => {
     res.status(201).json(map(result.recordset[0]));
   } catch (err) {
     console.error('[hw-inventory.create]', err);
-    res.status(500).json({ message: 'Failed to create asset', error: err.message });
+    res.status(500).json({ message: 'Failed to create asset'+ err.message, error: err.message });
   }
 };
 

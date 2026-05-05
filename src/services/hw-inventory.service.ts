@@ -58,10 +58,6 @@ export class HwInventoryService {
       );
       this.assets.update(list => [created, ...list]);
       return created;
-    } catch {
-      const fake: HWAsset = { ...asset, id: Date.now(), createdAt: new Date().toISOString() };
-      this.assets.update(list => [fake, ...list]);
-      return fake;
     } finally {
       this.loading.set(false);
     }
@@ -75,10 +71,6 @@ export class HwInventoryService {
       );
       this.assets.update(list => list.map(a => a.id === id ? updated : a));
       return updated;
-    } catch {
-      const fake = { ...asset, updatedAt: new Date().toISOString() };
-      this.assets.update(list => list.map(a => a.id === id ? fake : a));
-      return fake;
     } finally {
       this.loading.set(false);
     }
