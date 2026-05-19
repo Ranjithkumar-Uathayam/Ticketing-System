@@ -171,3 +171,86 @@ CREATE INDEX IX_Notifications_UserId ON Notifications (UserId);
 -- ─── Seed data ─────────────────────────────────────────────────────────────
 INSERT INTO Permissions (ScreenName)
 VALUES ('Dashboard'), ('Tickets'), ('User Management'), ('Reports'), ('Dispatch');
+
+IF NOT EXISTS (SELECT 1 FROM Permissions WHERE ScreenName = 'Price Configuration')
+BEGIN
+    INSERT INTO Permissions (ScreenName) VALUES ('Price Configuration');
+END;
+
+IF OBJECT_ID('dbo.PriceItemMaster', 'U') IS NULL
+BEGIN
+    CREATE TABLE PriceItemMaster (
+        Id INT PRIMARY KEY IDENTITY(1,1),
+        NormalizedSku NVARCHAR(120) NOT NULL,
+        SkuCode NVARCHAR(120) NOT NULL,
+        ItemName NVARCHAR(255) NULL,
+        Category NVARCHAR(120) NULL,
+        Color NVARCHAR(120) NULL,
+        Brand NVARCHAR(120) NULL,
+        HsnCode NVARCHAR(60) NULL,
+        Tat NVARCHAR(60) NULL,
+        Size NVARCHAR(80) NULL,
+        Weight NVARCHAR(80) NULL,
+        CostPrice DECIMAL(18,2) NOT NULL DEFAULT 0,
+        MRP DECIMAL(18,2) NOT NULL DEFAULT 0,
+        BatchGroup NVARCHAR(120) NULL,
+        EAN NVARCHAR(120) NULL,
+        Dimensions NVARCHAR(120) NULL,
+        TaxType NVARCHAR(80) NULL,
+        Enabled NVARCHAR(40) NULL,
+        ItemType NVARCHAR(80) NULL,
+        Expirable NVARCHAR(40) NULL,
+        SkuType NVARCHAR(80) NULL,
+        Image NVARCHAR(500) NULL,
+        PageUrl NVARCHAR(500) NULL,
+        SourceFileName NVARCHAR(255) NULL,
+        CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+        UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+        CONSTRAINT UQ_PriceItemMaster_NormalizedSku UNIQUE (NormalizedSku)
+    );
+
+    CREATE INDEX IX_PriceItemMaster_SkuCode ON PriceItemMaster (SkuCode);
+    CREATE INDEX IX_PriceItemMaster_ItemName ON PriceItemMaster (ItemName);
+    CREATE INDEX IX_PriceItemMaster_BrandCategory ON PriceItemMaster (Brand, Category);
+END;
+
+IF OBJECT_ID('dbo.PriceItemMasterMeta', 'U') IS NULL
+BEGIN
+    CREATE TABLE PriceItemMasterMeta (
+        Id INT PRIMARY KEY,
+        LastUploadFileName NVARCHAR(255) NULL,
+        LastUploadedAt DATETIME2 NULL,
+        TotalItems INT NOT NULL DEFAULT 0,
+        UpdatedBy INT NULL,
+        UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+        CONSTRAINT FK_PriceItemMasterMeta_Users FOREIGN KEY (UpdatedBy) REFERENCES Users(Id)
+    );
+END;
+
+IF COL_LENGTH('dbo.PriceConfigurations', 'ItemMasterUploadedAt') IS NULL
+BEGIN
+    ALTER TABLE PriceConfigurations
+    ADD ItemMasterUploadedAt DATETIME2 NULL;
+END;
+
+IF OBJECT_ID('dbo.PriceConfigurations', 'U') IS NULL
+BEGIN
+    CREATE TABLE PriceConfigurations (
+        Id INT PRIMARY KEY IDENTITY(1,1),
+        ConfigurationNo NVARCHAR(30) NOT NULL,
+        PickListNo NVARCHAR(100) NOT NULL,
+        PickListCreatedAt NVARCHAR(100) NULL,
+        ItemMasterFileName NVARCHAR(255) NULL,
+        PickListFileName NVARCHAR(255) NULL,
+        ItemsJson NVARCHAR(MAX) NOT NULL,
+        LabelTemplateJson NVARCHAR(MAX) NULL,
+        CreatedBy INT NULL,
+        CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+        UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+        CONSTRAINT UQ_PriceConfigurations_ConfigurationNo UNIQUE (ConfigurationNo),
+        CONSTRAINT FK_PriceConfigurations_Users FOREIGN KEY (CreatedBy) REFERENCES Users(Id)
+    );
+
+    CREATE INDEX IX_PriceConfigurations_UpdatedAt
+    ON PriceConfigurations (UpdatedAt DESC, Id DESC);
+END;

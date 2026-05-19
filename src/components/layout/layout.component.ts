@@ -31,6 +31,7 @@ export class LayoutComponent {
   canViewReports;
   canViewDispatch;
   canViewCustomerEntry;
+  canViewPriceConfiguration;
   canViewHwInventory;   // ← NEW
 
   constructor(
@@ -57,6 +58,11 @@ export class LayoutComponent {
     );
     this.canViewCustomerEntry  = computed(() =>
       this.authService.hasPermission('Customer Entry') ||
+      this.authService.isAdmin() ||
+      this.authService.isManager()
+    );
+    this.canViewPriceConfiguration = computed(() =>
+      this.authService.hasPermission('Price Configuration') ||
       this.authService.isAdmin() ||
       this.authService.isManager()
     );
@@ -87,6 +93,7 @@ export class LayoutComponent {
     if (url.match(/\/customer-entry\/\d+/))   return 'Customer Entry';
     if (url.includes('/customer-entry/new'))  return 'New Customer Entry';
     if (url.includes('/customer-entry'))      return 'Online Customer Entry';
+    if (url.includes('/price-configuration')) return 'Price Configuration';
     if (url.match(/\/hw-inventory\/\d+/))     return 'Edit Asset';
     if (url.includes('/hw-inventory/new'))    return 'New Asset';
     if (url.includes('/hw-inventory'))        return 'HW Inventory';

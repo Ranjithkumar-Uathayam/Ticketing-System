@@ -1,6 +1,5 @@
 <div class="h-screen flex overflow-hidden" style="background-color: #F8F9FC;">
 
-  <!-- Mobile Sidebar Overlay -->
   <div class="fixed inset-0 flex z-40 md:hidden" [class.pointer-events-none]="!sidebarOpen()">
     <div class="fixed inset-0 backdrop-blur-sm transition-opacity duration-300"
          style="background-color: rgba(27,47,110,0.6);"
@@ -18,7 +17,6 @@
         </button>
       </div>
 
-      <!-- Brand -->
       <div class="px-5 pt-5 pb-4" style="border-bottom: 1px solid rgba(253,181,21,0.2);">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background-color: #FDB515;">
@@ -31,108 +29,118 @@
         </div>
       </div>
 
-        <nav class="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
-            <p class="px-3 mb-3 text-xs font-bold uppercase tracking-widest" style="color: rgba(253,181,21,0.3);">Navigation</p>
-            
-            @if(sessionReady()) {
-            
-                @if(canViewDashboard()) {
-                <a routerLink="/dashboard" routerLinkActive="uath-active-nav" [routerLinkActiveOptions]="{exact: true}"
-                    class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                    style="color: rgba(253,181,21,0.7);">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                    </div>
-                    Dashboard
-                </a>
-                }
-            
-                @if(canViewTickets()) {
-                <a routerLink="/tickets" routerLinkActive="uath-active-nav"
-                    class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                    style="color: rgba(253,181,21,0.7);">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-                    </div>
-                    Tickets
-                </a>
-                }
-            
-                @if(canViewUserManagement()) {
-                <a routerLink="/user-management" routerLinkActive="uath-active-nav"
-                    class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                    style="color: rgba(253,181,21,0.7);">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    </div>
-                    User Management
-                </a>
-                }
-            
-                @if(canViewReports()) {
-                <a routerLink="/reports" routerLinkActive="uath-active-nav"
-                    class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                    style="color: rgba(253,181,21,0.7);">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    </div>
-                    Reports
-                </a>
-                }
-            
-                @if(canViewDispatch()) {
-                <a routerLink="/dispatch" routerLinkActive="uath-active-nav"
-                    class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                    style="color: rgba(253,181,21,0.7);">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H8zm0 0v4h8M10 12h4m-4 4h4m-6-4h.01m-.01 4h.01"/></svg>
-                    </div>
-                    Online Dispatch
-                </a>
-                }
-            
-                @if(canViewCustomerEntry()) {
-                <a routerLink="/customer-entry" routerLinkActive="uath-active-nav"
-                    class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                    style="color: rgba(253,181,21,0.7);">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    </div>
-                    Customer Care Entry
-                </a>
-                }
-            
-                <!-- ── HW Inventory ── NEW ──────────────────────────────────────────── -->
-                @if(canViewHwInventory()) {
-                    <a routerLink="/hw-inventory" routerLinkActive="uath-active-nav"
-                        class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                        style="color: rgba(253,181,21,0.7);">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                            d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
-                        </svg>
-                        </div>
-                        HW Inventory
-                    </a>
-                }
-            
-            } @else {
-                <!-- Skeleton while session loads -->
-                <div class="space-y-1 px-1 animate-pulse">
-                @for(_ of [1,2,3,4,5]; track $index) {
-                    <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl">
-                    <div class="w-8 h-8 rounded-lg flex-shrink-0" style="background:rgba(253,181,21,0.1);"></div>
-                    <div class="h-3 rounded-full flex-1" style="background:rgba(253,181,21,0.1);"></div>
-                    </div>
-                }
-                </div>
+      <nav class="flex-1 px-3 py-5 space-y-1 overflow-y-auto">
+        <p class="px-3 mb-3 text-xs font-bold uppercase tracking-widest" style="color: rgba(253,181,21,0.3);">Navigation</p>
+
+        @if(sessionReady()) {
+
+          @if(canViewDashboard()) {
+          <a routerLink="/dashboard" routerLinkActive="uath-active-nav" [routerLinkActiveOptions]="{exact: true}"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              </div>
+              Dashboard
+          </a>
+          }
+
+          @if(canViewTickets()) {
+          <a routerLink="/tickets" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+              </div>
+              Tickets
+          </a>
+          }
+
+          @if(canViewUserManagement()) {
+          <a routerLink="/user-management" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              </div>
+              User Management
+          </a>
+          }
+
+          @if(canViewReports()) {
+          <a routerLink="/reports" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              </div>
+              Reports
+          </a>
+          }
+
+          @if(canViewDispatch()) {
+          <a routerLink="/dispatch" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H8zm0 0v4h8M10 12h4m-4 4h4m-6-4h.01m-.01 4h.01"/></svg>
+              </div>
+              Online Dispatch
+          </a>
+          }
+
+          @if(canViewCustomerEntry()) {
+          <a routerLink="/customer-entry" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              </div>
+              Customer Care Entry
+          </a>
+          }
+
+          @if(canViewPriceConfiguration()) {
+          <a routerLink="/price-configuration" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z"/>
+              </svg>
+              </div>
+              Price Configuration
+          </a>
+          }
+
+          @if(canViewHwInventory()) {
+          <a routerLink="/hw-inventory" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+              </svg>
+              </div>
+              HW Inventory
+          </a>
+          }
+
+        } @else {
+          <div class="space-y-1 px-1 animate-pulse">
+            @for(_ of [1,2,3,4,5]; track $index) {
+              <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl">
+                <div class="w-8 h-8 rounded-lg flex-shrink-0" style="background:rgba(253,181,21,0.1);"></div>
+                <div class="h-3 rounded-full flex-1" style="background:rgba(253,181,21,0.1);"></div>
+              </div>
             }
-            
-        </nav>
+          </div>
+        }
+      </nav>
 
       <div class="px-4 py-4" style="border-top: 1px solid rgba(253,181,21,0.15);">
         <div class="flex items-center gap-3 px-2 py-2">
@@ -143,8 +151,7 @@
             <p class="text-xs font-semibold truncate" style="color: #FDB515;">{{ user()?.name }}</p>
             <p class="text-xs truncate" style="color: rgba(253,181,21,0.5);">{{ userRole()?.name }}</p>
           </div>
-          <button (click)="logout()" title="Sign out"
-            class="p-1.5 rounded-lg transition-colors uath-logout-btn">
+          <button (click)="logout()" title="Sign out" class="p-1.5 rounded-lg transition-colors uath-logout-btn">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
           </button>
         </div>
@@ -153,11 +160,8 @@
     <div class="flex-shrink-0 w-14"></div>
   </div>
 
-  <!-- Desktop Sidebar -->
   <div class="hidden md:flex md:flex-shrink-0">
     <div class="flex flex-col w-64" style="background-color: #1B2F6E;">
-
-      <!-- Logo -->
       <div class="px-5 py-5" style="border-bottom: 1px solid rgba(253,181,21,0.2);">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background-color: #FDB515;">
@@ -175,96 +179,113 @@
 
         @if(sessionReady()) {
 
-            @if(canViewDashboard()) {
-            <a routerLink="/dashboard" routerLinkActive="uath-active-nav" [routerLinkActiveOptions]="{exact: true}"
-                class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                style="color: rgba(253,181,21,0.7);">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                </div>
-                Dashboard
-            </a>
-            }
-            @if(canViewTickets()) {
-            <a routerLink="/tickets" routerLinkActive="uath-active-nav"
-                class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                style="color: rgba(253,181,21,0.7);">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
-                </div>
-                Tickets
-            </a>
-            }
-            @if(canViewUserManagement()) {
-            <a routerLink="/user-management" routerLinkActive="uath-active-nav"
-                class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                style="color: rgba(253,181,21,0.7);">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                </div>
-                User Management
-            </a>
-            }
-            @if(canViewReports()) {
-            <a routerLink="/reports" routerLinkActive="uath-active-nav"
-                class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                style="color: rgba(253,181,21,0.7);">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                </div>
-                Reports
-            </a>
-            }
-            @if(canViewDispatch()) {
-            <a routerLink="/dispatch" routerLinkActive="uath-active-nav"
-                class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                style="color: rgba(253,181,21,0.7);">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H8zm0 0v4h8M10 12h4m-4 4h4m-6-4h.01m-.01 4h.01"/></svg>
-                </div>
-                Online Dispatch
-            </a>
-            }
-            @if(canViewCustomerEntry()) {
-            <a routerLink="/customer-entry" routerLinkActive="uath-active-nav"
-                class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                style="color: rgba(253,181,21,0.7);">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                </div>
-                Customer Care Entry
-            </a>
-            }
-            @if(canViewHwInventory()) {
-                <a routerLink="/hw-inventory" routerLinkActive="uath-active-nav"
-                    class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
-                    style="color: rgba(253,181,21,0.7);">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                        d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
-                    </svg>
-                    </div>
-                    HW Inventory
-                </a>
-            }
+          @if(canViewDashboard()) {
+          <a routerLink="/dashboard" routerLinkActive="uath-active-nav" [routerLinkActiveOptions]="{exact: true}"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              </div>
+              Dashboard
+          </a>
+          }
+
+          @if(canViewTickets()) {
+          <a routerLink="/tickets" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+              </div>
+              Tickets
+          </a>
+          }
+
+          @if(canViewUserManagement()) {
+          <a routerLink="/user-management" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              </div>
+              User Management
+          </a>
+          }
+
+          @if(canViewReports()) {
+          <a routerLink="/reports" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              </div>
+              Reports
+          </a>
+          }
+
+          @if(canViewDispatch()) {
+          <a routerLink="/dispatch" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H8zm0 0v4h8M10 12h4m-4 4h4m-6-4h.01m-.01 4h.01"/></svg>
+              </div>
+              Online Dispatch
+          </a>
+          }
+
+          @if(canViewCustomerEntry()) {
+          <a routerLink="/customer-entry" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              </div>
+              Customer Care Entry
+          </a>
+          }
+
+          @if(canViewPriceConfiguration()) {
+          <a routerLink="/price-configuration" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l3.414 3.414A1 1 0 0117 7.414V19a2 2 0 01-2 2z"/>
+              </svg>
+              </div>
+              Price Configuration
+          </a>
+          }
+
+          @if(canViewHwInventory()) {
+          <a routerLink="/hw-inventory" routerLinkActive="uath-active-nav"
+              class="uath-nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+              style="color: rgba(253,181,21,0.7);">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 uath-icon-bg">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+              </svg>
+              </div>
+              HW Inventory
+          </a>
+          }
 
         } @else {
-            <!-- ── Nav skeleton — shown for ~200ms while restoreSession() fetches roles ── -->
-            <div class="space-y-1 px-1 animate-pulse">
+          <div class="space-y-1 px-1 animate-pulse">
             @for(_ of [1,2,3,4]; track $index) {
-                <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl">
+              <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl">
                 <div class="w-8 h-8 rounded-lg flex-shrink-0" style="background:rgba(253,181,21,0.1);"></div>
                 <div class="h-3 rounded-full flex-1" style="background:rgba(253,181,21,0.1);"></div>
-                </div>
+              </div>
             }
-            </div>
+          </div>
         }
-
-        </nav>
+      </nav>
 
       <div class="px-4 py-4" style="border-top: 1px solid rgba(253,181,21,0.15);">
         <div class="flex items-center gap-3 px-2 py-2">
@@ -283,10 +304,7 @@
     </div>
   </div>
 
-  <!-- Main Content Area -->
   <div class="flex flex-col w-0 flex-1 overflow-hidden">
-
-    <!-- Top Header -->
     <div class="relative z-10 flex-shrink-0 flex h-14 bg-white" style="border-bottom: 2px solid #FDB515; box-shadow: 0 1px 8px rgba(27,47,110,0.08);">
       <button (click)="toggleSidebar()" class="px-4 md:hidden transition-colors" style="color: #1B2F6E;">
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
@@ -299,7 +317,6 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <!-- Notification Bell -->
           <div class="relative">
             <button (click)="toggleNotificationPanel()"
               class="relative p-2 rounded-xl transition-colors hover:bg-amber-50" style="color: #1B2F6E;">
@@ -333,7 +350,6 @@
             }
           </div>
 
-          <!-- Mobile User Menu -->
           <div class="relative md:hidden">
             <button (click)="toggleUserMenu()" class="flex items-center p-1.5 rounded-xl hover:bg-amber-50 transition-colors">
               <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background-color: #1B2F6E;">
@@ -354,7 +370,6 @@
       </div>
     </div>
 
-    <!-- Page Content -->
     <main class="flex-1 relative overflow-y-auto focus:outline-none" style="background-color: #F8F9FC;">
       <div class="py-6 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <router-outlet></router-outlet>

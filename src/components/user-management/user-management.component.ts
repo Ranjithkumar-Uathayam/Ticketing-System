@@ -34,9 +34,9 @@ export class UserManagementComponent {
   editingUser     = signal<User | null>(null);
 
   availableScreens: AppScreen[] = [
-    'Dashboard', 'Tickets', 'User Management', 'Reports', 'Dispatch', 'Customer Entry', 'HW Inventory',
+    'Dashboard', 'Tickets', 'User Management', 'Reports', 'Dispatch', 'Customer Entry', 'HW Inventory', 'Price Configuration',
   ];
-  selectedPermissions = signal<boolean[]>(new Array(7).fill(false));
+  selectedPermissions = signal<boolean[]>(new Array(this.availableScreens.length).fill(false));
 
   ticketCategories: TicketCategory[] = TICKET_CATEGORIES;
 
@@ -186,7 +186,7 @@ export class UserManagementComponent {
     this.editingRole.set(role ?? null);
     if (role) {
       this.roleForm.patchValue({ name: role.name });
-      const perms = new Array(7).fill(false);
+      const perms = new Array(this.availableScreens.length).fill(false);
       role.permissions.forEach(p => {
         const i = this.availableScreens.indexOf(p);
         if (i >= 0) perms[i] = true;
@@ -194,7 +194,7 @@ export class UserManagementComponent {
       this.selectedPermissions.set(perms);
     } else {
       this.roleForm.reset();
-      this.selectedPermissions.set(new Array(7).fill(false));
+      this.selectedPermissions.set(new Array(this.availableScreens.length).fill(false));
     }
     this.isRoleModalOpen.set(true);
   }

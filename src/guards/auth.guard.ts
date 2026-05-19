@@ -17,6 +17,7 @@ const ROUTE_PERMISSIONS: Record<string, AppScreen> = {
   'dispatch':        'Dispatch',
   'customer-entry':  'Customer Entry',
   'hw-inventory':    'HW Inventory',
+  'price-configuration': 'Price Configuration',
 };
 
 @Injectable({ providedIn: 'root' })
@@ -41,7 +42,7 @@ export class AuthGuard implements CanActivate, CanActivateChild {
     if (requiredPermission) {
       // Admins and Managers bypass the permission table for Dispatch & Customer Entry
       if (
-        (path === 'dispatch' || path === 'customer-entry' || path === 'hw-inventory') &&
+        (path === 'dispatch' || path === 'customer-entry' || path === 'hw-inventory' || path === 'price-configuration') &&
         (this.authService.isAdmin() || this.authService.isManager())
       ) {
         return true;

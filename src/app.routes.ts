@@ -52,6 +52,10 @@ export const appRoutes: Routes = [
         path: 'customer-entry/:id',
         loadComponent: () => import('./components/customer-entry-form/customer-entry-form.component').then(c => c.CustomerEntryFormComponent)
       },
+      {
+        path: 'price-configuration',
+        loadComponent: () => import('./components/price-configuration/price-configuration.component').then(c => c.PriceConfigurationComponent)
+      },
       { 
         path: 'hw-inventory',       
         loadComponent: () => import('./components/hw-inventory-list/hw-inventory-list.component').then(c => c.HwInventoryListComponent) 
