@@ -1,19 +1,9 @@
 const { sql, poolPromise } = require('../db');
-const { execFile } = require('child_process');
+const { parseItemMaster, parsePickList } = require('../scripts/price-config-parser');
 const crypto = require('crypto');
 const fs = require('fs/promises');
 const os = require('os');
 const path = require('path');
-
-const PARSER_SCRIPT_PATH = path.join(__dirname, '..', 'scripts', 'price_config_parser.py');
-
-const DEFAULT_PYTHON_CANDIDATES = [
-  process.env.PRICE_CONFIG_PYTHON,
-  process.env.PYTHON_PATH,
-  path.join(os.homedir(), '.cache', 'codex-runtimes', 'codex-primary-runtime', 'dependencies', 'python', 'python.exe'),
-  'python',
-  'python3',
-].filter(Boolean);
 
 const LABEL_TEMPLATE_FALLBACK = {
   companyName: 'B AND B TEXTILE',
@@ -45,38 +35,6 @@ const writeTempFile = async (prefix, originalName, buffer) => {
   const tempPath = path.join(os.tmpdir(), `${prefix}-${crypto.randomUUID()}-${safeName}`);
   await fs.writeFile(tempPath, buffer);
   return tempPath;
-};
-
-const tryExecFile = (command, args) => new Promise((resolve, reject) => {
-  execFile(command, args, { windowsHide: true, timeout: 120000 }, (error, stdout, stderr) => {
-    if (error) {
-      reject(new Error(stderr || stdout || error.message));
-      return;
-    }
-    resolve(stdout);
-  });
-});
-
-const runParser = async (mode, filePath) => {
-  let lastError = null;
-
-  for (const pythonCommand of DEFAULT_PYTHON_CANDIDATES) {
-    try {
-      const stdout = await tryExecFile(pythonCommand, [
-        PARSER_SCRIPT_PATH,
-        mode,
-        '--file',
-        filePath,
-      ]);
-      return JSON.parse(stdout);
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw new Error(
-    `Unable to parse the uploaded file. Configure PRICE_CONFIG_PYTHON with a Python runtime that includes openpyxl and pypdf. ${lastError ? `Last error: ${lastError.message}` : ''}`.trim()
-  );
 };
 
 const normalizeSku = (value) => String(value || '').replace(/\s+/g, '').trim().toUpperCase();
@@ -626,7 +584,7 @@ exports.importItemMaster = async (req, res) => {
 
   try {
     itemMasterPath = await writeTempFile('item-master', itemMasterFileName, decodeBase64File(itemMasterBase64));
-    const parsed = await runParser('item-master', itemMasterPath);
+    const parsed = await parseItemMaster(itemMasterPath);
     const rows = (parsed.items || [])
       .map((row) => toItemMasterImportRow(row, itemMasterFileName))
       .filter((row) => row.normalizedSku && row.skuCode);
@@ -848,7 +806,7 @@ exports.preview = async (req, res) => {
     }
 
     pickListPath = await writeTempFile('pick-list', pickListFileName, decodeBase64File(pickListBase64));
-    const pickList = await runParser('pick-list', pickListPath);
+    const pickList = await parsePickList(pickListPath);
     const pickListItems = Array.isArray(pickList.items) ? pickList.items : [];
 
     if (!pickListItems.length) {

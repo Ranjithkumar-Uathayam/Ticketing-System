@@ -118,6 +118,7 @@ export class PriceConfigurationComponent {
         this.itemMasterLimit,
       );
       this.applyItemMasterPage(result, keepPage ? this.itemMasterPage() : page);
+      this.cdr.markForCheck();
     } catch (err: any) {
       this.flash('error', err?.error?.message || err?.message || 'Failed to load item master data.');
     } finally {
@@ -156,6 +157,7 @@ export class PriceConfigurationComponent {
       const result = await this.service.importItemMaster(file);
       this.itemMasterFile.set(null);
       this.applyItemMasterPage(result, 1);
+      this.cdr.markForCheck();
       this.flash('success', `Imported ${result.meta.totalItems} item master rows successfully.`);
     } catch (err: any) {
       this.flash('error', err?.error?.message || err?.message || 'Failed to import item master.');
