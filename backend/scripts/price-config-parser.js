@@ -17,7 +17,7 @@ const nodePath = require('path');
 // ─── Text helpers ────────────────────────────────────────────────────────────
 
 function normalizeHeader(value) {
-  return String(value || '').replace(/[^a-z0-9]+/g, '').toLowerCase();
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
 
 function cleanText(value) {
@@ -42,7 +42,7 @@ function detectHeaderRow(rows, requiredAny, maxRows = 20) {
     const normalized = (rows[ri] || []).map(normalizeHeader);
     if (normalized.some(k => requiredAny.includes(k))) {
       const headerMap = {};
-      normalized.forEach((k, i) => { if (k) headerMap[k] = i; });
+      normalized.forEach((k, i) => { if (k && !(k in headerMap)) headerMap[k] = i; });
       return { headerRowIndex: ri + 1, headerMap };
     }
   }

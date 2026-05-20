@@ -91,7 +91,15 @@ export class PriceConfigurationService {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(String(reader.result || ''));
-      reader.onerror = () => reject(reader.error || new Error(`Unable to read ${file.name}.`));
+      reader.onerror = () => {
+        const domMsg = reader.error?.message || '';
+        const isLocked = /permission|could not be read/i.test(domMsg);
+        reject(new Error(
+          isLocked
+            ? `Cannot read "${file.name}" — the file may be open in another application (e.g. Excel). Close it and try again.`
+            : `Unable to read "${file.name}"${domMsg ? ': ' + domMsg : '.'}`
+        ));
+      };
       reader.readAsDataURL(file);
     });
   }
