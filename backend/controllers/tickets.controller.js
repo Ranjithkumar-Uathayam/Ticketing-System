@@ -1,5 +1,12 @@
 const { sql, poolPromise } = require('../db');
 
+// List view: excludes large screenshot blobs to keep the query fast
+const TICKET_LIST_COLUMNS = `Id, Title, Description, Status, Priority, Category, SubCategory, Division,
+    ReporterId, AssigneeId, CreatedAt, UpdatedAt,
+    CreatedBy, EmployeeId, ExtensionNumber
+`;
+
+// Detail view: full row including screenshots
 const TICKET_COLUMNS = `Id, Title, Description, Status, Priority, Category, SubCategory, Division,
     ReporterId, AssigneeId, CreatedAt, UpdatedAt,
     ScreenshotUrl, ScreenshotFileName, CreatedBy, EmployeeId, ExtensionNumber
@@ -49,7 +56,7 @@ exports.getAllTickets = async (req, res) => {
     if (createdTo)   { request.input('createdTo',   sql.DateTime2, new Date(createdTo));   where += ' AND CreatedAt < @createdTo'; }
 
     const result = await request.query(`
-      SELECT ${TICKET_COLUMNS}
+      SELECT ${TICKET_LIST_COLUMNS}
       FROM Tickets
       ${where}
       ORDER BY UpdatedAt DESC
@@ -77,6 +84,25 @@ exports.getAllTickets = async (req, res) => {
   } catch (err) {
     console.error('[tickets.getAllTickets]', err);
     res.status(500).json({ message: 'Failed to retrieve tickets.' });
+  }
+};
+
+// GET /api/tickets/:id — full row including screenshots
+exports.getTicketById = async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (isNaN(id)) return res.status(400).json({ message: 'Invalid ticket ID.' });
+
+  try {
+    const pool   = await poolPromise;
+    const result = await pool.request()
+      .input('id', sql.Int, id)
+      .query(`SELECT ${TICKET_COLUMNS} FROM Tickets WHERE Id = @id`);
+
+    if (!result.recordset[0]) return res.status(404).json({ message: 'Ticket not found.' });
+    res.status(200).json(mapTicketToCamelCase(result.recordset[0]));
+  } catch (err) {
+    console.error('[tickets.getTicketById]', err);
+    res.status(500).json({ message: 'Failed to retrieve ticket.' });
   }
 };
 

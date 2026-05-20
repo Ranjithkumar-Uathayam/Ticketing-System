@@ -74,6 +74,12 @@ export class ApiService {
     return this.tickets().find(t => t.id === id);
   }
 
+  async fetchTicketById(id: number): Promise<Ticket> {
+    return firstValueFrom(
+      this.http.get<Ticket>(`${environment.apiUrl}/tickets/${id}`)
+    );
+  }
+
   async createTicket(ticketData: Omit<Ticket, 'id' | 'createdAt' | 'updatedAt'>): Promise<void> {
     const newTicket = await firstValueFrom(
       this.http.post<Ticket>(`${environment.apiUrl}/tickets`, ticketData)

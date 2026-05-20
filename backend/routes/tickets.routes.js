@@ -8,6 +8,7 @@ const { validateCreateTicket, validateUpdateTicket } = require('../validators');
 router.use(authenticate);
 
 router.get('/',     ctrl.getAllTickets);
+router.get('/:id',  ctrl.getTicketById);
 router.post('/',    validateCreateTicket, ctrl.createTicket);
 router.put('/:id',  validateUpdateTicket, ctrl.updateTicket);
 

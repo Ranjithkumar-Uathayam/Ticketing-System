@@ -12,6 +12,7 @@ const DEFAULT_PYTHON_CANDIDATES = [
   process.env.PYTHON_PATH,
   path.join(os.homedir(), '.cache', 'codex-runtimes', 'codex-primary-runtime', 'dependencies', 'python', 'python.exe'),
   'python',
+  'python3',
 ].filter(Boolean);
 
 const LABEL_TEMPLATE_FALLBACK = {
@@ -29,6 +30,8 @@ const ITEM_MASTER_DEFAULT_META = {
   lastUploadFileName: null,
   lastUploadedAt: null,
 };
+
+let schemaReadyPromise = null;
 
 const decodeBase64File = (base64Value = '') => {
   const raw = String(base64Value);
@@ -192,6 +195,149 @@ const mapRecord = (row) => {
     ...summary,
     items,
   };
+};
+
+const ensureSchema = async (pool) => {
+  if (!schemaReadyPromise) {
+    schemaReadyPromise = pool.request().query(`
+      IF OBJECT_ID('dbo.PriceConfigurations', 'U') IS NULL
+      BEGIN
+          CREATE TABLE PriceConfigurations (
+              Id INT PRIMARY KEY IDENTITY(1,1),
+              ConfigurationNo NVARCHAR(50) NOT NULL,
+              PickListNo NVARCHAR(100) NOT NULL,
+              PickListCreatedAt NVARCHAR(100) NULL,
+              ItemMasterFileName NVARCHAR(255) NULL,
+              PickListFileName NVARCHAR(255) NULL,
+              ItemsJson NVARCHAR(MAX) NOT NULL,
+              LabelTemplateJson NVARCHAR(MAX) NULL,
+              CreatedBy INT NULL,
+              CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+              UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+              CONSTRAINT UQ_PriceConfigurations_ConfigurationNo UNIQUE (ConfigurationNo)
+          );
+      END;
+
+      IF COL_LENGTH('dbo.PriceConfigurations', 'ItemMasterUploadedAt') IS NULL
+      BEGIN
+          ALTER TABLE PriceConfigurations
+          ADD ItemMasterUploadedAt DATETIME2 NULL;
+      END;
+
+      IF NOT EXISTS (
+          SELECT 1
+          FROM sys.foreign_keys
+          WHERE name = 'FK_PriceConfigurations_Users'
+      ) AND OBJECT_ID('dbo.Users', 'U') IS NOT NULL
+      BEGIN
+          ALTER TABLE PriceConfigurations
+          ADD CONSTRAINT FK_PriceConfigurations_Users
+          FOREIGN KEY (CreatedBy) REFERENCES Users(Id);
+      END;
+
+      IF NOT EXISTS (
+          SELECT 1
+          FROM sys.indexes
+          WHERE name = 'IX_PriceConfigurations_UpdatedAt'
+            AND object_id = OBJECT_ID('dbo.PriceConfigurations')
+      )
+      BEGIN
+          CREATE INDEX IX_PriceConfigurations_UpdatedAt
+          ON PriceConfigurations (UpdatedAt DESC, Id DESC);
+      END;
+
+      IF OBJECT_ID('dbo.PriceItemMaster', 'U') IS NULL
+      BEGIN
+          CREATE TABLE PriceItemMaster (
+              Id INT PRIMARY KEY IDENTITY(1,1),
+              NormalizedSku NVARCHAR(120) NOT NULL,
+              SkuCode NVARCHAR(120) NOT NULL,
+              ItemName NVARCHAR(255) NULL,
+              Category NVARCHAR(120) NULL,
+              Color NVARCHAR(120) NULL,
+              Brand NVARCHAR(120) NULL,
+              HsnCode NVARCHAR(60) NULL,
+              Tat NVARCHAR(60) NULL,
+              Size NVARCHAR(80) NULL,
+              Weight NVARCHAR(80) NULL,
+              CostPrice DECIMAL(18,2) NOT NULL DEFAULT 0,
+              MRP DECIMAL(18,2) NOT NULL DEFAULT 0,
+              BatchGroup NVARCHAR(120) NULL,
+              EAN NVARCHAR(120) NULL,
+              Dimensions NVARCHAR(120) NULL,
+              TaxType NVARCHAR(80) NULL,
+              Enabled NVARCHAR(40) NULL,
+              ItemType NVARCHAR(80) NULL,
+              Expirable NVARCHAR(40) NULL,
+              SkuType NVARCHAR(80) NULL,
+              Image NVARCHAR(500) NULL,
+              PageUrl NVARCHAR(500) NULL,
+              SourceFileName NVARCHAR(255) NULL,
+              CreatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+              UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE(),
+              CONSTRAINT UQ_PriceItemMaster_NormalizedSku UNIQUE (NormalizedSku)
+          );
+      END;
+
+      IF NOT EXISTS (
+          SELECT 1
+          FROM sys.indexes
+          WHERE name = 'IX_PriceItemMaster_SkuCode'
+            AND object_id = OBJECT_ID('dbo.PriceItemMaster')
+      )
+      BEGIN
+          CREATE INDEX IX_PriceItemMaster_SkuCode ON PriceItemMaster (SkuCode);
+      END;
+
+      IF NOT EXISTS (
+          SELECT 1
+          FROM sys.indexes
+          WHERE name = 'IX_PriceItemMaster_ItemName'
+            AND object_id = OBJECT_ID('dbo.PriceItemMaster')
+      )
+      BEGIN
+          CREATE INDEX IX_PriceItemMaster_ItemName ON PriceItemMaster (ItemName);
+      END;
+
+      IF NOT EXISTS (
+          SELECT 1
+          FROM sys.indexes
+          WHERE name = 'IX_PriceItemMaster_BrandCategory'
+            AND object_id = OBJECT_ID('dbo.PriceItemMaster')
+      )
+      BEGIN
+          CREATE INDEX IX_PriceItemMaster_BrandCategory ON PriceItemMaster (Brand, Category);
+      END;
+
+      IF OBJECT_ID('dbo.PriceItemMasterMeta', 'U') IS NULL
+      BEGIN
+          CREATE TABLE PriceItemMasterMeta (
+              Id INT PRIMARY KEY,
+              LastUploadFileName NVARCHAR(255) NULL,
+              LastUploadedAt DATETIME2 NULL,
+              TotalItems INT NOT NULL DEFAULT 0,
+              UpdatedBy INT NULL,
+              UpdatedAt DATETIME2 NOT NULL DEFAULT GETDATE()
+          );
+      END;
+
+      IF NOT EXISTS (
+          SELECT 1
+          FROM sys.foreign_keys
+          WHERE name = 'FK_PriceItemMasterMeta_Users'
+      ) AND OBJECT_ID('dbo.Users', 'U') IS NOT NULL
+      BEGIN
+          ALTER TABLE PriceItemMasterMeta
+          ADD CONSTRAINT FK_PriceItemMasterMeta_Users
+          FOREIGN KEY (UpdatedBy) REFERENCES Users(Id);
+      END;
+    `).catch((error) => {
+      schemaReadyPromise = null;
+      throw error;
+    });
+  }
+
+  await schemaReadyPromise;
 };
 
 const fetchItemMasterMeta = async (poolOrTransaction) => {
@@ -457,6 +603,7 @@ const buildConfigurationNo = (id, createdAt = new Date()) => {
 exports.getItemMaster = async (req, res) => {
   try {
     const pool = await poolPromise;
+    await ensureSchema(pool);
     const result = await fetchItemMasterPage(pool, req.query.search, req.query.page, req.query.limit);
     res.json(result);
   } catch (err) {
@@ -473,7 +620,9 @@ exports.importItemMaster = async (req, res) => {
   }
 
   let itemMasterPath = null;
-  const transaction = new sql.Transaction(await poolPromise);
+  const pool = await poolPromise;
+  await ensureSchema(pool);
+  const transaction = new sql.Transaction(pool);
 
   try {
     itemMasterPath = await writeTempFile('item-master', itemMasterFileName, decodeBase64File(itemMasterBase64));
@@ -531,7 +680,6 @@ exports.importItemMaster = async (req, res) => {
 
     await transaction.commit();
 
-    const pool = await poolPromise;
     const page = await fetchItemMasterPage(pool, '', 1, 15);
     res.json(page);
   } catch (err) {
@@ -563,6 +711,7 @@ exports.updateItemMasterItem = async (req, res) => {
     }
 
     const pool = await poolPromise;
+    await ensureSchema(pool);
     const result = await pool.request()
       .input('id', sql.Int, id)
       .input('normalizedSku', sql.NVarChar(120), normalizedSku)
@@ -631,6 +780,7 @@ exports.updateItemMasterItem = async (req, res) => {
 exports.getAll = async (_req, res) => {
   try {
     const pool = await poolPromise;
+    await ensureSchema(pool);
     const result = await pool.request().query(`
       SELECT
         Id,
@@ -664,6 +814,7 @@ exports.getById = async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const pool = await poolPromise;
+    await ensureSchema(pool);
     const result = await pool.request()
       .input('id', sql.Int, id)
       .query('SELECT * FROM PriceConfigurations WHERE Id = @id');
@@ -690,6 +841,7 @@ exports.preview = async (req, res) => {
 
   try {
     const pool = await poolPromise;
+    await ensureSchema(pool);
     const meta = await fetchItemMasterMeta(pool);
     if (!meta.hasData) {
       return res.status(400).json({ message: 'Upload the item master before generating a pick list preview.' });
@@ -700,7 +852,9 @@ exports.preview = async (req, res) => {
     const pickListItems = Array.isArray(pickList.items) ? pickList.items : [];
 
     if (!pickListItems.length) {
-      return res.status(400).json({ message: 'No pick list rows were found in the uploaded file.' });
+      return res.status(400).json({
+        message: 'No pick list rows were found in the uploaded file. Make sure the PDF is a valid pick list with serial numbers, or try uploading the pick list as an Excel file.',
+      });
     }
 
     const masterMap = await fetchMasterRowsBySkus(
@@ -742,6 +896,7 @@ exports.create = async (req, res) => {
 
   try {
     const pool = await poolPromise;
+    await ensureSchema(pool);
     const insertResult = await pool.request()
       .input('configurationNo', sql.NVarChar(50), provisionalConfigurationNo)
       .input('pickListNo', sql.NVarChar(100), cleanText(body.pickListNo))
@@ -812,6 +967,7 @@ exports.update = async (req, res) => {
 
   try {
     const pool = await poolPromise;
+    await ensureSchema(pool);
     const updateResult = await pool.request()
       .input('id', sql.Int, id)
       .input('pickListNo', sql.NVarChar(100), cleanText(body.pickListNo))

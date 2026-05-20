@@ -155,8 +155,8 @@ export class TicketDetailComponent implements OnInit {
       this.ticketForm.controls.status.setValue('New');
     } else if (idParam) {
       const ticketId = +idParam;
-      const foundTicket = this.apiService.getTicketById(ticketId);
-      if (foundTicket) {
+      this.loading.set(true);
+      this.apiService.fetchTicketById(ticketId).then(foundTicket => {
         this.ticket.set(foundTicket);
         this.ticketForm.patchValue(foundTicket as any);
 
@@ -193,7 +193,11 @@ export class TicketDetailComponent implements OnInit {
           this.ticketForm.controls.employeeId.disable();
           this.ticketForm.controls.extensionNumber.disable();
         }
-      }
+      }).catch(err => {
+        console.error('[TicketDetail] Failed to load ticket', err);
+      }).finally(() => {
+        this.loading.set(false);
+      });
     }
   }
 

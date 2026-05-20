@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, computed, effect, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, ChangeDetectorRef, ElementRef, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../shared/pagination.component';
@@ -53,8 +53,8 @@ export class PriceConfigurationComponent {
   readonly saving = signal(false);
   readonly printing = signal(false);
 
-  itemMasterFile: File | null = null;
-  pickListFile: File | null = null;
+  readonly itemMasterFile = signal<File | null>(null);
+  readonly pickListFile = signal<File | null>(null);
 
   readonly visibleItems = computed(() => {
     const preview = this.preview();
@@ -90,6 +90,8 @@ export class PriceConfigurationComponent {
     private service: PriceConfigurationService,
     private exportService: PriceConfigurationExportService,
     private labelPrintService: PriceLabelPrintService,
+    private cdr: ChangeDetectorRef,
+    private el: ElementRef,
   ) {
     this.service.getAll();
     this.loadItemMaster();
@@ -135,23 +137,24 @@ export class PriceConfigurationComponent {
   }
 
   setItemMasterFile(event: Event) {
-    this.itemMasterFile = (event.target as HTMLInputElement)?.files?.[0] ?? null;
+    this.itemMasterFile.set((event.target as HTMLInputElement)?.files?.[0] ?? null);
   }
 
   setPickListFile(event: Event) {
-    this.pickListFile = (event.target as HTMLInputElement)?.files?.[0] ?? null;
+    this.pickListFile.set((event.target as HTMLInputElement)?.files?.[0] ?? null);
   }
 
   async importItemMaster() {
-    if (!this.itemMasterFile) {
+    const file = this.itemMasterFile();
+    if (!file) {
       this.flash('error', 'Choose the item master Excel file before importing.');
       return;
     }
 
     this.itemMasterUploading.set(true);
     try {
-      const result = await this.service.importItemMaster(this.itemMasterFile);
-      this.itemMasterFile = null;
+      const result = await this.service.importItemMaster(file);
+      this.itemMasterFile.set(null);
       this.applyItemMasterPage(result, 1);
       this.flash('success', `Imported ${result.meta.totalItems} item master rows successfully.`);
     } catch (err: any) {
@@ -196,21 +199,24 @@ export class PriceConfigurationComponent {
       this.flash('error', 'Upload the item master first. After that you only need to re-upload when master data changes.');
       return;
     }
-    if (!this.pickListFile) {
+    const pickListFile = this.pickListFile();
+    if (!pickListFile) {
       this.flash('error', 'Choose the pick list PDF or Excel file first.');
       return;
     }
 
     this.generating.set(true);
     try {
-      const preview = await this.service.generatePreview(this.pickListFile);
+      const preview = await this.service.generatePreview(pickListFile);
       this.preview.set(preview);
       this.activeRecordId.set(null);
       this.activeConfigurationNo.set(null);
       this.selectedSerialNo.set(preview.items[0]?.serialNo ?? null);
+      this.cdr.markForCheck();
       this.flash('success', `Loaded ${preview.totalLines} pick list rows for price review.`);
+      this.scrollToPreview();
     } catch (err: any) {
-      this.flash('error', err?.error?.message || err?.message || 'Failed to generate the pick list preview.');
+      this.flash('error', err?.error?.message || err?.message || 'Failed to generate the pick list preview.', 7000);
     } finally {
       this.generating.set(false);
     }
@@ -221,9 +227,11 @@ export class PriceConfigurationComponent {
     try {
       const loaded = await this.service.getById(record.id);
       this.applyLoadedRecord(loaded);
+      this.cdr.markForCheck();
       this.flash('success', `Loaded configuration ${loaded.configurationNo}.`);
+      this.scrollToPreview();
     } catch (err: any) {
-      this.flash('error', err?.error?.message || err?.message || 'Failed to load the saved configuration.');
+      this.flash('error', err?.error?.message || err?.message || 'Failed to load the saved configuration.', 7000);
     } finally {
       this.generating.set(false);
     }
@@ -435,8 +443,15 @@ export class PriceConfigurationComponent {
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
-  private flash(type: 'success' | 'error', msg: string) {
+  private scrollToPreview() {
+    setTimeout(() => {
+      const el = this.el.nativeElement.querySelector('#price-config-preview');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+  }
+
+  private flash(type: 'success' | 'error', msg: string, durationMs = 3200) {
     this.toast.set({ type, msg });
-    setTimeout(() => this.toast.set(null), 3200);
+    setTimeout(() => this.toast.set(null), durationMs);
   }
 }

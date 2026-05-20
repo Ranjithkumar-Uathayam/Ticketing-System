@@ -178,11 +178,29 @@ def parse_pick_list_pdf(file_path):
     full_text = "\n".join((page.extract_text() or "") for page in reader.pages)
     raw_lines = [line.rstrip() for line in full_text.splitlines()]
 
-    picklist_no_match = re.search(r"Picklist No:\s*([A-Za-z0-9-]+)", full_text, re.IGNORECASE)
-    created_match = re.search(r"Created:\s*([0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{4}\s+[0-9]{2}:[0-9]{2})", full_text)
+    # Accept several header label variants: "Picklist No:", "Pick List No:", "PL No:", etc.
+    picklist_no_match = re.search(
+        r"(?:Pick\s*List|Picklist|PL)\s*(?:No|#|Number)[.:\s]+([A-Za-z0-9_-]+)",
+        full_text,
+        re.IGNORECASE,
+    )
+    # Also try a bare PK-style number if the above doesn't match
+    if not picklist_no_match:
+        picklist_no_match = re.search(r"\b(PK[0-9]{3,})\b", full_text, re.IGNORECASE)
+
+    created_match = re.search(
+        r"Created[:\s]+([0-9]{1,2}\s+[A-Za-z]{3}\s+[0-9]{4}\s+[0-9]{2}:[0-9]{2})",
+        full_text,
+    )
+
+    # Find the item list section (case-insensitive). Fall back to start of doc if not found.
+    start_line = 0
+    for idx, raw_line in enumerate(raw_lines):
+        if re.search(r"pick\s+these\s+items", raw_line, re.IGNORECASE):
+            start_line = idx + 1
+            break
 
     items = []
-    started = False
     current_serial = None
     current_sku = ""
     detail_lines = []
@@ -199,22 +217,50 @@ def parse_pick_list_pdf(file_path):
         current_sku = ""
         detail_lines = []
 
-    for raw_line in raw_lines:
+    for raw_line in raw_lines[start_line:]:
         line = clean_text(raw_line)
         if not line:
             continue
 
-        if not started:
-            if line.startswith("PICK THESE ITEMS"):
-                started = True
-            continue
-
-        if line.startswith("Powered By"):
+        if re.search(r"powered\s+by", line, re.IGNORECASE):
             break
 
-        if re.fullmatch(r"\d+", line):
+        # Skip common PDF footer / header noise that starts with a number but is not
+        # a pick-list serial: "Page 1 of 3", "1 of 3", standalone page numbers after
+        # the item section ends, etc.
+        if re.search(r"\bpage\b", line, re.IGNORECASE):
+            continue
+
+        # ── Format 1 ──────────────────────────────────────────────────────────
+        # A line that is purely digits (optionally followed by a period or
+        # closing paren) is an isolated serial number.
+        # Examples: "1", "1.", "12", "42."
+        if re.fullmatch(r"\d+[.)]?", line):
             flush_current()
-            current_serial = int(line)
+            current_serial = int(re.sub(r"\D", "", line))
+            continue
+
+        # ── Format 2 ──────────────────────────────────────────────────────────
+        # pypdf often merges the serial number and SKU onto a single line when
+        # the PDF uses a table or two-column layout.
+        # Examples:
+        #   "1.PROD-SKU-001"          → serial=1, sku="PROD-SKU-001"
+        #   "1. PROD-SKU-001"         → serial=1, sku="PROD-SKU-001"
+        #   "1 PROD-SKU-001"          → serial=1, sku="PROD-SKU-001"
+        #   "1 PROD-SKU-001 Name …"   → serial=1, sku="PROD-SKU-001", remainder=detail
+        # Guard: SKU token must be ≥3 chars and contain no spaces (real SKU codes
+        # never contain spaces; this rejects "1 of", "1 May", etc.).
+        inline_match = re.match(
+            r"^(\d{1,5})[.)\s]\s*([A-Za-z0-9][A-Za-z0-9_./-]{2,})(?:\s+(.+))?$",
+            line,
+        )
+        if inline_match and int(inline_match.group(1)) > 0:
+            flush_current()
+            current_serial = int(inline_match.group(1))
+            current_sku = clean_text(inline_match.group(2))
+            remainder = clean_text(inline_match.group(3) or "")
+            if remainder:
+                detail_lines.append(remainder)
             continue
 
         if current_serial is None:
