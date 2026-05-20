@@ -218,7 +218,8 @@ export class PriceConfigurationComponent {
       this.flash('success', `Loaded ${preview.totalLines} pick list rows for price review.`);
       this.scrollToPreview();
     } catch (err: any) {
-      this.flash('error', err?.error?.message || err?.message || 'Failed to generate the pick list preview.', 7000);
+      const detail = err?.error?.error ? ` (${err.error.error})` : '';
+      this.flash('error', (err?.error?.message || err?.message || 'Failed to generate the pick list preview.') + detail, 8000);
     } finally {
       this.generating.set(false);
     }

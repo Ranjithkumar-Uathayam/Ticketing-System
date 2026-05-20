@@ -1,610 +1,618 @@
-<div class="min-h-screen p-4 md:p-6" style="background:#F4F6FB;">
+<div class="min-h-screen" style="background:#F4F6FB;">
+
+  <!-- Toast -->
   @if(toast()) {
-    <div class="fixed top-5 right-5 z-50 px-5 py-3.5 rounded-2xl shadow-xl text-sm font-semibold"
-         style="animation:slideIn .3s ease; min-width:260px; color:white;"
+    <div class="fixed top-4 right-4 left-4 sm:left-auto z-50 px-4 py-3 rounded-2xl shadow-xl text-sm font-semibold max-w-sm sm:max-w-md w-full sm:w-auto ml-auto"
+         style="animation:slideIn .3s ease; color:white;"
          [style.background]="toast()!.type === 'success' ? '#16A34A' : '#DC2626'">
       {{ toast()!.msg }}
     </div>
   }
 
-  <div class="rounded-[32px] p-6 md:p-8 mb-6 shadow-sm"
-       style="background:linear-gradient(135deg,#10214B 0%,#1B2F6E 58%,#3357B3 100%);">
-    <div class="flex flex-wrap items-start justify-between gap-6">
-      <div class="max-w-3xl">
-        <p class="text-xs font-bold uppercase tracking-[0.28em]" style="color:#FDB515;">Online Pricing Workflow</p>
-        <h1 class="text-3xl md:text-4xl font-black mt-3 leading-tight text-white">Persistent Item Master, repeat pick list pricing, and label printing in one flow.</h1>
-        <p class="text-sm md:text-base mt-4 max-w-2xl" style="color:rgba(255,255,255,0.84);">
-          Upload the Item Master once, maintain it directly in the app, then upload a different Pick List each time to review prices, save the session, and print labels.
-        </p>
-      </div>
+  <!-- Hero Banner -->
+  <div class="p-4 md:p-6">
+    <div class="rounded-2xl md:rounded-[32px] p-5 md:p-8 mb-5 shadow-sm"
+         style="background:linear-gradient(135deg,#10214B 0%,#1B2F6E 58%,#3357B3 100%);">
 
-      <div class="bg-white/10 backdrop-blur-sm rounded-3xl px-5 py-4 min-w-[280px]" style="border:1px solid rgba(253,181,21,0.2);">
-        <p class="text-xs font-bold uppercase tracking-[0.22em]" style="color:#FDB515;">Current Master Status</p>
-        <p class="text-3xl font-black mt-3 text-white">{{ itemMasterMeta().totalItems }}</p>
-        <p class="text-xs mt-2" style="color:rgba(255,255,255,0.75);">
-          {{ itemMasterMeta().hasData ? 'Master data is ready for new pick list uploads.' : 'Upload the item master to begin.' }}
-        </p>
-        <p class="text-xs mt-3" style="color:rgba(255,255,255,0.72);">
-          Last file: {{ itemMasterMeta().lastUploadFileName || 'Not uploaded yet' }}
-        </p>
-      </div>
-    </div>
-
-    <div class="grid md:grid-cols-4 gap-3 mt-8">
-      <div class="rounded-3xl p-4" style="background:rgba(255,255,255,0.08);">
-        <p class="text-[11px] font-bold uppercase tracking-[0.22em]" style="color:#FDB515;">Step 1</p>
-        <p class="text-sm font-bold mt-2 text-white">Upload Item Master once</p>
-        <p class="text-xs mt-2" style="color:rgba(255,255,255,0.78);">Re-upload only when master details change.</p>
-      </div>
-      <div class="rounded-3xl p-4" style="background:rgba(255,255,255,0.08);">
-        <p class="text-[11px] font-bold uppercase tracking-[0.22em]" style="color:#FDB515;">Step 2</p>
-        <p class="text-sm font-bold mt-2 text-white">Upload Pick List every time</p>
-        <p class="text-xs mt-2" style="color:rgba(255,255,255,0.78);">PDF or Excel pick list files are supported.</p>
-      </div>
-      <div class="rounded-3xl p-4" style="background:rgba(255,255,255,0.08);">
-        <p class="text-[11px] font-bold uppercase tracking-[0.22em]" style="color:#FDB515;">Step 3</p>
-        <p class="text-sm font-bold mt-2 text-white">Review matched pick list rows</p>
-        <p class="text-xs mt-2" style="color:rgba(255,255,255,0.78);">Only pick list items are loaded into the pricing review.</p>
-      </div>
-      <div class="rounded-3xl p-4" style="background:rgba(255,255,255,0.08);">
-        <p class="text-[11px] font-bold uppercase tracking-[0.22em]" style="color:#FDB515;">Step 4</p>
-        <p class="text-sm font-bold mt-2 text-white">Save and print labels</p>
-        <p class="text-xs mt-2" style="color:rgba(255,255,255,0.78);">Use the saved pricing session to print the label layout.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid xl:grid-cols-[1.55fr_1fr] gap-5 mb-6">
-    <div class="bg-white rounded-3xl p-5 shadow-sm" style="border:1px solid #E8EDF8;">
-      <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
-        <div>
-          <p class="text-xs font-black uppercase tracking-[0.22em]" style="color:#0F766E;">Step 1</p>
-          <h2 class="text-xl font-black mt-2" style="color:#1B2F6E;">Item Master Management</h2>
-          <p class="text-xs mt-2" style="color:rgba(27,47,110,0.5);">
-            Keep the master in table view, edit fields directly here, and re-upload the Excel only when the source data changes.
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+        <div class="max-w-2xl">
+          <p class="text-xs font-bold uppercase tracking-[0.28em]" style="color:#FDB515;">Online Pricing Workflow</p>
+          <h1 class="text-2xl md:text-3xl lg:text-4xl font-black mt-3 leading-tight text-white">
+            Persistent Item Master, repeat pick list pricing, and label printing in one flow.
+          </h1>
+          <p class="text-sm mt-3 max-w-xl" style="color:rgba(255,255,255,0.84);">
+            Upload the Item Master once, then upload a different Pick List each time to review prices, save the session, and print labels.
           </p>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
-          <label class="px-4 py-2.5 rounded-xl text-sm font-bold cursor-pointer transition-all"
-                 style="background:#EEF2FF; color:#3730A3; border:1px solid #C7D2FE;">
-            {{ itemMasterMeta().hasData ? 'Re-upload Item Master' : 'Upload Item Master' }}
-            <input type="file" class="hidden" accept=".xlsx,.xlsm,.xltx,.xltm" (change)="setItemMasterFile($event)">
-          </label>
-          <button (click)="importItemMaster()"
-                  [disabled]="!itemMasterFile() || itemMasterUploading()"
-                  class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style="background:#1B2F6E; color:#FDB515;">
-            {{ itemMasterUploading() ? 'Importing...' : 'Import Master' }}
-          </button>
+        <div class="bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-4 lg:min-w-[240px] xl:min-w-[280px]"
+             style="border:1px solid rgba(253,181,21,0.2);">
+          <p class="text-xs font-bold uppercase tracking-[0.22em]" style="color:#FDB515;">Current Master Status</p>
+          <p class="text-3xl font-black mt-2 text-white">{{ itemMasterMeta().totalItems }}</p>
+          <p class="text-xs mt-2" style="color:rgba(255,255,255,0.75);">
+            {{ itemMasterMeta().hasData ? 'Master data is ready for new pick list uploads.' : 'Upload the item master to begin.' }}
+          </p>
+          <p class="text-xs mt-2" style="color:rgba(255,255,255,0.62);">
+            Last file: {{ itemMasterMeta().lastUploadFileName || 'Not uploaded yet' }}
+          </p>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
-        <div class="rounded-2xl p-4" style="background:#F8FAFF; border:1px solid #E8EDF8;">
-          <p class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Total Items</p>
-          <p class="text-2xl font-black mt-2" style="color:#1B2F6E;">{{ itemMasterMeta().totalItems }}</p>
-        </div>
-        <div class="rounded-2xl p-4" style="background:#F8FAFF; border:1px solid #E8EDF8;">
-          <p class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Last Upload</p>
-          <p class="text-sm font-black mt-2" style="color:#1B2F6E;">{{ formatDate(itemMasterMeta().lastUploadedAt) }}</p>
-        </div>
-        <div class="rounded-2xl p-4" style="background:#F8FAFF; border:1px solid #E8EDF8;">
-          <p class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Source File</p>
-          <p class="text-sm font-black mt-2 truncate" style="color:#1B2F6E;">{{ itemMasterMeta().lastUploadFileName || '-' }}</p>
-        </div>
-        <div class="rounded-2xl p-4" style="background:#F8FAFF; border:1px solid #E8EDF8;">
-          <p class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Selected File</p>
-          <p class="text-sm font-black mt-2 truncate" style="color:#1B2F6E;">{{ itemMasterFile()?.name || 'No file selected' }}</p>
-        </div>
-      </div>
-
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div class="relative flex-1 min-w-[240px]">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:rgba(27,47,110,0.3);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input type="text"
-                 [ngModel]="itemMasterSearch()"
-                 (ngModelChange)="onItemMasterSearch($event)"
-                 placeholder="Search SKU, item name, brand, category..."
-                 class="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl outline-none"
-                 style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;">
-        </div>
-        <div class="text-xs font-semibold" style="color:rgba(27,47,110,0.48);">
-          Editable fields: Item Name, Brand, Category, Size, Color, MRP, EAN, Enabled
-        </div>
-      </div>
-
-      @if(itemMasterLoading()) {
-        <div class="py-14 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">Loading item master data...</div>
-      } @else if(itemMasterRows().length === 0) {
-        <div class="py-14 text-center rounded-2xl" style="border:1px dashed #D7E0F4; color:rgba(27,47,110,0.45);">
-          <p class="text-base font-bold">No Item Master rows available.</p>
-          <p class="text-sm mt-2">Import the master Excel once to start using the pricing workflow.</p>
-        </div>
-      } @else {
-        <div class="overflow-x-auto rounded-2xl" style="border:1px solid #E8EDF8;">
-          <table class="w-full" style="min-width:1260px;">
-            <thead>
-              <tr style="background:#F8FAFF; border-bottom:1px solid #E8EDF8;">
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">SKU</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Item Name</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Brand</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Category</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Size</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Color</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">MRP</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">EAN</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Enabled</th>
-                <th class="px-3 py-3 text-center text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Action</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y" style="border-color:#F0F4FC;">
-              @for(row of itemMasterRows(); track row.id) {
-                <tr class="hover:bg-amber-50/20">
-                  <td class="px-3 py-3">
-                    <div class="text-xs font-mono font-bold" style="color:#1B2F6E;">{{ row.skuCode }}</div>
-                    <div class="text-xs mt-1" style="color:rgba(27,47,110,0.42);">{{ formatDate(row.updatedAt) }}</div>
-                  </td>
-                  <td class="px-3 py-3">
-                    <textarea rows="2"
-                              class="w-full rounded-xl px-3 py-2 text-xs outline-none resize-y"
-                              style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E;"
-                              [ngModel]="row.itemName"
-                              (ngModelChange)="updateMasterField(row.id, 'itemName', $event)"></textarea>
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-full rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E;"
-                           [ngModel]="row.brand"
-                           (ngModelChange)="updateMasterField(row.id, 'brand', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-full rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E;"
-                           [ngModel]="row.category"
-                           (ngModelChange)="updateMasterField(row.id, 'category', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-24 rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E;"
-                           [ngModel]="row.size"
-                           (ngModelChange)="updateMasterField(row.id, 'size', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-full rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E;"
-                           [ngModel]="row.color"
-                           (ngModelChange)="updateMasterField(row.id, 'color', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="number"
-                           step="0.01"
-                           min="0"
-                           class="w-24 rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E;"
-                           [ngModel]="row.mrp"
-                           (ngModelChange)="updateMasterField(row.id, 'mrp', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-full rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E;"
-                           [ngModel]="row.ean"
-                           (ngModelChange)="updateMasterField(row.id, 'ean', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-24 rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E;"
-                           [ngModel]="row.enabled"
-                           (ngModelChange)="updateMasterField(row.id, 'enabled', $event)">
-                  </td>
-                  <td class="px-3 py-3 text-center">
-                    <button (click)="saveMasterRow(row)"
-                            [disabled]="isMasterSaving(row.id)"
-                            class="px-4 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                            style="background:#1B2F6E; color:#FDB515;">
-                      {{ isMasterSaving(row.id) ? 'Saving...' : 'Save Row' }}
-                    </button>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-          <app-pagination
-            [currentPage]="itemMasterPage()"
-            [totalItems]="itemMasterTotal()"
-            [pageSize]="itemMasterLimit"
-            itemLabel="item master rows"
-            (pageChange)="onItemMasterPageChange($event)">
-          </app-pagination>
-        </div>
-      }
-    </div>
-
-    <div class="space-y-5">
-      <div class="bg-white rounded-3xl p-5 shadow-sm" style="border:1px solid #E8EDF8;">
-        <p class="text-xs font-black uppercase tracking-[0.22em]" style="color:#C2410C;">Step 2</p>
-        <h2 class="text-xl font-black mt-2" style="color:#1B2F6E;">Pick List Session</h2>
-        <p class="text-xs mt-2" style="color:rgba(27,47,110,0.5);">
-          Upload the pick list every time. The pricing grid loads only those pick list rows and matches them against the stored item master.
-        </p>
-
-        <div class="rounded-3xl p-4 mt-5" style="background:#F8FAFF; border:1px solid #E8EDF8;">
-          <label class="block rounded-2xl p-4 cursor-pointer transition-all hover:shadow-md" style="background:white; border:1px dashed #9BB0E5;">
-            <div class="flex items-start gap-3">
-              <div class="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0" style="background:#1B2F6E;">
-                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#FDB515">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 16v-8m0 8 3-3m-3 3-3-3M8 20h8a2 2 0 002-2V6a2 2 0 00-2-2h-3.172a2 2 0 01-1.414-.586L10.586 2.586A2 2 0 009.172 2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                </svg>
-              </div>
-              <div class="min-w-0">
-                <p class="text-sm font-bold" style="color:#1B2F6E;">Pick List PDF / Excel</p>
-                <p class="text-xs mt-1" style="color:rgba(27,47,110,0.48);">Supports files like `PK15149.pdf` and Excel-based pick list exports.</p>
-                <p class="text-xs font-semibold mt-3 truncate" style="color:#0F766E;">
-                  {{ pickListFile()?.name || preview()?.pickListFileName || 'Choose pick list file' }}
-                </p>
-              </div>
-            </div>
-            <input type="file" class="hidden" accept=".pdf,.xlsx,.xlsm,.xltx,.xltm" (change)="setPickListFile($event)">
-          </label>
-
-          <button (click)="generatePreview()"
-                  [disabled]="!itemMasterMeta().hasData || !pickListFile() || generating()"
-                  class="w-full mt-4 px-5 py-3 rounded-2xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  style="background:#FDB515; color:#1B2F6E;">
-            {{ generating() ? 'Generating Pick List Preview...' : 'Load Pick List Into Pricing Screen' }}
-          </button>
-        </div>
-      </div>
-
-      <div class="bg-white rounded-3xl p-5 shadow-sm" style="border:1px solid #E8EDF8;">
-        <h2 class="text-lg font-black" style="color:#1B2F6E;">Saved Price Sessions</h2>
-        <p class="text-xs mt-2" style="color:rgba(27,47,110,0.48);">Open a previous pricing session to review or reprint labels.</p>
-
-        @if(recordsLoading()) {
-          <div class="py-12 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">Loading saved sessions...</div>
-        } @else if(records().length === 0) {
-          <div class="py-12 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">No saved sessions yet.</div>
-        } @else {
-          <div class="space-y-3 max-h-[420px] overflow-y-auto pr-1 mt-4">
-            @for(record of records(); track record.id) {
-              <button (click)="openRecord(record)"
-                      class="w-full text-left rounded-2xl p-4 transition-all hover:shadow-md"
-                      [style.background]="activeRecordId() === record.id ? 'rgba(253,181,21,0.14)' : '#F8FAFF'"
-                      [style.border]="activeRecordId() === record.id ? '1px solid #FDB515' : '1px solid #E8EDF8'">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-sm font-black truncate" style="color:#1B2F6E;">{{ record.configurationNo }}</p>
-                    <p class="text-xs mt-1 font-semibold" style="color:rgba(27,47,110,0.5);">Pick List: {{ record.pickListNo }}</p>
-                  </div>
-                  <div class="text-right text-xs font-semibold" style="color:#0F766E;">
-                    {{ record.matchedCount }}/{{ record.totalLines }}
-                  </div>
-                </div>
-                <div class="grid grid-cols-3 gap-2 mt-3 text-xs" style="color:rgba(27,47,110,0.55);">
-                  <div>Qty: <span class="font-bold" style="color:#1B2F6E;">{{ record.totalQuantity }}</span></div>
-                  <div>Open: <span class="font-bold" style="color:#1B2F6E;">{{ record.unmatchedCount }}</span></div>
-                  <div class="text-right">{{ formatDate(record.updatedAt) }}</div>
-                </div>
-              </button>
-            }
+      <!-- Step Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-6">
+        @for(step of [{n:'1',title:'Upload Item Master once',desc:'Re-upload only when master details change.'},
+                      {n:'2',title:'Upload Pick List every time',desc:'PDF or Excel pick list files are supported.'},
+                      {n:'3',title:'Review matched pick list rows',desc:'Only pick list items are loaded into pricing review.'},
+                      {n:'4',title:'Save and print labels',desc:'Use the saved pricing session to print the label layout.'}]; track step.n) {
+          <div class="rounded-2xl p-3 md:p-4" style="background:rgba(255,255,255,0.08);">
+            <p class="text-[10px] font-bold uppercase tracking-[0.22em]" style="color:#FDB515;">Step {{ step.n }}</p>
+            <p class="text-xs md:text-sm font-bold mt-2 text-white">{{ step.title }}</p>
+            <p class="text-xs mt-1 hidden sm:block" style="color:rgba(255,255,255,0.78);">{{ step.desc }}</p>
           </div>
         }
       </div>
     </div>
-  </div>
 
-  @if(preview()) {
-    <div id="price-config-preview" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-      <div class="bg-white rounded-2xl p-4 shadow-sm" style="border:1px solid #E8EDF8;">
-        <p class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Pick List</p>
-        <p class="text-xl font-black mt-2" style="color:#1B2F6E;">{{ preview()!.pickListNo || 'Draft' }}</p>
-        <p class="text-xs mt-1" style="color:rgba(27,47,110,0.42);">{{ formatDate(preview()!.pickListCreatedAt) }}</p>
-      </div>
-      <div class="bg-white rounded-2xl p-4 shadow-sm" style="border:1px solid #E8EDF8;">
-        <p class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Matched</p>
-        <p class="text-xl font-black mt-2 text-green-600">{{ preview()!.matchedCount }}</p>
-        <p class="text-xs mt-1" style="color:rgba(27,47,110,0.42);">{{ preview()!.unmatchedCount }} need manual review</p>
-      </div>
-      <div class="bg-white rounded-2xl p-4 shadow-sm" style="border:1px solid #E8EDF8;">
-        <p class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Quantity</p>
-        <p class="text-xl font-black mt-2" style="color:#1B2F6E;">{{ preview()!.totalQuantity }}</p>
-        <p class="text-xs mt-1" style="color:rgba(27,47,110,0.42);">{{ preview()!.totalLines }} pick list rows</p>
-      </div>
-      <div class="bg-white rounded-2xl p-4 shadow-sm" style="border:1px solid #E8EDF8;">
-        <p class="text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Session Value</p>
-        <p class="text-xl font-black mt-2" style="color:#1B2F6E;">{{ formatCurrency(totalValue()) }}</p>
-        <p class="text-xs mt-1" style="color:rgba(27,47,110,0.42);">Master file: {{ preview()!.itemMasterFileName || '-' }}</p>
-      </div>
-    </div>
+    <!-- Step 1 + Step 2 Grid -->
+    <div class="grid xl:grid-cols-[1fr_360px] 2xl:grid-cols-[1fr_400px] gap-5 mb-5">
 
-    <div class="grid xl:grid-cols-[1.85fr_1fr] gap-5">
-      <div class="bg-white rounded-3xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
-        <div class="px-5 py-4 flex flex-wrap items-center justify-between gap-3" style="border-bottom:1px solid #E8EDF8; background:#F8FAFF;">
-          <div>
-            <p class="text-xs font-black uppercase tracking-[0.22em]" style="color:#C2410C;">Step 3</p>
-            <h2 class="text-lg font-black mt-2" style="color:#1B2F6E;">Pick List Pricing Review</h2>
-            <p class="text-xs mt-1" style="color:rgba(27,47,110,0.48);">Only the current pick list items are loaded here. Edit prices and any required fields before saving.</p>
+      <!-- Step 1: Item Master Management -->
+      <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-sm" style="border:1px solid #E8EDF8;">
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-5">
+          <div class="min-w-0">
+            <p class="text-xs font-black uppercase tracking-[0.22em]" style="color:#0F766E;">Step 1</p>
+            <h2 class="text-lg md:text-xl font-black mt-1" style="color:#1B2F6E;">Item Master Management</h2>
+            <p class="text-xs mt-1 max-w-lg" style="color:rgba(27,47,110,0.5);">
+              Keep the master in table view, edit fields directly here, and re-upload the Excel only when the source data changes.
+            </p>
           </div>
-
-          <div class="flex items-center gap-2 flex-wrap">
-            <label class="inline-flex items-center gap-2 text-xs font-bold cursor-pointer" style="color:#1B2F6E;">
-              <input type="checkbox" class="rounded border-slate-300"
-                     [checked]="showUnmatchedOnly()"
-                     (change)="showUnmatchedOnly.set($any($event.target).checked)">
-              Show unmatched only
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <label class="px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all whitespace-nowrap"
+                   style="background:#EEF2FF; color:#3730A3; border:1px solid #C7D2FE;">
+              {{ itemMasterMeta().hasData ? 'Re-upload Master' : 'Upload Master' }}
+              <input type="file" class="hidden" accept=".xlsx,.xlsm,.xltx,.xltm" (change)="setItemMasterFile($event)">
             </label>
-            <button (click)="downloadPickList()"
-                    class="px-4 py-2.5 rounded-xl text-xs font-bold transition-all"
-                    style="background:#D1FAE5; color:#065F46; border:1px solid #6EE7B7;">
-              Download Updated Pick List
-            </button>
-            <button (click)="saveConfiguration()"
-                    [disabled]="saving()"
-                    class="px-4 py-2.5 rounded-xl text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            <button (click)="importItemMaster()"
+                    [disabled]="!itemMasterFile() || itemMasterUploading()"
+                    class="px-4 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                     style="background:#1B2F6E; color:#FDB515;">
-              {{ saving() ? 'Saving...' : 'Save Session' }}
+              {{ itemMasterUploading() ? 'Importing...' : 'Import' }}
             </button>
-            <button (click)="saveConfiguration(true)"
-                    [disabled]="saving() || printing()"
-                    class="px-4 py-2.5 rounded-xl text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          </div>
+        </div>
+
+        <!-- Master Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4">
+          <div class="rounded-xl p-3" style="background:#F8FAFF; border:1px solid #E8EDF8;">
+            <p class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Total Items</p>
+            <p class="text-xl font-black mt-1" style="color:#1B2F6E;">{{ itemMasterMeta().totalItems }}</p>
+          </div>
+          <div class="rounded-xl p-3" style="background:#F8FAFF; border:1px solid #E8EDF8;">
+            <p class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Last Upload</p>
+            <p class="text-xs font-black mt-1" style="color:#1B2F6E;">{{ formatDate(itemMasterMeta().lastUploadedAt) }}</p>
+          </div>
+          <div class="rounded-xl p-3" style="background:#F8FAFF; border:1px solid #E8EDF8; overflow:hidden;">
+            <p class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Source File</p>
+            <p class="text-xs font-black mt-1 truncate" style="color:#1B2F6E;">{{ itemMasterMeta().lastUploadFileName || '-' }}</p>
+          </div>
+          <div class="rounded-xl p-3" style="background:#F8FAFF; border:1px solid #E8EDF8; overflow:hidden;">
+            <p class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Selected File</p>
+            <p class="text-xs font-black mt-1 truncate" style="color:#1B2F6E;">{{ itemMasterFile()?.name || 'No file selected' }}</p>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+          <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                 style="color:rgba(27,47,110,0.3);">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text"
+                   [ngModel]="itemMasterSearch()"
+                   (ngModelChange)="onItemMasterSearch($event)"
+                   placeholder="Search SKU, item name, brand, category..."
+                   class="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl outline-none"
+                   style="border:1.5px solid #E8EDF8; color:#1B2F6E; background:#F8F9FC;">
+          </div>
+          <p class="text-xs font-semibold flex-shrink-0" style="color:rgba(27,47,110,0.48);">
+            Editable: Name, Brand, Category, Size, Color, MRP, EAN, Enabled
+          </p>
+        </div>
+
+        <!-- Table -->
+        @if(itemMasterLoading()) {
+          <div class="py-14 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">Loading item master data...</div>
+        } @else if(itemMasterRows().length === 0) {
+          <div class="py-14 text-center rounded-2xl" style="border:1px dashed #D7E0F4; color:rgba(27,47,110,0.45);">
+            <p class="text-base font-bold">No Item Master rows available.</p>
+            <p class="text-sm mt-2">Import the master Excel once to start using the pricing workflow.</p>
+          </div>
+        } @else {
+          <div class="overflow-x-auto rounded-2xl" style="border:1px solid #E8EDF8;">
+            <table class="w-full" style="min-width:900px;">
+              <thead>
+                <tr style="background:#F8FAFF; border-bottom:1px solid #E8EDF8;">
+                  <th class="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">SKU</th>
+                  <th class="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Item Name</th>
+                  <th class="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Brand</th>
+                  <th class="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Category</th>
+                  <th class="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Size</th>
+                  <th class="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Color</th>
+                  <th class="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">MRP</th>
+                  <th class="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">EAN</th>
+                  <th class="px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Enabled</th>
+                  <th class="px-3 py-2.5 text-center text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.42);">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y" style="border-color:#F0F4FC;">
+                @for(row of itemMasterRows(); track row.id) {
+                  <tr class="hover:bg-amber-50/20">
+                    <td class="px-3 py-2.5">
+                      <div class="text-xs font-mono font-bold" style="color:#1B2F6E;">{{ row.skuCode }}</div>
+                      <div class="text-[10px] mt-0.5" style="color:rgba(27,47,110,0.42);">{{ formatDate(row.updatedAt) }}</div>
+                    </td>
+                    <td class="px-3 py-2.5">
+                      <textarea rows="2"
+                                class="w-full rounded-lg px-2 py-1.5 text-xs outline-none resize-y"
+                                style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E; min-width:140px;"
+                                [ngModel]="row.itemName"
+                                (ngModelChange)="updateMasterField(row.id, 'itemName', $event)"></textarea>
+                    </td>
+                    <td class="px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none w-full"
+                             style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E; min-width:90px;"
+                             [ngModel]="row.brand"
+                             (ngModelChange)="updateMasterField(row.id, 'brand', $event)">
+                    </td>
+                    <td class="px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none w-full"
+                             style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E; min-width:100px;"
+                             [ngModel]="row.category"
+                             (ngModelChange)="updateMasterField(row.id, 'category', $event)">
+                    </td>
+                    <td class="px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none"
+                             style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E; width:70px;"
+                             [ngModel]="row.size"
+                             (ngModelChange)="updateMasterField(row.id, 'size', $event)">
+                    </td>
+                    <td class="px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none"
+                             style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E; width:90px;"
+                             [ngModel]="row.color"
+                             (ngModelChange)="updateMasterField(row.id, 'color', $event)">
+                    </td>
+                    <td class="px-3 py-2.5">
+                      <input type="number" step="0.01" min="0"
+                             class="rounded-lg px-2 py-1.5 text-xs outline-none"
+                             style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E; width:80px;"
+                             [ngModel]="row.mrp"
+                             (ngModelChange)="updateMasterField(row.id, 'mrp', $event)">
+                    </td>
+                    <td class="px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none w-full"
+                             style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E; min-width:90px;"
+                             [ngModel]="row.ean"
+                             (ngModelChange)="updateMasterField(row.id, 'ean', $event)">
+                    </td>
+                    <td class="px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none"
+                             style="border:1px solid #E8EDF8; background:#F8FAFF; color:#1B2F6E; width:70px;"
+                             [ngModel]="row.enabled"
+                             (ngModelChange)="updateMasterField(row.id, 'enabled', $event)">
+                    </td>
+                    <td class="px-3 py-2.5 text-center">
+                      <button (click)="saveMasterRow(row)"
+                              [disabled]="isMasterSaving(row.id)"
+                              class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                              style="background:#1B2F6E; color:#FDB515;">
+                        {{ isMasterSaving(row.id) ? 'Saving...' : 'Save Row' }}
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <app-pagination
+              [currentPage]="itemMasterPage()"
+              [totalItems]="itemMasterTotal()"
+              [pageSize]="itemMasterLimit"
+              itemLabel="item master rows"
+              (pageChange)="onItemMasterPageChange($event)">
+            </app-pagination>
+          </div>
+        }
+      </div>
+
+      <!-- Right Column: Step 2 + Saved Sessions -->
+      <div class="flex flex-col gap-5">
+
+        <!-- Step 2: Pick List Session -->
+        <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-sm" style="border:1px solid #E8EDF8;">
+          <p class="text-xs font-black uppercase tracking-[0.22em]" style="color:#C2410C;">Step 2</p>
+          <h2 class="text-lg font-black mt-1" style="color:#1B2F6E;">Pick List Session</h2>
+          <p class="text-xs mt-1" style="color:rgba(27,47,110,0.5);">
+            Upload the pick list every time. The pricing grid loads only those pick list rows and matches them against the stored item master.
+          </p>
+
+          <div class="rounded-2xl p-3 md:p-4 mt-4" style="background:#F8FAFF; border:1px solid #E8EDF8;">
+            <label class="block rounded-xl p-3 md:p-4 cursor-pointer transition-all hover:shadow-md"
+                   style="background:white; border:1px dashed #9BB0E5;">
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#1B2F6E;">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="#FDB515">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                          d="M12 16v-8m0 8 3-3m-3 3-3-3M8 20h8a2 2 0 002-2V6a2 2 0 00-2-2h-3.172a2 2 0 01-1.414-.586L10.586 2.586A2 2 0 009.172 2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-bold" style="color:#1B2F6E;">Pick List PDF / Excel</p>
+                  <p class="text-xs mt-1" style="color:rgba(27,47,110,0.48);">Supports PK*.pdf and Excel-based pick list exports.</p>
+                  <p class="text-xs font-semibold mt-2 truncate" style="color:#0F766E;">
+                    {{ pickListFile()?.name || preview()?.pickListFileName || 'Choose pick list file' }}
+                  </p>
+                </div>
+              </div>
+              <input type="file" class="hidden" accept=".pdf,.xlsx,.xlsm,.xltx,.xltm" (change)="setPickListFile($event)">
+            </label>
+
+            <button (click)="generatePreview()"
+                    [disabled]="!itemMasterMeta().hasData || !pickListFile() || generating()"
+                    class="w-full mt-3 px-5 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     style="background:#FDB515; color:#1B2F6E;">
-              {{ saving() ? 'Saving...' : (printing() ? 'Printing...' : 'Save & Print Labels') }}
+              {{ generating() ? 'Generating Preview...' : 'Load Pick List Into Pricing Screen' }}
             </button>
+
+            @if(!itemMasterMeta().hasData) {
+              <p class="text-xs mt-2 text-center font-semibold" style="color:#C2410C;">
+                Upload the Item Master first (Step 1) before loading a pick list.
+              </p>
+            }
           </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full" style="min-width:1360px;">
-            <thead>
-              <tr style="background:#F8FAFF; border-bottom:1px solid #E8EDF8;">
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Status</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">SKU / SI</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Pick List Name</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Item Name</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Brand</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Category</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Size</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Color</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Qty</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Price</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Total</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Label Qty</th>
-                <th class="px-3 py-3 text-left text-xs font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.4);">Notes</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y" style="border-color:#F0F4FC;">
-              @for(item of visibleItems(); track item.serialNo) {
-                <tr class="transition-colors cursor-pointer hover:bg-amber-50/30"
-                    [style.background]="selectedItem()?.serialNo === item.serialNo ? 'rgba(253,181,21,0.08)' : 'white'"
-                    (click)="selectItem(item)">
-                  <td class="px-3 py-3">
-                    <span class="px-2 py-1 rounded-full text-xs font-bold" [style]="statusStyle(item.matchStatus)">
-                      {{ item.matchStatus }}
+        <!-- Saved Sessions -->
+        <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-sm" style="border:1px solid #E8EDF8;">
+          <h2 class="text-base font-black" style="color:#1B2F6E;">Saved Price Sessions</h2>
+          <p class="text-xs mt-1" style="color:rgba(27,47,110,0.48);">Open a previous pricing session to review or reprint labels.</p>
+
+          @if(recordsLoading()) {
+            <div class="py-10 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">Loading saved sessions...</div>
+          } @else if(records().length === 0) {
+            <div class="py-10 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">No saved sessions yet.</div>
+          } @else {
+            <div class="space-y-2 max-h-[320px] overflow-y-auto pr-1 mt-3">
+              @for(record of records(); track record.id) {
+                <button (click)="openRecord(record)"
+                        class="w-full text-left rounded-xl p-3 transition-all hover:shadow-md"
+                        [style.background]="activeRecordId() === record.id ? 'rgba(253,181,21,0.14)' : '#F8FAFF'"
+                        [style.border]="activeRecordId() === record.id ? '1px solid #FDB515' : '1px solid #E8EDF8'">
+                  <div class="flex items-start justify-between gap-2">
+                    <p class="text-xs font-black truncate" style="color:#1B2F6E;">{{ record.configurationNo }}</p>
+                    <span class="text-xs font-semibold flex-shrink-0" style="color:#0F766E;">
+                      {{ record.matchedCount }}/{{ record.totalLines }}
                     </span>
-                  </td>
-                  <td class="px-3 py-3">
-                    <p class="text-xs font-mono font-bold" style="color:#1B2F6E;">{{ item.skuCode }}</p>
-                    <p class="text-xs mt-1" style="color:rgba(27,47,110,0.42);">SI {{ item.serialNo }}</p>
-                  </td>
-                  <td class="px-3 py-3">
-                    <textarea rows="2"
-                              class="w-full rounded-xl px-3 py-2 text-xs outline-none resize-y"
-                              style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF;"
-                              [ngModel]="item.pickListName"
-                              (ngModelChange)="updateItem(item.serialNo, 'pickListName', $event)"></textarea>
-                  </td>
-                  <td class="px-3 py-3">
-                    <textarea rows="2"
-                              class="w-full rounded-xl px-3 py-2 text-xs outline-none resize-y"
-                              style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF;"
-                              [ngModel]="item.itemName"
-                              (ngModelChange)="updateItem(item.serialNo, 'itemName', $event)"></textarea>
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-full rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF;"
-                           [ngModel]="item.brand"
-                           (ngModelChange)="updateItem(item.serialNo, 'brand', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-full rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF;"
-                           [ngModel]="item.category"
-                           (ngModelChange)="updateItem(item.serialNo, 'category', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-24 rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF;"
-                           [ngModel]="item.size"
-                           (ngModelChange)="updateItem(item.serialNo, 'size', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-full rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF;"
-                           [ngModel]="item.color"
-                           (ngModelChange)="updateItem(item.serialNo, 'color', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="number"
-                           min="0"
-                           class="w-20 rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF;"
-                           [ngModel]="item.qty"
-                           (ngModelChange)="updateItem(item.serialNo, 'qty', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="number"
-                           min="0"
-                           step="0.01"
-                           class="w-24 rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF;"
-                           [ngModel]="item.currentPrice"
-                           (ngModelChange)="updateItem(item.serialNo, 'currentPrice', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <p class="text-xs font-bold" style="color:#1B2F6E;">{{ formatCurrency(item.totalPrice) }}</p>
-                    <p class="text-xs mt-1" style="color:rgba(27,47,110,0.4);">Cost {{ formatCurrency(item.costPrice) }}</p>
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="number"
-                           min="0"
-                           class="w-20 rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF;"
-                           [ngModel]="item.labelQty"
-                           (ngModelChange)="updateItem(item.serialNo, 'labelQty', $event)">
-                  </td>
-                  <td class="px-3 py-3">
-                    <input type="text"
-                           class="w-full rounded-xl px-3 py-2 text-xs outline-none"
-                           style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF;"
-                           [ngModel]="item.notes"
-                           (ngModelChange)="updateItem(item.serialNo, 'notes', $event)">
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="13" class="px-5 py-10 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">
-                    No pick list items match the current filter.
-                  </td>
-                </tr>
+                  </div>
+                  <p class="text-[10px] mt-0.5 font-semibold" style="color:rgba(27,47,110,0.5);">{{ record.pickListNo }}</p>
+                  <div class="flex items-center gap-3 mt-2 text-[10px]" style="color:rgba(27,47,110,0.55);">
+                    <span>Qty: <b style="color:#1B2F6E;">{{ record.totalQuantity }}</b></span>
+                    <span>Unmatched: <b style="color:#1B2F6E;">{{ record.unmatchedCount }}</b></span>
+                    <span class="ml-auto">{{ formatDate(record.updatedAt) }}</span>
+                  </div>
+                </button>
               }
-            </tbody>
-          </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 & 4: Preview Section -->
+    @if(preview()) {
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        <div class="bg-white rounded-2xl p-3 md:p-4 shadow-sm" style="border:1px solid #E8EDF8;">
+          <p class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Pick List</p>
+          <p class="text-lg font-black mt-1" style="color:#1B2F6E;">{{ preview()!.pickListNo || 'Draft' }}</p>
+          <p class="text-[10px] mt-0.5" style="color:rgba(27,47,110,0.42);">{{ formatDate(preview()!.pickListCreatedAt) }}</p>
+        </div>
+        <div class="bg-white rounded-2xl p-3 md:p-4 shadow-sm" style="border:1px solid #E8EDF8;">
+          <p class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Matched</p>
+          <p class="text-lg font-black mt-1 text-green-600">{{ preview()!.matchedCount }}</p>
+          <p class="text-[10px] mt-0.5" style="color:rgba(27,47,110,0.42);">{{ preview()!.unmatchedCount }} need review</p>
+        </div>
+        <div class="bg-white rounded-2xl p-3 md:p-4 shadow-sm" style="border:1px solid #E8EDF8;">
+          <p class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Total Qty</p>
+          <p class="text-lg font-black mt-1" style="color:#1B2F6E;">{{ preview()!.totalQuantity }}</p>
+          <p class="text-[10px] mt-0.5" style="color:rgba(27,47,110,0.42);">{{ preview()!.totalLines }} rows</p>
+        </div>
+        <div class="bg-white rounded-2xl p-3 md:p-4 shadow-sm" style="border:1px solid #E8EDF8;">
+          <p class="text-[10px] font-bold uppercase tracking-widest" style="color:rgba(27,47,110,0.45);">Session Value</p>
+          <p class="text-lg font-black mt-1" style="color:#1B2F6E;">{{ formatCurrency(totalValue()) }}</p>
+          <p class="text-[10px] mt-0.5 truncate" style="color:rgba(27,47,110,0.42);">{{ preview()!.itemMasterFileName || '-' }}</p>
         </div>
       </div>
 
-      <div class="space-y-5">
-        <div class="bg-white rounded-3xl p-5 shadow-sm" style="border:1px solid #E8EDF8;">
-          <div class="flex items-center justify-between gap-3 mb-4">
-            <div>
-              <p class="text-xs font-black uppercase tracking-[0.22em]" style="color:#C2410C;">Step 4</p>
-              <h2 class="text-lg font-black mt-2" style="color:#1B2F6E;">Label Print Preview</h2>
-              <p class="text-xs mt-1" style="color:rgba(27,47,110,0.48);">Sample design follows the uploaded print reference and updates from the selected pick list row.</p>
+      <div id="price-config-preview" class="grid xl:grid-cols-[1fr_360px] 2xl:grid-cols-[1fr_400px] gap-5">
+
+        <!-- Step 3: Pricing Review Table -->
+        <div class="bg-white rounded-2xl md:rounded-3xl shadow-sm overflow-hidden" style="border:1px solid #E8EDF8;">
+          <!-- Table Header / Controls -->
+          <div class="px-4 md:px-5 py-3 md:py-4" style="border-bottom:1px solid #E8EDF8; background:#F8FAFF;">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <p class="text-xs font-black uppercase tracking-[0.22em]" style="color:#C2410C;">Step 3</p>
+                <h2 class="text-base md:text-lg font-black mt-1" style="color:#1B2F6E;">Pick List Pricing Review</h2>
+                <p class="text-xs mt-0.5" style="color:rgba(27,47,110,0.48);">Edit prices and fields before saving.</p>
+              </div>
+
+              <div class="flex items-center gap-2 flex-wrap">
+                <label class="inline-flex items-center gap-1.5 text-xs font-bold cursor-pointer" style="color:#1B2F6E;">
+                  <input type="checkbox" class="rounded border-slate-300"
+                         [checked]="showUnmatchedOnly()"
+                         (change)="showUnmatchedOnly.set($any($event.target).checked)">
+                  Unmatched only
+                </label>
+                <button (click)="downloadPickList()"
+                        class="px-3 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap"
+                        style="background:#D1FAE5; color:#065F46; border:1px solid #6EE7B7;">
+                  Download
+                </button>
+                <button (click)="saveConfiguration()"
+                        [disabled]="saving()"
+                        class="px-3 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        style="background:#1B2F6E; color:#FDB515;">
+                  {{ saving() ? 'Saving...' : 'Save Session' }}
+                </button>
+                <button (click)="saveConfiguration(true)"
+                        [disabled]="saving() || printing()"
+                        class="px-3 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                        style="background:#FDB515; color:#1B2F6E;">
+                  {{ saving() ? 'Saving...' : (printing() ? 'Printing...' : 'Save & Print') }}
+                </button>
+              </div>
             </div>
           </div>
 
-          @if(selectedItem()) {
-            <div class="rounded-[28px] p-5 shadow-inner" style="background:linear-gradient(180deg,#112654 0%, #1B2F6E 100%); color:white;">
-              <div class="flex items-start justify-between gap-4">
-                <div>
-                  <p class="text-xs font-bold uppercase tracking-[0.2em]" style="color:#FDB515;">{{ selectedItem()!.brand || 'UATHAYAM' }}</p>
-                  <h3 class="text-lg font-black mt-2 leading-tight">{{ selectedItem()!.itemName || selectedItem()!.pickListName }}</h3>
-                </div>
-                <div class="px-3 py-1 rounded-xl text-xs font-bold" style="background:rgba(253,181,21,0.18); color:#FDB515;">
-                  Qty {{ selectedItem()!.labelQty }}
-                </div>
-              </div>
-
-              <div class="rounded-2xl p-4 mt-5" style="background:white; color:#1B2F6E;">
-                <div class="flex items-end justify-between gap-3">
-                  <div>
-                    <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(27,47,110,0.48);">MRP</p>
-                    <p class="text-2xl font-black mt-1">{{ formatCurrency(selectedItem()!.currentPrice) }}</p>
-                  </div>
-                  <div class="text-right">
-                    <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(27,47,110,0.48);">Barcode</p>
-                    <p class="text-xs font-mono mt-1">{{ selectedItem()!.ean || selectedItem()!.skuCode }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3 mt-4">
-                <div class="rounded-2xl p-3" style="background:rgba(255,255,255,0.08);">
-                  <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(253,181,21,0.8);">Category</p>
-                  <p class="text-sm font-bold mt-1">{{ selectedItem()!.category || '-' }}</p>
-                </div>
-                <div class="rounded-2xl p-3" style="background:rgba(255,255,255,0.08);">
-                  <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(253,181,21,0.8);">Size / Color</p>
-                  <p class="text-sm font-bold mt-1">{{ selectedItem()!.size || '-' }} / {{ selectedItem()!.color || '-' }}</p>
-                </div>
-              </div>
-
-              <div class="mt-5 text-[11px] leading-relaxed" style="color:rgba(255,255,255,0.84);">
-                <p>{{ preview()!.labelTemplate.companyName }}</p>
-                <p>{{ preview()!.labelTemplate.unitLine }}</p>
-                <p>{{ preview()!.labelTemplate.website }} | {{ preview()!.labelTemplate.email }}</p>
-                <p>Customer Care: {{ preview()!.labelTemplate.customerCare }}</p>
-              </div>
-            </div>
-
-            <button (click)="printLabels()"
-                    [disabled]="printing()"
-                    class="w-full mt-4 px-5 py-3 rounded-2xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    style="background:#1B2F6E; color:#FDB515;">
-              {{ printing() ? 'Preparing Print...' : 'Print Labels Now' }}
-            </button>
-
-            <div class="mt-5">
-              <h3 class="text-sm font-black mb-2" style="color:#1B2F6E;">Sample Print Command Reference</h3>
-              <textarea rows="16"
-                        readonly
-                        class="w-full rounded-2xl px-4 py-3 text-xs font-mono outline-none resize-y"
-                        style="border:1px solid #E8EDF8; background:#0F172A; color:#E2E8F0;">{{ labelCommandPreview() }}</textarea>
-            </div>
-          } @else {
-            <div class="py-12 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">
-              Select a pick list row to preview the label.
-            </div>
-          }
+          <div class="overflow-x-auto">
+            <table class="w-full" style="min-width:1100px;">
+              <thead>
+                <tr style="background:#F8FAFF; border-bottom:1px solid #E8EDF8;">
+                  @for(col of ['Status','SKU / SI','Pick List Name','Item Name','Brand','Category','Size','Color','Qty','Price','Total','Label Qty','Notes']; track col) {
+                    <th class="px-2 md:px-3 py-2.5 text-left text-[10px] font-bold uppercase tracking-widest"
+                        style="color:rgba(27,47,110,0.4);">{{ col }}</th>
+                  }
+                </tr>
+              </thead>
+              <tbody class="divide-y" style="border-color:#F0F4FC;">
+                @for(item of visibleItems(); track item.serialNo) {
+                  <tr class="transition-colors cursor-pointer hover:bg-amber-50/30"
+                      [style.background]="selectedItem()?.serialNo === item.serialNo ? 'rgba(253,181,21,0.08)' : 'white'"
+                      (click)="selectItem(item)">
+                    <td class="px-2 md:px-3 py-2.5">
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold" [style]="statusStyle(item.matchStatus)">
+                        {{ item.matchStatus }}
+                      </span>
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <p class="text-xs font-mono font-bold" style="color:#1B2F6E;">{{ item.skuCode }}</p>
+                      <p class="text-[10px] mt-0.5" style="color:rgba(27,47,110,0.42);">SI {{ item.serialNo }}</p>
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <textarea rows="2" class="w-full rounded-lg px-2 py-1.5 text-xs outline-none resize-y"
+                                style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF; min-width:130px;"
+                                [ngModel]="item.pickListName"
+                                (ngModelChange)="updateItem(item.serialNo, 'pickListName', $event)"></textarea>
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <textarea rows="2" class="w-full rounded-lg px-2 py-1.5 text-xs outline-none resize-y"
+                                style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF; min-width:130px;"
+                                [ngModel]="item.itemName"
+                                (ngModelChange)="updateItem(item.serialNo, 'itemName', $event)"></textarea>
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none w-full"
+                             style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF; min-width:80px;"
+                             [ngModel]="item.brand"
+                             (ngModelChange)="updateItem(item.serialNo, 'brand', $event)">
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none w-full"
+                             style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF; min-width:90px;"
+                             [ngModel]="item.category"
+                             (ngModelChange)="updateItem(item.serialNo, 'category', $event)">
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none"
+                             style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF; width:60px;"
+                             [ngModel]="item.size"
+                             (ngModelChange)="updateItem(item.serialNo, 'size', $event)">
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none"
+                             style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF; width:80px;"
+                             [ngModel]="item.color"
+                             (ngModelChange)="updateItem(item.serialNo, 'color', $event)">
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <input type="number" min="0"
+                             class="rounded-lg px-2 py-1.5 text-xs outline-none"
+                             style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF; width:60px;"
+                             [ngModel]="item.qty"
+                             (ngModelChange)="updateItem(item.serialNo, 'qty', $event)">
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <input type="number" min="0" step="0.01"
+                             class="rounded-lg px-2 py-1.5 text-xs outline-none"
+                             style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF; width:80px;"
+                             [ngModel]="item.currentPrice"
+                             (ngModelChange)="updateItem(item.serialNo, 'currentPrice', $event)">
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <p class="text-xs font-bold" style="color:#1B2F6E;">{{ formatCurrency(item.totalPrice) }}</p>
+                      <p class="text-[10px] mt-0.5" style="color:rgba(27,47,110,0.4);">Cost {{ formatCurrency(item.costPrice) }}</p>
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <input type="number" min="0"
+                             class="rounded-lg px-2 py-1.5 text-xs outline-none"
+                             style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF; width:60px;"
+                             [ngModel]="item.labelQty"
+                             (ngModelChange)="updateItem(item.serialNo, 'labelQty', $event)">
+                    </td>
+                    <td class="px-2 md:px-3 py-2.5">
+                      <input type="text" class="rounded-lg px-2 py-1.5 text-xs outline-none w-full"
+                             style="border:1px solid #E8EDF8; color:#1B2F6E; background:#F8FAFF; min-width:90px;"
+                             [ngModel]="item.notes"
+                             (ngModelChange)="updateItem(item.serialNo, 'notes', $event)">
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="13" class="px-5 py-10 text-center text-sm font-semibold"
+                        style="color:rgba(27,47,110,0.45);">
+                      No pick list items match the current filter.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        <div class="bg-white rounded-3xl p-5 shadow-sm" style="border:1px solid #E8EDF8;">
-          <h2 class="text-lg font-black" style="color:#1B2F6E;">Selected Item Details</h2>
-          @if(selectedItem()) {
-            <div class="grid grid-cols-2 gap-3 mt-4 text-sm">
-              <div class="rounded-2xl p-3" style="background:#F8FAFF;">
-                <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(27,47,110,0.48);">SKU Code</p>
-                <p class="font-bold mt-1" style="color:#1B2F6E;">{{ selectedItem()!.skuCode }}</p>
-              </div>
-              <div class="rounded-2xl p-3" style="background:#F8FAFF;">
-                <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(27,47,110,0.48);">Shelf</p>
-                <p class="font-bold mt-1" style="color:#1B2F6E;">{{ selectedItem()!.shelfCode || '-' }}</p>
-              </div>
-              <div class="rounded-2xl p-3" style="background:#F8FAFF;">
-                <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(27,47,110,0.48);">Cost Price</p>
-                <p class="font-bold mt-1" style="color:#1B2F6E;">{{ formatCurrency(selectedItem()!.costPrice) }}</p>
-              </div>
-              <div class="rounded-2xl p-3" style="background:#F8FAFF;">
-                <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(27,47,110,0.48);">HSN / Weight</p>
-                <p class="font-bold mt-1" style="color:#1B2F6E;">{{ selectedItem()!.hsnCode || '-' }} / {{ selectedItem()!.weight || '-' }}</p>
+        <!-- Step 4: Label Print + Selected Item Details -->
+        <div class="flex flex-col gap-5">
+
+          <!-- Label Print Preview -->
+          <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-sm" style="border:1px solid #E8EDF8;">
+            <div class="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <p class="text-xs font-black uppercase tracking-[0.22em]" style="color:#C2410C;">Step 4</p>
+                <h2 class="text-base font-black mt-1" style="color:#1B2F6E;">Label Print Preview</h2>
+                <p class="text-xs mt-0.5" style="color:rgba(27,47,110,0.48);">Select a row to preview the label.</p>
               </div>
             </div>
-          } @else {
-            <div class="py-10 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">
-              Pick an item from the pricing table to review its details here.
-            </div>
-          }
+
+            @if(selectedItem()) {
+              <div class="rounded-2xl p-4 shadow-inner"
+                   style="background:linear-gradient(180deg,#112654 0%, #1B2F6E 100%); color:white;">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-xs font-bold uppercase tracking-[0.2em]" style="color:#FDB515;">
+                      {{ selectedItem()!.brand || 'UATHAYAM' }}
+                    </p>
+                    <h3 class="text-base font-black mt-1 leading-tight">
+                      {{ selectedItem()!.itemName || selectedItem()!.pickListName }}
+                    </h3>
+                  </div>
+                  <div class="px-2.5 py-1 rounded-lg text-xs font-bold flex-shrink-0"
+                       style="background:rgba(253,181,21,0.18); color:#FDB515;">
+                    Qty {{ selectedItem()!.labelQty }}
+                  </div>
+                </div>
+
+                <div class="rounded-xl p-3 mt-4" style="background:white; color:#1B2F6E;">
+                  <div class="flex items-end justify-between gap-3">
+                    <div>
+                      <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(27,47,110,0.48);">MRP</p>
+                      <p class="text-2xl font-black mt-0.5">{{ formatCurrency(selectedItem()!.currentPrice) }}</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(27,47,110,0.48);">Barcode</p>
+                      <p class="text-xs font-mono mt-0.5">{{ selectedItem()!.ean || selectedItem()!.skuCode }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-3">
+                  <div class="rounded-xl p-2.5" style="background:rgba(255,255,255,0.08);">
+                    <p class="text-[10px] font-bold uppercase" style="color:rgba(253,181,21,0.8);">Category</p>
+                    <p class="text-xs font-bold mt-0.5">{{ selectedItem()!.category || '-' }}</p>
+                  </div>
+                  <div class="rounded-xl p-2.5" style="background:rgba(255,255,255,0.08);">
+                    <p class="text-[10px] font-bold uppercase" style="color:rgba(253,181,21,0.8);">Size / Color</p>
+                    <p class="text-xs font-bold mt-0.5">{{ selectedItem()!.size || '-' }} / {{ selectedItem()!.color || '-' }}</p>
+                  </div>
+                </div>
+
+                <div class="mt-4 text-[10px] leading-relaxed" style="color:rgba(255,255,255,0.84);">
+                  <p>{{ preview()!.labelTemplate.companyName }}</p>
+                  <p>{{ preview()!.labelTemplate.unitLine }}</p>
+                  <p>{{ preview()!.labelTemplate.website }} | {{ preview()!.labelTemplate.email }}</p>
+                  <p>Customer Care: {{ preview()!.labelTemplate.customerCare }}</p>
+                </div>
+              </div>
+
+              <button (click)="printLabels()"
+                      [disabled]="printing()"
+                      class="w-full mt-4 px-5 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      style="background:#1B2F6E; color:#FDB515;">
+                {{ printing() ? 'Preparing Print...' : 'Print Labels Now' }}
+              </button>
+
+              <div class="mt-4">
+                <h3 class="text-xs font-black mb-2" style="color:#1B2F6E;">Sample Print Command</h3>
+                <textarea rows="14" readonly
+                          class="w-full rounded-xl px-3 py-2.5 text-xs font-mono outline-none resize-y"
+                          style="border:1px solid #E8EDF8; background:#0F172A; color:#E2E8F0;">{{ labelCommandPreview() }}</textarea>
+              </div>
+            } @else {
+              <div class="py-12 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">
+                Select a pick list row to preview the label.
+              </div>
+            }
+          </div>
+
+          <!-- Selected Item Details -->
+          <div class="bg-white rounded-2xl md:rounded-3xl p-4 md:p-5 shadow-sm" style="border:1px solid #E8EDF8;">
+            <h2 class="text-base font-black" style="color:#1B2F6E;">Selected Item Details</h2>
+            @if(selectedItem()) {
+              <div class="grid grid-cols-2 gap-2 mt-3 text-sm">
+                @for(detail of [
+                  {label:'SKU Code', value: selectedItem()!.skuCode},
+                  {label:'Shelf', value: selectedItem()!.shelfCode || '-'},
+                  {label:'Cost Price', value: formatCurrency(selectedItem()!.costPrice)},
+                  {label:'HSN / Weight', value: (selectedItem()!.hsnCode || '-') + ' / ' + (selectedItem()!.weight || '-')}
+                ]; track detail.label) {
+                  <div class="rounded-xl p-3" style="background:#F8FAFF;">
+                    <p class="text-[10px] font-bold uppercase tracking-[0.18em]" style="color:rgba(27,47,110,0.48);">{{ detail.label }}</p>
+                    <p class="font-bold mt-1 text-xs" style="color:#1B2F6E;">{{ detail.value }}</p>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="py-10 text-center text-sm font-semibold" style="color:rgba(27,47,110,0.45);">
+                Pick an item from the pricing table to review its details here.
+              </div>
+            }
+          </div>
+
         </div>
       </div>
-    </div>
-  } @else {
-    <div class="bg-white rounded-3xl p-10 text-center shadow-sm" style="border:1px solid #E8EDF8;">
-      <div class="w-16 h-16 rounded-3xl mx-auto mb-4 flex items-center justify-center" style="background:rgba(27,47,110,0.08);">
-        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="#1B2F6E">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7h18M5 7v12a2 2 0 002 2h10a2 2 0 002-2V7m-9 4h4m-4 4h7" />
-        </svg>
+
+    } @else {
+      <!-- Empty state -->
+      <div class="bg-white rounded-2xl md:rounded-3xl p-8 md:p-10 text-center shadow-sm" style="border:1px solid #E8EDF8;">
+        <div class="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center"
+             style="background:rgba(27,47,110,0.08);">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="#1B2F6E">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+                  d="M3 7h18M5 7v12a2 2 0 002 2h10a2 2 0 002-2V7m-9 4h4m-4 4h7" />
+          </svg>
+        </div>
+        <h2 class="text-base md:text-lg font-black" style="color:#1B2F6E;">Pick List Preview Not Started</h2>
+        <p class="text-sm mt-2 mx-auto max-w-lg" style="color:rgba(27,47,110,0.48);">
+          Once the Item Master is ready, upload a Pick List PDF or Excel file to load those rows into the pricing screen.
+        </p>
       </div>
-      <h2 class="text-lg font-black" style="color:#1B2F6E;">Pick List Preview Not Started</h2>
-      <p class="text-sm mt-2 mx-auto max-w-2xl" style="color:rgba(27,47,110,0.48);">
-        Once the Item Master is ready, upload any Pick List PDF or Excel file to load only those rows into the pricing screen.
-      </p>
-    </div>
-  }
+    }
+
+  </div>
 </div>
 
 <style>
   @keyframes slideIn {
-    from { transform:translateX(40px); opacity:0; }
-    to { transform:translateX(0); opacity:1; }
+    from { transform: translateX(40px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
   }
 </style>

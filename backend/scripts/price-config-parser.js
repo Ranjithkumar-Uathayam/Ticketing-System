@@ -1,16 +1,7 @@
 'use strict';
 
-/**
- * Pure Node.js parser for Item Master Excel files and Pick List PDF/Excel files.
- * Replaces the Python (openpyxl + pypdf) dependency so no Python runtime is required.
- *
- * Dependencies (installed via npm):
- *   xlsx       — SheetJS, reads .xlsx/.xlsm/.xltx/.xltm files
- *   pdf-parse  — extracts raw text from PDF files
- */
-
 const XLSX = require('xlsx');
-const pdfParse = require('pdf-parse');
+const { PDFParse } = require('pdf-parse');
 const fs = require('fs');
 const nodePath = require('path');
 
@@ -199,7 +190,9 @@ function parsePickItem(serialNo, skuCode, detailLines) {
 
 async function parsePickListPdf(filePath) {
   const buf = fs.readFileSync(filePath);
-  const data = await pdfParse(buf);
+  const parser = new PDFParse({ data: buf });
+  const data = await parser.getText();
+  await parser.destroy();
   const fullText = data.text || '';
   const rawLines = fullText.split('\n').map(l => l.trimEnd());
 
