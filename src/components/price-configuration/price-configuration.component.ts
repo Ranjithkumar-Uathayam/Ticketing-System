@@ -301,7 +301,8 @@ export class PriceConfigurationComponent {
         this.printLabels();
       }
     } catch (err: any) {
-      this.flash('error', err?.error?.message || err?.message || 'Failed to save the price configuration.');
+      const detail = err?.error?.error ? ` (${err.error.error})` : '';
+      this.flash('error', (err?.error?.message || err?.message || 'Failed to save the price configuration.') + detail, 8000);
     } finally {
       this.saving.set(false);
     }

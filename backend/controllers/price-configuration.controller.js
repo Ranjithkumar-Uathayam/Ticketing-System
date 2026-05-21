@@ -176,6 +176,17 @@ const ensureSchema = async (pool) => {
           );
       END;
 
+      IF EXISTS (
+          SELECT 1 FROM sys.columns
+          WHERE object_id = OBJECT_ID('dbo.PriceConfigurations')
+            AND name = 'ConfigurationNo'
+            AND max_length < 100
+      )
+      BEGIN
+          ALTER TABLE PriceConfigurations
+          ALTER COLUMN ConfigurationNo NVARCHAR(50) NOT NULL;
+      END;
+
       IF COL_LENGTH('dbo.PriceConfigurations', 'ItemMasterUploadedAt') IS NULL
       BEGIN
           ALTER TABLE PriceConfigurations
@@ -850,12 +861,13 @@ exports.create = async (req, res) => {
   }
 
   const labelTemplate = sanitizeLabelTemplate(body.labelTemplate);
-  const provisionalConfigurationNo = `TMP-${crypto.randomUUID()}`;
+  const provisionalConfigurationNo = `TMP-${Date.now()}`;
 
   try {
     const pool = await poolPromise;
     await ensureSchema(pool);
-    const insertResult = await pool.request()
+
+    await pool.request()
       .input('configurationNo', sql.NVarChar(50), provisionalConfigurationNo)
       .input('pickListNo', sql.NVarChar(100), cleanText(body.pickListNo))
       .input('pickListCreatedAt', sql.NVarChar(100), trimOrNull(body.pickListCreatedAt))
@@ -877,7 +889,6 @@ exports.create = async (req, res) => {
           LabelTemplateJson,
           CreatedBy
         )
-        OUTPUT INSERTED.Id, INSERTED.CreatedAt
         VALUES (
           @configurationNo,
           @pickListNo,
@@ -891,20 +902,25 @@ exports.create = async (req, res) => {
         )
       `);
 
-    const inserted = insertResult.recordset[0];
-    const configurationNo = buildConfigurationNo(inserted.Id, inserted.CreatedAt);
+    const idResult = await pool.request()
+      .input('no', sql.NVarChar(50), provisionalConfigurationNo)
+      .query('SELECT TOP 1 Id, CreatedAt FROM PriceConfigurations WHERE ConfigurationNo = @no');
+    const newId = idResult.recordset[0]?.Id;
+    const createdAt = idResult.recordset[0]?.CreatedAt;
+
+    if (!newId) {
+      throw new Error('Failed to retrieve the new configuration ID after insert.');
+    }
+
+    const configurationNo = buildConfigurationNo(newId, createdAt);
 
     await pool.request()
-      .input('id', sql.Int, inserted.Id)
+      .input('id', sql.Int, newId)
       .input('configurationNo', sql.NVarChar(50), configurationNo)
-      .query(`
-        UPDATE PriceConfigurations
-        SET ConfigurationNo = @configurationNo, UpdatedAt = GETDATE()
-        WHERE Id = @id
-      `);
+      .query(`UPDATE PriceConfigurations SET ConfigurationNo = @configurationNo, UpdatedAt = GETDATE() WHERE Id = @id`);
 
     const fullResult = await pool.request()
-      .input('id', sql.Int, inserted.Id)
+      .input('id', sql.Int, newId)
       .query('SELECT * FROM PriceConfigurations WHERE Id = @id');
 
     res.status(201).json(mapRecord(fullResult.recordset[0]));
@@ -951,11 +967,12 @@ exports.update = async (req, res) => {
         SELECT * FROM PriceConfigurations WHERE Id = @id;
       `);
 
-    if (!updateResult.recordset[0]) {
+    const updatedRow = (updateResult.recordsets?.[1] ?? updateResult.recordsets?.[0] ?? [])[0];
+    if (!updatedRow) {
       return res.status(404).json({ message: 'Price configuration not found.' });
     }
 
-    res.json(mapRecord(updateResult.recordset[0]));
+    res.json(mapRecord(updatedRow));
   } catch (err) {
     console.error('[price-config.update]', err);
     res.status(500).json({ message: 'Failed to update the price configuration.', error: err.message });
