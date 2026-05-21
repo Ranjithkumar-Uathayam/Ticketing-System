@@ -212,9 +212,9 @@ export class LabelPrintConfigComponent {
     const spans: string[] = [];
 
     // Start guard bars
-    spans.push(`<span style="height:54px;width:3px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
+    spans.push(`<span style="height:72px;width:3px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
     spans.push(`<span style="width:2px;display:inline-block;"></span>`);
-    spans.push(`<span style="height:54px;width:2px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
+    spans.push(`<span style="height:72px;width:2px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
     spans.push(`<span style="width:3px;display:inline-block;"></span>`);
 
     chars.forEach((ch, i) => {
@@ -222,7 +222,7 @@ export class LabelPrintConfigComponent {
       // 7 bar/space alternations per character for realistic density
       for (let b = 0; b < 7; b++) {
         const isBar = ((code >> (b % 8)) & 1) === 1;
-        const h = isBar ? 48 + ((code * 3 + i * 7 + b) % 12) : 0;
+        const h = isBar ? 62 + ((code * 3 + i * 7 + b) % 12) : 0;
         const w = 1 + ((code + b * 5 + i) % 3);
         if (isBar) {
           spans.push(`<span style="height:${h}px;width:${w}px;background:#111827;display:inline-block;vertical-align:bottom;margin-right:1px;"></span>`);
@@ -234,9 +234,9 @@ export class LabelPrintConfigComponent {
 
     // End guard bars
     spans.push(`<span style="width:3px;display:inline-block;"></span>`);
-    spans.push(`<span style="height:54px;width:2px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
+    spans.push(`<span style="height:72px;width:2px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
     spans.push(`<span style="width:1px;display:inline-block;"></span>`);
-    spans.push(`<span style="height:54px;width:3px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
+    spans.push(`<span style="height:72px;width:3px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
 
     return spans.join('');
   }

@@ -199,18 +199,18 @@
       @if (previewItem(); as item) {
         <!-- Outer wrapper — scales the label up 1.8× for readability -->
         <div class="px-4 py-5 flex justify-center">
-          <div style="width:612px;height:324px;overflow:hidden;flex-shrink:0;">
-            <!-- Inner label at 9cm × 4.4cm scaled 1.8× (340×180 px content area) -->
+          <div style="width:612px;height:356px;overflow:hidden;flex-shrink:0;">
+            <!-- Inner label at 9cm × 4.4cm scaled 1.8× (340×198 px content area) -->
             <div style="
-              width:340px; height:180px;
+              width:340px; height:198px;
               transform:scale(1.8); transform-origin:top left;
               background:white; border:1px solid #9CA3AF;
               font-family:'Courier New',Courier,monospace;
               position:relative; box-sizing:border-box; overflow:hidden;">
 
               <!-- Barcode area -->
-              <div style="padding:2px 4px 0 4px;height:58px;overflow:hidden;line-height:0;background:white;">
-                <div style="display:flex;align-items:flex-end;height:54px;gap:0;overflow:hidden;"
+              <div style="padding:2px 4px 0 4px;height:76px;overflow:hidden;line-height:0;background:white;">
+                <div style="display:flex;align-items:flex-end;height:72px;gap:0;overflow:hidden;"
                      [innerHTML]="renderBarcode(item.ean || item.skuCode)"></div>
               </div>
               <div style="font-size:6px;letter-spacing:0.1em;text-align:center;padding:1px 4px 1px;font-family:'Courier New',monospace;color:#111827;line-height:1;font-weight:700;">
