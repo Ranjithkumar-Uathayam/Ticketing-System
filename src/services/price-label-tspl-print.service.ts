@@ -82,19 +82,19 @@ export class PriceLabelTsplPrintService {
    * Builds TSPL for one 90 mm × 44 mm price label (203 DPI = 8 dots/mm).
    *
    * Layout (dots):
-   *   y=4   – CODE128 barcode, height 52 dots (~6.5 mm)
-   *   y=58  – horizontal separator
-   *   y=62  – left col: SKU / right col: SIZE
-   *   y=90  – left: MRP (large) / right: Color
-   *   y=124 – left: (Incl. taxes) / right: Net Qty
-   *   y=142 – left: Category / right: Country of Origin
-   *   y=168 – left: Brand
-   *   y=194 – left: Mkg Dt
-   *   y=228 – footer separator
-   *   y=232 – footer: Mfg & Mktd by
-   *   y=248 – footer: unit/address line
-   *   y=264 – website | email
-   *   y=280 – customer care
+   *   y=4   – CODE128 barcode, height 64 dots (~8 mm)
+   *   y=70  – horizontal separator
+   *   y=74  – left col: SKU / right col: SIZE
+   *   y=100 – left: MRP (large) / right: Color
+   *   y=134 – left: (Incl. taxes) / right: Net Qty
+   *   y=152 – left: Category / right: Country of Origin
+   *   y=178 – left: Brand
+   *   y=204 – left: Mkg Dt
+   *   y=230 – footer separator
+   *   y=234 – footer: Mfg & Mktd by
+   *   y=250 – footer: unit/address line
+   *   y=266 – website | email
+   *   y=282 – customer care  (bottom = 298 dots = 37.3 mm < 44 mm ✓)
    */
   buildSingleLabelTspl(
     item: PriceConfigItem,
@@ -123,37 +123,37 @@ export class PriceLabelTsplPrintService {
       `CLS`,
 
       // ── Barcode (no HRI – item code printed as TEXT below) ──────────────────
-      `BARCODE 8,4,"128",52,0,0,2,2,"${esc(barcode)}"`,
+      `BARCODE 8,4,"128",64,0,0,2,2,"${esc(barcode)}"`,
 
-      // ── Separator after barcode ─────────────────────────────────────────────
-      `BAR 0,58,720,1`,
+      // ── Separator after barcode (barcode ends at y=68) ──────────────────────
+      `BAR 0,70,720,1`,
 
       // ── Vertical separator between left / right columns (x=430 = 53.75 mm) ─
-      `BAR 430,58,1,170`,
+      `BAR 430,70,1,158`,
 
       // ── Left column ─────────────────────────────────────────────────────────
-      `TEXT 8,62,"2",0,1,1,"${esc(item.skuCode || item.ean || '-')}"`,
-      `TEXT 8,90,"3",0,1,1,"MRP :${mrp}"`,
-      `TEXT 8,124,"1",0,1,1,"(Incl.of all Taxes)"`,
-      `TEXT 8,142,"2",0,1,1,"Category : ${esc(item.category || '-')}"`,
-      `TEXT 8,168,"2",0,1,1,"Brand : ${esc(item.brand || '-')}"`,
-      `TEXT 8,194,"2",0,1,1,"Mkg Dt : ${mfgDate}"`,
+      `TEXT 8,74,"2",0,1,1,"${esc(item.skuCode || item.ean || '-')}"`,
+      `TEXT 8,100,"3",0,1,1,"MRP :${mrp}"`,
+      `TEXT 8,134,"1",0,1,1,"(Incl.of all Taxes)"`,
+      `TEXT 8,152,"2",0,1,1,"Category : ${esc(item.category || '-')}"`,
+      `TEXT 8,178,"2",0,1,1,"Brand : ${esc(item.brand || '-')}"`,
+      `TEXT 8,204,"2",0,1,1,"Mkg Dt : ${mfgDate}"`,
 
       // ── Right column ─────────────────────────────────────────────────────────
-      `TEXT 434,62,"2",0,1,1,"SIZE : ${esc(item.size || '-')}"`,
-      `TEXT 434,90,"2",0,1,1,"Color : ${esc(item.color || '-')}"`,
-      `TEXT 434,116,"2",0,1,1,"Net Qty : ${esc(netQty)}"`,
-      `TEXT 434,142,"1",0,1,1,"Country Of Origin : ${esc(tpl.countryOfOrigin || 'India')}"`,
+      `TEXT 434,74,"2",0,1,1,"SIZE : ${esc(item.size || '-')}"`,
+      `TEXT 434,100,"2",0,1,1,"Color : ${esc(item.color || '-')}"`,
+      `TEXT 434,126,"2",0,1,1,"Net Qty : ${esc(netQty)}"`,
+      `TEXT 434,152,"1",0,1,1,"Country Of Origin : ${esc(tpl.countryOfOrigin || 'India')}"`,
 
       // ── Footer separator ─────────────────────────────────────────────────────
-      `BAR 0,228,720,1`,
+      `BAR 0,230,720,1`,
 
       // ── Footer (font "1" = 8×16 tiny) ────────────────────────────────────────
-      `TEXT 8,232,"1",0,1,1,"Mfg & Mktd by : ${esc(tpl.companyName)}"`,
-      `TEXT 8,248,"1",0,1,1,"${esc(tpl.unitLine)}"`,
-      `TEXT 8,264,"1",0,1,1,"website : ${esc(tpl.website)}"`,
-      `TEXT 310,264,"1",0,1,1,"Email : ${esc(tpl.email)}"`,
-      `TEXT 8,280,"1",0,1,1,"Customer Care No: ${esc(tpl.customerCare)}"`,
+      `TEXT 8,234,"1",0,1,1,"Mfg & Mktd by : ${esc(tpl.companyName)}"`,
+      `TEXT 8,250,"1",0,1,1,"${esc(tpl.unitLine)}"`,
+      `TEXT 8,266,"1",0,1,1,"website : ${esc(tpl.website)}"`,
+      `TEXT 310,266,"1",0,1,1,"Email : ${esc(tpl.email)}"`,
+      `TEXT 8,282,"1",0,1,1,"Customer Care No: ${esc(tpl.customerCare)}"`,
 
       `PRINT 1,1`,
     ];

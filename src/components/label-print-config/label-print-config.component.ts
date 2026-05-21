@@ -26,7 +26,7 @@ import { environment } from '../../environments/environment';
   imports: [CommonModule, FormsModule],
 })
 export class LabelPrintConfigComponent {
-  readonly records       = this.configService.records;
+  readonly records        = this.configService.records;
   readonly recordsLoading = this.configService.loading;
 
   readonly toast          = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -209,14 +209,36 @@ export class LabelPrintConfigComponent {
 
   renderBarcode(value: string): string {
     const chars = Array.from(String(value || 'N/A'));
-    return chars
-      .map((ch, i) => {
-        const code = ch.charCodeAt(0);
-        const h    = 22 + ((code + i * 7) % 34);
-        const w    = (code % 3) + 1;
-        return `<span style="height:${h}px;width:${w}px;display:inline-block;background:#111827;margin-right:1px;vertical-align:bottom;border-radius:0.5px;"></span>`;
-      })
-      .join('');
+    const spans: string[] = [];
+
+    // Start guard bars
+    spans.push(`<span style="height:54px;width:3px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
+    spans.push(`<span style="width:2px;display:inline-block;"></span>`);
+    spans.push(`<span style="height:54px;width:2px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
+    spans.push(`<span style="width:3px;display:inline-block;"></span>`);
+
+    chars.forEach((ch, i) => {
+      const code = ch.charCodeAt(0);
+      // 7 bar/space alternations per character for realistic density
+      for (let b = 0; b < 7; b++) {
+        const isBar = ((code >> (b % 8)) & 1) === 1;
+        const h = isBar ? 48 + ((code * 3 + i * 7 + b) % 12) : 0;
+        const w = 1 + ((code + b * 5 + i) % 3);
+        if (isBar) {
+          spans.push(`<span style="height:${h}px;width:${w}px;background:#111827;display:inline-block;vertical-align:bottom;margin-right:1px;"></span>`);
+        } else {
+          spans.push(`<span style="width:${w}px;display:inline-block;margin-right:1px;"></span>`);
+        }
+      }
+    });
+
+    // End guard bars
+    spans.push(`<span style="width:3px;display:inline-block;"></span>`);
+    spans.push(`<span style="height:54px;width:2px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
+    spans.push(`<span style="width:1px;display:inline-block;"></span>`);
+    spans.push(`<span style="height:54px;width:3px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
+
+    return spans.join('');
   }
 
   formatCurrency(value: number): string {
