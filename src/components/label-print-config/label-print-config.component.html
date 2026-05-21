@@ -1,0 +1,501 @@
+<!-- Toast ─────────────────────────────────────────────────────────────────── -->
+@if (toast()) {
+  <div class="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl text-sm font-semibold transition-all"
+       [style]="toast()!.type === 'success'
+         ? 'background:#DCFCE7;color:#166534;border:1.5px solid #86EFAC;'
+         : 'background:#FEE2E2;color:#991B1B;border:1.5px solid #FCA5A5;'">
+    @if (toast()!.type === 'success') {
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+    } @else {
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+    }
+    {{ toast()!.msg }}
+  </div>
+}
+
+<!-- Page header ──────────────────────────────────────────────────────────── -->
+<div class="flex items-start justify-between mb-6 gap-4 flex-wrap">
+  <div>
+    <h1 class="text-xl font-bold" style="color:#1B2F6E;">Label Print Configuration</h1>
+    <p class="text-sm mt-0.5" style="color:#6B7280;">
+      Configure thermal label settings and print product labels via hardware printer
+      — 9 cm × 4.4 cm label, TSPL format
+    </p>
+  </div>
+  <div class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl"
+       style="background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;">
+    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+    </svg>
+    Hardware Print (QZ Tray / Agent)
+  </div>
+</div>
+
+<!-- Config selector card ─────────────────────────────────────────────────── -->
+<div class="rounded-2xl shadow-sm mb-5 px-5 py-4 flex flex-wrap items-end gap-4"
+     style="background:white;border:1.5px solid #E5E7EB;">
+  <div class="flex-1 min-w-0">
+    <label class="block text-xs font-bold uppercase tracking-wide mb-1.5" style="color:#374151;">
+      Price Configuration
+    </label>
+    @if (recordsLoading()) {
+      <div class="h-10 rounded-xl animate-pulse" style="background:#F3F4F6;"></div>
+    } @else if (!records().length) {
+      <div class="text-sm px-3 py-2 rounded-xl" style="background:#FEF3C7;color:#92400E;">
+        No saved configurations found. Go to Price Configuration to save one first.
+      </div>
+    } @else {
+      <select
+        class="w-full h-10 px-3 rounded-xl text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+        style="border-color:#D1D5DB;color:#111827;background:white;"
+        (change)="onConfigSelect($event)">
+        <option value="">— Select a configuration —</option>
+        @for (rec of records(); track rec.id) {
+          <option [value]="rec.id" [selected]="selectedConfigId() === rec.id">
+            {{ rec.configurationNo }} — {{ rec.pickListNo }} ({{ rec.totalLines }} items)
+          </option>
+        }
+      </select>
+    }
+  </div>
+
+  <button
+    class="h-10 px-5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 flex-shrink-0"
+    [disabled]="!selectedConfigId() || loadingConfig()"
+    (click)="loadConfig()"
+    style="background:#1B2F6E;color:white;"
+    [style.opacity]="!selectedConfigId() || loadingConfig() ? '0.5' : '1'">
+    @if (loadingConfig()) {
+      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+      </svg>
+      Loading…
+    } @else {
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+      </svg>
+      Load Configuration
+    }
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+<!-- Main content — only shown once a configuration is loaded                  -->
+<!-- ══════════════════════════════════════════════════════════════════════════ -->
+@if (preview()) {
+  <!-- Print Settings accordion ──────────────────────────────────────────── -->
+  <div class="rounded-2xl shadow-sm mb-5 overflow-hidden"
+       style="background:white;border:1.5px solid #E5E7EB;">
+    <button
+      class="w-full flex items-center justify-between px-5 py-3.5 text-sm font-bold transition-colors hover:bg-slate-50"
+      style="color:#1B2F6E;"
+      (click)="settingsOpen.update(v => !v)">
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Printer Settings
+      </div>
+      <svg class="w-4 h-4 transition-transform" [style.transform]="settingsOpen() ? 'rotate(180deg)' : ''"
+           fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+
+    @if (settingsOpen()) {
+      <div class="px-5 pb-5 pt-1 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-5"
+           style="border-top:1px solid #F3F4F6;">
+
+        <!-- Printer Name -->
+        <div class="lg:col-span-2">
+          <label class="block text-xs font-bold uppercase tracking-wide mb-1" style="color:#374151;">
+            Printer Name
+          </label>
+          <input type="text"
+            class="w-full h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+            style="border-color:#D1D5DB;color:#111827;"
+            [value]="printSettings().printerName"
+            (input)="updateSetting('printerName', $any($event.target).value)"
+            placeholder="e.g. TSC TTP-244 Pro" />
+        </div>
+
+        <!-- Mfg Date -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wide mb-1" style="color:#374151;">
+            Mfg Date
+          </label>
+          <input type="text"
+            class="w-full h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+            style="border-color:#D1D5DB;color:#111827;"
+            [value]="printSettings().mfgDate"
+            (input)="updateSetting('mfgDate', $any($event.target).value)"
+            placeholder="e.g. May-26" />
+        </div>
+
+        <!-- Density -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wide mb-1" style="color:#374151;">
+            Density ({{ printSettings().density }})
+          </label>
+          <input type="range" min="1" max="15" step="1"
+            class="w-full accent-blue-600"
+            [value]="printSettings().density"
+            (input)="updateSetting('density', +$any($event.target).value)" />
+          <div class="flex justify-between text-xs mt-0.5" style="color:#9CA3AF;">
+            <span>1</span><span>15</span>
+          </div>
+        </div>
+
+        <!-- Speed -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wide mb-1" style="color:#374151;">
+            Speed ({{ printSettings().speed }})
+          </label>
+          <input type="range" min="1" max="4" step="1"
+            class="w-full accent-blue-600"
+            [value]="printSettings().speed"
+            (input)="updateSetting('speed', +$any($event.target).value)" />
+          <div class="flex justify-between text-xs mt-0.5" style="color:#9CA3AF;">
+            <span>1</span><span>4</span>
+          </div>
+        </div>
+
+        <!-- Gap -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wide mb-1" style="color:#374151;">
+            Gap (mm)
+          </label>
+          <input type="number" min="0" max="10" step="0.5"
+            class="w-full h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+            style="border-color:#D1D5DB;color:#111827;"
+            [value]="printSettings().gapMm"
+            (input)="updateSetting('gapMm', +$any($event.target).value)" />
+        </div>
+
+      </div>
+    }
+  </div>
+
+  <!-- Two-column main area ─────────────────────────────────────────────────── -->
+  <div class="grid grid-cols-1 xl:grid-cols-5 gap-5 items-start">
+
+    <!-- LEFT: Label Preview ──────────────────────────────────────────────── -->
+    <div class="xl:col-span-2 rounded-2xl shadow-sm overflow-hidden"
+         style="background:white;border:1.5px solid #E5E7EB;">
+
+      <div class="px-4 py-3 flex items-center justify-between"
+           style="border-bottom:1px solid #F3F4F6;">
+        <h3 class="text-sm font-bold" style="color:#1B2F6E;">Label Preview</h3>
+        <span class="text-xs px-2.5 py-1 rounded-full font-semibold"
+              style="background:#F0FDF4;color:#166534;border:1px solid #BBF7D0;">
+          9 cm × 4.4 cm
+        </span>
+      </div>
+
+      @if (previewItem(); as item) {
+        <!-- Outer wrapper — scales the label up 1.8× for readability -->
+        <div class="px-4 py-5 flex justify-center">
+          <div style="width:612px;height:299px;overflow:hidden;flex-shrink:0;">
+            <!-- Inner label at true 9cm × 4.4cm (340×166 px at 96 DPI) scaled 1.8× -->
+            <div style="
+              width:340px; height:166px;
+              transform:scale(1.8); transform-origin:top left;
+              background:white; border:1px solid #9CA3AF;
+              font-family:'Courier New',Courier,monospace;
+              position:relative; box-sizing:border-box; overflow:hidden;">
+
+              <!-- Barcode area -->
+              <div style="padding:3px 4px 2px 4px;height:34px;overflow:hidden;line-height:0;">
+                <div style="display:flex;align-items:flex-end;height:28px;gap:0;"
+                     [innerHTML]="renderBarcode(item.ean || item.skuCode)"></div>
+              </div>
+              <div style="font-size:6px;letter-spacing:0.08em;text-align:left;padding:0 4px;font-family:'Courier New',monospace;color:#111827;line-height:1;">
+                {{ item.ean || item.skuCode }}
+              </div>
+
+              <!-- Horizontal separator -->
+              <div style="height:1px;background:#111827;margin:2px 0;"></div>
+
+              <!-- Main body: left + vsep + right -->
+              <div style="display:flex;flex:1;min-height:0;">
+
+                <!-- Left column -->
+                <div style="flex:0 0 54%;padding:2px 3px;overflow:hidden;font-size:6px;line-height:1.35;color:#111827;">
+                  <div style="font-size:6.5px;font-weight:700;letter-spacing:0.03em;">{{ item.skuCode || item.ean }}</div>
+                  <div style="font-size:8.5px;font-weight:900;margin:1px 0;">MRP :Rs.{{ item.currentPrice | number:'1.2-2' }}</div>
+                  <div style="font-size:5px;color:#555;">(Incl.of all Taxes)</div>
+                  <div style="font-size:5.5px;margin-top:1px;">Category : {{ item.category || '-' }}</div>
+                  <div style="font-size:5.5px;">Brand : {{ item.brand || '-' }}</div>
+                  <div style="font-size:5.5px;">Mkg Dt : {{ printSettings().mfgDate || '-' }}</div>
+                </div>
+
+                <!-- Vertical separator -->
+                <div style="width:1px;background:#111827;flex-shrink:0;"></div>
+
+                <!-- Right column -->
+                <div style="flex:1;padding:2px 3px;overflow:hidden;font-size:5.5px;line-height:1.4;color:#111827;">
+                  <div style="font-size:6px;font-weight:700;">SIZE : {{ item.size || '-' }}</div>
+                  <div style="font-size:5.5px;">Color : {{ item.color || '-' }}</div>
+                  <div style="font-size:5.5px;">Net Qty : {{ item.labelQty || item.qty || 1 }}</div>
+                  <div style="font-size:5px;margin-top:2px;">Country Of Origin :</div>
+                  <div style="font-size:5px;">{{ preview()!.labelTemplate.countryOfOrigin || 'India' }}</div>
+                </div>
+              </div>
+
+              <!-- Footer separator -->
+              <div style="height:1px;background:#111827;margin:2px 0;"></div>
+
+              <!-- Footer lines -->
+              <div style="padding:1px 3px;font-size:4.5px;line-height:1.45;color:#111827;overflow:hidden;">
+                <div>Mfg &amp; Mktd by : {{ preview()!.labelTemplate.companyName }}</div>
+                <div>{{ preview()!.labelTemplate.unitLine }}</div>
+                <div style="display:flex;justify-content:space-between;">
+                  <span>website : {{ preview()!.labelTemplate.website }}</span>
+                  <span>Email : {{ preview()!.labelTemplate.email }}</span>
+                </div>
+                <div>Customer Care No: {{ preview()!.labelTemplate.customerCare }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Preview item info bar -->
+        <div class="px-4 pb-3 text-xs" style="color:#6B7280;">
+          Previewing: <strong style="color:#111827;">{{ item.skuCode }}</strong>
+          — {{ item.itemName || item.pickListName }}
+        </div>
+      } @else {
+        <div class="px-4 py-12 text-center text-sm" style="color:#9CA3AF;">
+          No items to preview
+        </div>
+      }
+    </div>
+
+    <!-- RIGHT: Item List ─────────────────────────────────────────────────── -->
+    <div class="xl:col-span-3 rounded-2xl shadow-sm overflow-hidden"
+         style="background:white;border:1.5px solid #E5E7EB;">
+
+      <!-- Header + stats bar -->
+      <div class="px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+           style="border-bottom:1px solid #F3F4F6;">
+        <h3 class="text-sm font-bold" style="color:#1B2F6E;">
+          Items
+          <span class="ml-1.5 px-2 py-0.5 rounded-full text-xs font-semibold"
+                style="background:#EFF6FF;color:#1D4ED8;">
+            {{ items().length }}
+          </span>
+        </h3>
+        <div class="flex items-center gap-4 text-xs font-semibold" style="color:#6B7280;">
+          <span>
+            Selected:
+            <strong style="color:#111827;">{{ selectedItems().length }}</strong>
+            items ·
+            <strong style="color:#1B2F6E;">{{ totalLabelCount() }}</strong>
+            labels
+          </span>
+          <span>|</span>
+          <span>
+            Total:
+            <strong style="color:#111827;">{{ items().length }}</strong>
+            items ·
+            <strong style="color:#1B2F6E;">{{ allLabelCount() }}</strong>
+            labels
+          </span>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="overflow-x-auto" style="max-height:420px;overflow-y:auto;">
+        <table class="w-full text-xs" style="border-collapse:collapse;">
+          <thead class="sticky top-0 z-10" style="background:#F8F9FC;">
+            <tr>
+              <th class="px-3 py-2.5 text-left w-8">
+                <input type="checkbox"
+                  class="w-3.5 h-3.5 rounded accent-blue-600 cursor-pointer"
+                  [checked]="allSelected()"
+                  [indeterminate]="someSelected()"
+                  (change)="toggleAll()" />
+              </th>
+              <th class="px-3 py-2.5 text-left font-bold uppercase tracking-wide" style="color:#6B7280;white-space:nowrap;">SKU</th>
+              <th class="px-3 py-2.5 text-left font-bold uppercase tracking-wide" style="color:#6B7280;">Item Name</th>
+              <th class="px-3 py-2.5 text-left font-bold uppercase tracking-wide" style="color:#6B7280;">Size</th>
+              <th class="px-3 py-2.5 text-left font-bold uppercase tracking-wide" style="color:#6B7280;">Color</th>
+              <th class="px-3 py-2.5 text-right font-bold uppercase tracking-wide" style="color:#6B7280;white-space:nowrap;">MRP</th>
+              <th class="px-3 py-2.5 text-center font-bold uppercase tracking-wide" style="color:#6B7280;white-space:nowrap;">Label Qty</th>
+              <th class="px-3 py-2.5 text-center font-bold uppercase tracking-wide" style="color:#6B7280;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item.serialNo) {
+              <tr
+                class="cursor-pointer transition-colors"
+                [style]="previewSerialNo() === item.serialNo
+                  ? 'background:#EFF6FF;'
+                  : 'background:white;'"
+                style="border-bottom:1px solid #F3F4F6;"
+                (click)="setPreviewItem(item.serialNo)">
+
+                <!-- Checkbox -->
+                <td class="px-3 py-2" (click)="$event.stopPropagation(); toggleItem(item.serialNo)">
+                  <input type="checkbox"
+                    class="w-3.5 h-3.5 rounded accent-blue-600 cursor-pointer"
+                    [checked]="selectedSerialNos().has(item.serialNo)"
+                    (change)="toggleItem(item.serialNo)" />
+                </td>
+
+                <!-- SKU -->
+                <td class="px-3 py-2 font-mono font-bold whitespace-nowrap" style="color:#1B2F6E;">
+                  {{ item.skuCode || '-' }}
+                </td>
+
+                <!-- Item Name -->
+                <td class="px-3 py-2 max-w-[180px] truncate" style="color:#111827;"
+                    [title]="item.itemName || item.pickListName">
+                  {{ item.itemName || item.pickListName || '-' }}
+                </td>
+
+                <!-- Size -->
+                <td class="px-3 py-2 whitespace-nowrap" style="color:#374151;">
+                  {{ item.size || '-' }}
+                </td>
+
+                <!-- Color -->
+                <td class="px-3 py-2 whitespace-nowrap" style="color:#374151;">
+                  {{ item.color || '-' }}
+                </td>
+
+                <!-- MRP -->
+                <td class="px-3 py-2 text-right font-bold whitespace-nowrap" style="color:#111827;">
+                  {{ formatCurrency(item.currentPrice) }}
+                </td>
+
+                <!-- Label Qty (editable) -->
+                <td class="px-3 py-2 text-center">
+                  <span class="px-2 py-0.5 rounded-full font-bold text-xs"
+                        style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;">
+                    {{ item.labelQty || item.qty || 1 }}
+                  </span>
+                </td>
+
+                <!-- Match status -->
+                <td class="px-3 py-2 text-center">
+                  <span class="px-2 py-0.5 rounded-full font-bold text-xs"
+                        [style]="matchBadgeStyle(item.matchStatus)">
+                    {{ item.matchStatus }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Print controls -->
+      <div class="px-4 py-4 flex flex-wrap items-center justify-between gap-3"
+           style="border-top:1.5px solid #E5E7EB;background:#FAFAFA;">
+
+        <div class="text-xs font-medium" style="color:#6B7280;">
+          @if (printing()) {
+            <span class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+              </svg>
+              Sending to printer…
+            </span>
+          } @else {
+            Ready — {{ totalLabelCount() }} label(s) from {{ selectedItems().length }} item(s) selected
+          }
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Print Selected -->
+          <button
+            class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+            style="background:#1B2F6E;color:white;"
+            [style.opacity]="printing() || !selectedItems().length ? '0.5' : '1'"
+            [disabled]="printing() || !selectedItems().length"
+            (click)="printSelected()">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+            </svg>
+            Print Selected ({{ totalLabelCount() }})
+          </button>
+
+          <!-- Print All -->
+          <button
+            class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all"
+            style="background:#FDB515;color:#1B2F6E;"
+            [style.opacity]="printing() || !items().length ? '0.5' : '1'"
+            [disabled]="printing() || !items().length"
+            (click)="printAll()">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+            </svg>
+            Print All ({{ allLabelCount() }})
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end two-column grid -->
+
+  <!-- Label template info (read-only from loaded config) ──────────────────── -->
+  <div class="mt-5 rounded-2xl overflow-hidden shadow-sm"
+       style="background:white;border:1.5px solid #E5E7EB;">
+    <div class="px-4 py-3 flex items-center gap-2"
+         style="border-bottom:1px solid #F3F4F6;">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:#1B2F6E;">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <h3 class="text-sm font-bold" style="color:#1B2F6E;">Label Template (from configuration)</h3>
+    </div>
+    <div class="px-4 py-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-xs">
+      <div>
+        <p class="font-bold uppercase tracking-wide mb-0.5" style="color:#6B7280;">Company Name</p>
+        <p style="color:#111827;word-break:break-word;">{{ preview()!.labelTemplate.companyName || '—' }}</p>
+      </div>
+      <div>
+        <p class="font-bold uppercase tracking-wide mb-0.5" style="color:#6B7280;">Address / Unit Line</p>
+        <p style="color:#111827;word-break:break-word;">{{ preview()!.labelTemplate.unitLine || '—' }}</p>
+      </div>
+      <div>
+        <p class="font-bold uppercase tracking-wide mb-0.5" style="color:#6B7280;">Website</p>
+        <p style="color:#111827;">{{ preview()!.labelTemplate.website || '—' }}</p>
+      </div>
+      <div>
+        <p class="font-bold uppercase tracking-wide mb-0.5" style="color:#6B7280;">Email</p>
+        <p style="color:#111827;">{{ preview()!.labelTemplate.email || '—' }}</p>
+      </div>
+      <div>
+        <p class="font-bold uppercase tracking-wide mb-0.5" style="color:#6B7280;">Customer Care</p>
+        <p style="color:#111827;">{{ preview()!.labelTemplate.customerCare || '—' }}</p>
+      </div>
+      <div>
+        <p class="font-bold uppercase tracking-wide mb-0.5" style="color:#6B7280;">Country of Origin</p>
+        <p style="color:#111827;">{{ preview()!.labelTemplate.countryOfOrigin || '—' }}</p>
+      </div>
+    </div>
+    <div class="px-4 pb-3 text-xs" style="color:#9CA3AF;">
+      To change template details, update the label template in the Price Configuration screen and re-save the configuration.
+    </div>
+  </div>
+
+} @else if (!loadingConfig()) {
+  <!-- Empty state when no config loaded yet -->
+  <div class="rounded-2xl py-16 text-center" style="background:white;border:1.5px dashed #D1D5DB;">
+    <svg class="w-12 h-12 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color:#D1D5DB;">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+    </svg>
+    <p class="text-sm font-semibold mb-1" style="color:#374151;">No configuration loaded</p>
+    <p class="text-sm" style="color:#9CA3AF;">Select a price configuration above and click Load to begin.</p>
+  </div>
+}

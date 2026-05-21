@@ -32,7 +32,8 @@ export class LayoutComponent {
   canViewDispatch;
   canViewCustomerEntry;
   canViewPriceConfiguration;
-  canViewHwInventory;   // ← NEW
+  canViewLabelPrintConfig;
+  canViewHwInventory;
 
   constructor(
     public authService:         AuthService,
@@ -66,6 +67,11 @@ export class LayoutComponent {
       this.authService.isAdmin() ||
       this.authService.isManager()
     );
+    this.canViewLabelPrintConfig = computed(() =>
+      this.authService.hasPermission('Price Configuration') ||
+      this.authService.isAdmin() ||
+      this.authService.isManager()
+    );
     // HW Inventory: visible to Admin, Manager, or anyone with explicit permission
     this.canViewHwInventory    = computed(() =>
       this.authService.hasPermission('HW Inventory') ||
@@ -94,6 +100,7 @@ export class LayoutComponent {
     if (url.includes('/customer-entry/new'))  return 'New Customer Entry';
     if (url.includes('/customer-entry'))      return 'Online Customer Entry';
     if (url.includes('/price-configuration')) return 'Price Configuration';
+    if (url.includes('/label-print-config'))  return 'Label Print Configuration';
     if (url.match(/\/hw-inventory\/\d+/))     return 'Edit Asset';
     if (url.includes('/hw-inventory/new'))    return 'New Asset';
     if (url.includes('/hw-inventory'))        return 'HW Inventory';

@@ -56,9 +56,13 @@ export const appRoutes: Routes = [
         path: 'price-configuration',
         loadComponent: () => import('./components/price-configuration/price-configuration.component').then(c => c.PriceConfigurationComponent)
       },
-      { 
-        path: 'hw-inventory',       
-        loadComponent: () => import('./components/hw-inventory-list/hw-inventory-list.component').then(c => c.HwInventoryListComponent) 
+      {
+        path: 'label-print-config',
+        loadComponent: () => import('./components/label-print-config/label-print-config.component').then(c => c.LabelPrintConfigComponent)
+      },
+      {
+        path: 'hw-inventory',
+        loadComponent: () => import('./components/hw-inventory-list/hw-inventory-list.component').then(c => c.HwInventoryListComponent)
         },
         { 
             path: 'hw-inventory/:id',   
