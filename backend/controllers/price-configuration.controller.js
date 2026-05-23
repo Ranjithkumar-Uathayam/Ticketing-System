@@ -6,10 +6,10 @@ const os = require('os');
 const path = require('path');
 
 const LABEL_TEMPLATE_FALLBACK = {
-  companyName: 'B AND B TEXTILE',
-  unitLine: '(A Unit of ENES Textile Mills)',
+  companyName: 'B AND B TEXTILE (A Unit of ENES Textile Mills)',
+  unitLine: 'RSF.NO.14/1,2,4A1,15/1,NH Road,Attayampalayam,Gangapuram,Chithode,Erode-638102',
   website: 'www.uathayam.in',
-  email: 'info@uathayam.com',
+  email: 'online@uathayam.com',
   customerCare: '9942677757',
   countryOfOrigin: 'India',
 };

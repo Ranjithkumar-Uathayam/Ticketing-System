@@ -174,8 +174,10 @@
     <div class="flex-shrink-0 w-14"></div>
   </div>
 
-  <div class="hidden md:flex md:flex-shrink-0">
-    <div class="flex flex-col w-64" style="background-color: #1B2F6E;">
+  <div class="hidden md:flex md:flex-shrink-0 overflow-hidden"
+       style="transition: width 0.3s ease; min-width: 0;"
+       [style.width]="desktopSidebarCollapsed() ? '0px' : '16rem'">
+    <div class="flex flex-col w-64" style="background-color: #1B2F6E; min-width: 16rem;">
       <div class="px-5 py-5" style="border-bottom: 1px solid rgba(253,181,21,0.2);">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background-color: #FDB515;">
@@ -336,6 +338,12 @@
     <div class="relative z-10 flex-shrink-0 flex h-14 bg-white" style="border-bottom: 2px solid #FDB515; box-shadow: 0 1px 8px rgba(27,47,110,0.08);">
       <button (click)="toggleSidebar()" class="px-4 md:hidden transition-colors" style="color: #1B2F6E;">
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
+      </button>
+      <button (click)="toggleDesktopSidebar()" class="hidden md:flex px-4 items-center transition-colors hover:opacity-70" style="color: #1B2F6E;" [title]="desktopSidebarCollapsed() ? 'Show sidebar' : 'Hide sidebar'">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4v16"/>
+        </svg>
       </button>
 
       <div class="flex-1 flex items-center justify-between px-4">

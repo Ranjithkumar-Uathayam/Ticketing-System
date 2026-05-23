@@ -18,10 +18,11 @@ export class LayoutComponent {
   notifications;
   unreadCount;
 
-  userMenuOpen          = signal(false);
-  notificationPanelOpen = signal(false);
-  sidebarOpen           = signal(false);
-  pageTitle             = signal('Dashboard');
+  userMenuOpen             = signal(false);
+  notificationPanelOpen    = signal(false);
+  sidebarOpen              = signal(false);
+  desktopSidebarCollapsed  = signal(false);
+  pageTitle                = signal('Dashboard');
 
   sessionReady;
 
@@ -112,7 +113,8 @@ export class LayoutComponent {
     this.router.navigate(['/login']);
   }
 
-  toggleSidebar()           { this.sidebarOpen.update(v => !v); }
-  toggleUserMenu()          { this.userMenuOpen.update(v => !v); }
-  toggleNotificationPanel() { this.notificationPanelOpen.update(v => !v); }
+  toggleSidebar()              { this.sidebarOpen.update(v => !v); }
+  toggleDesktopSidebar()       { this.desktopSidebarCollapsed.update(v => !v); }
+  toggleUserMenu()             { this.userMenuOpen.update(v => !v); }
+  toggleNotificationPanel()    { this.notificationPanelOpen.update(v => !v); }
 }

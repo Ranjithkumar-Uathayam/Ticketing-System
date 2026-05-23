@@ -21,7 +21,10 @@ export const DEFAULT_PRICE_LABEL_SETTINGS: PriceLabelPrintSettings = {
   density: 10,
   speed: 2,
   gapMm: 3,
-  mfgDate: '',
+  mfgDate: new Date().toLocaleDateString('en-US', {
+    month: 'short',
+    year: '2-digit'
+  }).replace(' ', '-'),
   labelWidthMm: 90,
   labelHeightMm: 44,
 };
