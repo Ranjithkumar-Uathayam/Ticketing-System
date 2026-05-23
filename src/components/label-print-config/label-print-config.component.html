@@ -322,7 +322,7 @@
               <!-- Footer lines -->
               <div style="padding:1px 3px;font-size:4.5px;line-height:1.45;color:#111827;overflow:hidden;">
                 <div>Mfg &amp; Mktd by : {{ preview()!.labelTemplate.companyName }}</div>
-                <div>{{ preview()!.labelTemplate.unitLine }}</div>
+                <div style="overflow-wrap:anywhere;word-break:break-all;">{{ preview()!.labelTemplate.unitLine }}</div>
                 <div style="display:flex;justify-content:space-between;">
                   <span>website : {{ preview()!.labelTemplate.website }}</span>
                   <span>Email : {{ preview()!.labelTemplate.email }}</span>

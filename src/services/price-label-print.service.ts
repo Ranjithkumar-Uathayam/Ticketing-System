@@ -236,6 +236,8 @@ export class PriceLabelPrintService {
       font-size: 10px;
       line-height: 1.45;
       color: #374151;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     @media print {
       body { background: white; padding: 8mm; -webkit-print-color-adjust: exact; print-color-adjust: exact; }

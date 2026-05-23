@@ -156,7 +156,11 @@ export class PriceLabelTsplPrintService {
     const mfgDate = new Date().toLocaleDateString('en-US', {
                     month: 'short',
                     year: '2-digit'
-                }).replace(' ', '-')
+                }).replace(' ', '-');
+
+    const maxChars = Math.floor((settings.labelWidthMm * 8 - 16) / 8);
+    const unitLines = this.splitUnitLine(tpl.unitLine || '', maxChars);
+    const footerShift = (unitLines.length - 1) * 18;
 
     const lines = [
       `SIZE ${settings.labelWidthMm} mm,${settings.labelHeightMm} mm`,
@@ -195,15 +199,24 @@ export class PriceLabelTsplPrintService {
 
       // ── Footer (font "1" = 8×16 tiny) ────────────────────────────────────────
       `TEXT 8,252,"1",0,1,1,"Mfg & Mktd by : ${esc(tpl.companyName)}"`,
-      `TEXT 8,270,"1",0,1,1,"${esc(tpl.unitLine)}"`,
-      `TEXT 8,288,"1",0,1,1,"website : ${esc(tpl.website)}"`,
-      `TEXT 310,288,"1",0,1,1,"Email : ${esc(tpl.email)}"`,
-      `TEXT 8,306,"1",0,1,1,"Customer Care No: ${esc(tpl.customerCare)}"`,
+      ...unitLines.map((line: string, i: number) => `TEXT 8,${270 + i * 18},"1",0,1,1,"${esc(line)}"`),
+      `TEXT 8,${288 + footerShift},"1",0,1,1,"website : ${esc(tpl.website)}"`,
+      `TEXT 310,${288 + footerShift},"1",0,1,1,"Email : ${esc(tpl.email)}"`,
+      `TEXT 8,${306 + footerShift},"1",0,1,1,"Customer Care No: ${esc(tpl.customerCare)}"`,
 
       `PRINT 1,1`,
     ];
 
     return lines.join('\r\n') + '\r\n';
+  }
+
+  private splitUnitLine(text: string, maxChars: number): string[] {
+    if (!text || text.length <= maxChars) return [text || ''];
+    let cut = text.lastIndexOf(',', maxChars - 1);
+    if (cut <= 0) cut = maxChars;
+    const line1 = text.slice(0, cut + 1).trimEnd();
+    const line2 = text.slice(cut + 1).trimStart();
+    return line2 ? [line1, line2] : [line1];
   }
 
   // ── QZ Tray ──────────────────────────────────────────────────────────────────
