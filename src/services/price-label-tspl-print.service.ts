@@ -153,7 +153,10 @@ export class PriceLabelTsplPrintService {
       ? `Rs.${item.currentPrice.toFixed(2)}`
       : 'Rs.0.00';
     const netQty  = String(item.labelQty || item.qty || 1);
-    const mfgDate = esc(settings.mfgDate || '-');
+    const mfgDate = new Date().toLocaleDateString('en-US', {
+                    month: 'short',
+                    year: '2-digit'
+                }).replace(' ', '-')
 
     const lines = [
       `SIZE ${settings.labelWidthMm} mm,${settings.labelHeightMm} mm`,
