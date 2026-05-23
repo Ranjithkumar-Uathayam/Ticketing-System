@@ -1,7 +1,7 @@
 'use strict';
 
 const XLSX = require('xlsx');
-const { PDFParse } = require('pdf-parse');
+const pdfParse = require('pdf-parse');
 const fs = require('fs');
 const nodePath = require('path');
 
@@ -190,9 +190,7 @@ function parsePickItem(serialNo, skuCode, detailLines) {
 
 async function parsePickListPdf(filePath) {
   const buf = fs.readFileSync(filePath);
-  const parser = new PDFParse({ data: buf });
-  const data = await parser.getText();
-  await parser.destroy();
+  const data = await pdfParse(buf);
   const fullText = data.text || '';
   const rawLines = fullText.split('\n').map(l => l.trimEnd());
 
