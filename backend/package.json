@@ -6,9 +6,12 @@
   "bin": "server.js",
   "pkg": {
     "assets": [
-      "api/**/*",
+      "controllers/**/*",
+      "middleware/**/*",
       "node_modules/**/*",
-      "sql/**/*",
+      "routes/**/*",
+      "scripts/**/*",
+      "validators/**/*",
       "/**/*"
     ]
   },
