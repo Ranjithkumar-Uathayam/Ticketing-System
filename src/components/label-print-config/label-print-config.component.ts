@@ -19,6 +19,8 @@ import {
 } from '../../price-configuration.models';
 import { environment } from '../../environments/environment';
 
+const SETTINGS_STORAGE_KEY = 'price_label_print_settings';
+
 @Component({
   selector: 'app-label-print-config',
   templateUrl: './label-print-config.component.html',
@@ -29,22 +31,23 @@ export class LabelPrintConfigComponent {
   readonly records        = this.configService.records;
   readonly recordsLoading = this.configService.loading;
 
-  readonly toast          = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
-  readonly preview        = signal<PriceConfigPreview | null>(null);
+  readonly toast            = signal<{ type: 'success' | 'error'; msg: string } | null>(null);
+  readonly preview          = signal<PriceConfigPreview | null>(null);
   readonly selectedConfigId = signal<number | null>(null);
-  readonly loadingConfig  = signal(false);
-  readonly printing       = signal(false);
-  readonly settingsOpen   = signal(true);
+  readonly loadingConfig    = signal(false);
+  readonly printing         = signal(false);
+  readonly settingsOpen     = signal(true);
+
+  readonly availablePrinters  = signal<string[]>([]);
+  readonly detectingPrinters  = signal(false);
+  readonly printerDetectError = signal<string | null>(null);
 
   /** Serial numbers of checked items */
   readonly selectedSerialNos = signal<Set<number>>(new Set());
   /** Serial number of the item currently shown in the label preview */
   readonly previewSerialNo   = signal<number | null>(null);
 
-  readonly printSettings = signal<PriceLabelPrintSettings>({
-    ...DEFAULT_PRICE_LABEL_SETTINGS,
-    printerName: (environment as any).hwLabelPrinterName || 'TSC TTP-244 Pro',
-  });
+  readonly printSettings = signal<PriceLabelPrintSettings>(this.loadSavedSettings());
 
   // ── Computed ────────────────────────────────────────────────────────────────
 
@@ -83,12 +86,48 @@ export class LabelPrintConfigComponent {
     this.items().reduce((s, i) => s + Math.max(1, i.labelQty || i.qty || 1), 0)
   );
 
+  // Preview dimensions: inner at 3.78 px/mm, outer = inner × 1.8 scale
+  readonly previewInnerWidthPx  = computed(() => Math.round(this.printSettings().labelWidthMm  * 3.78));
+  readonly previewInnerHeightPx = computed(() => Math.round(this.printSettings().labelHeightMm * 3.78));
+  readonly previewOuterWidthPx  = computed(() => Math.round(this.previewInnerWidthPx()  * 1.8));
+  readonly previewOuterHeightPx = computed(() => Math.round(this.previewInnerHeightPx() * 1.8));
+
+  readonly isNonStandardSize = computed(() =>
+    this.printSettings().labelWidthMm !== 90 || this.printSettings().labelHeightMm !== 44
+  );
+
   constructor(
     private configService: PriceConfigurationService,
     private printService:  PriceLabelTsplPrintService,
     private cdr: ChangeDetectorRef,
   ) {
     this.configService.getAll();
+  }
+
+  // ── Settings persistence ─────────────────────────────────────────────────────
+
+  private loadSavedSettings(): PriceLabelPrintSettings {
+    try {
+      const saved = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<PriceLabelPrintSettings>;
+        return {
+          ...DEFAULT_PRICE_LABEL_SETTINGS,
+          printerName: (environment as any).hwLabelPrinterName || 'TSC TTP-244 Pro',
+          ...parsed,
+        };
+      }
+    } catch { /* ignore parse errors */ }
+    return {
+      ...DEFAULT_PRICE_LABEL_SETTINGS,
+      printerName: (environment as any).hwLabelPrinterName || 'TSC TTP-244 Pro',
+    };
+  }
+
+  private persistSettings(): void {
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(this.printSettings()));
+    } catch { /* ignore storage errors */ }
   }
 
   // ── Config loading ───────────────────────────────────────────────────────────
@@ -164,6 +203,30 @@ export class LabelPrintConfigComponent {
     value: PriceLabelPrintSettings[K],
   ): void {
     this.printSettings.update(s => ({ ...s, [key]: value }));
+    this.persistSettings();
+  }
+
+  // ── Printer detection ─────────────────────────────────────────────────────────
+
+  async detectPrinters(): Promise<void> {
+    this.detectingPrinters.set(true);
+    this.printerDetectError.set(null);
+    try {
+      const printers = await this.printService.detectPrinters();
+      this.availablePrinters.set(printers);
+      if (!printers.length) {
+        this.printerDetectError.set('No printers detected on this PC.');
+      } else if (!this.printSettings().printerName && printers.length === 1) {
+        // Auto-select when exactly one printer is found
+        this.updateSetting('printerName', printers[0]);
+      }
+      this.cdr.markForCheck();
+    } catch (err: any) {
+      this.printerDetectError.set(err?.message || 'Failed to detect printers.');
+      this.availablePrinters.set([]);
+    } finally {
+      this.detectingPrinters.set(false);
+    }
   }
 
   // ── Printing ─────────────────────────────────────────────────────────────────

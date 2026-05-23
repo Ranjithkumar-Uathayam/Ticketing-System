@@ -12,6 +12,8 @@ export interface PriceLabelPrintSettings {
   speed: number;     // 1–4
   gapMm: number;     // label gap in mm
   mfgDate: string;   // e.g. "May-26"
+  labelWidthMm: number;   // label width in mm
+  labelHeightMm: number;  // label height in mm
 }
 
 export const DEFAULT_PRICE_LABEL_SETTINGS: PriceLabelPrintSettings = {
@@ -20,6 +22,8 @@ export const DEFAULT_PRICE_LABEL_SETTINGS: PriceLabelPrintSettings = {
   speed: 2,
   gapMm: 3,
   mfgDate: '',
+  labelWidthMm: 90,
+  labelHeightMm: 44,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -61,6 +65,41 @@ export class PriceLabelTsplPrintService {
     );
   }
 
+  async detectPrinters(): Promise<string[]> {
+    const mode = environment.hwLabelPrintMode;
+
+    if (mode === 'qz-tray') {
+      await this.initQzTray();
+      try {
+        const found = await qz.printers.find();
+        return Array.isArray(found) ? found : (found ? [found] : []);
+      } catch {
+        throw new Error('QZ Tray could not list printers on this PC.');
+      }
+    }
+
+    if (mode === 'local-agent') {
+      try {
+        const response = await firstValueFrom(
+          this.http.get<{ printers: string[] }>(`${environment.hwLabelAgentUrl}/api/printers`)
+        );
+        return response.printers || [];
+      } catch {
+        throw new Error('Could not reach local print agent to list printers. Ensure the agent is running.');
+      }
+    }
+
+    // server mode
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ printers: string[] }>(`${environment.apiUrl}/price-labels/printers`)
+      );
+      return response.printers || [];
+    } catch {
+      throw new Error('Could not fetch printer list from server.');
+    }
+  }
+
   // ── TSPL builders ────────────────────────────────────────────────────────────
 
   buildBatchTspl(
@@ -79,9 +118,9 @@ export class PriceLabelTsplPrintService {
   }
 
   /**
-   * Builds TSPL for one 90 mm × 44 mm price label (203 DPI = 8 dots/mm).
+   * Builds TSPL for one label using configured size (default 90 mm × 44 mm, 203 DPI = 8 dots/mm).
    *
-   * Layout (dots):
+   * Layout (dots, optimised for 90×44 mm):
    *   y=4   – CODE128 barcode, height 80 dots (~10 mm)
    *   y=86  – horizontal separator
    *   y=90  – left col: SKU / right col: SIZE
@@ -94,7 +133,7 @@ export class PriceLabelTsplPrintService {
    *   y=252 – footer: Mfg & Mktd by
    *   y=270 – footer: unit/address line
    *   y=288 – website | email
-   *   y=306 – customer care  (bottom = 322 dots = 40.25 mm < 44 mm ✓)
+   *   y=306 – customer care  (bottom ≈ 322 dots = 40.25 mm < 44 mm ✓)
    */
   buildSingleLabelTspl(
     item: PriceConfigItem,
@@ -114,7 +153,7 @@ export class PriceLabelTsplPrintService {
     const mfgDate = esc(settings.mfgDate || '-');
 
     const lines = [
-      `SIZE 90 mm,44 mm`,
+      `SIZE ${settings.labelWidthMm} mm,${settings.labelHeightMm} mm`,
       `GAP ${settings.gapMm} mm,0 mm`,
       `DENSITY ${settings.density}`,
       `SPEED ${settings.speed}`,
@@ -163,11 +202,7 @@ export class PriceLabelTsplPrintService {
 
   // ── QZ Tray ──────────────────────────────────────────────────────────────────
 
-  private async sendViaQzTray(
-    printerName: string,
-    content: string,
-    jobName: string,
-  ): Promise<void> {
+  private async initQzTray(): Promise<void> {
     const cert: string = (environment as any).qzCertificate || '';
 
     qz.security.setCertificatePromise((resolve: (c: string) => void) => resolve(cert));
@@ -199,6 +234,14 @@ export class PriceLabelTsplPrintService {
         'QZ Tray is not running on this PC. Install and start QZ Tray, then try again.'
       );
     }
+  }
+
+  private async sendViaQzTray(
+    printerName: string,
+    content: string,
+    jobName: string,
+  ): Promise<void> {
+    await this.initQzTray();
 
     let allPrinters: string[];
     try {

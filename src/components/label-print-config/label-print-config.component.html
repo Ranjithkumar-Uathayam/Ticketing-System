@@ -107,20 +107,64 @@
     </button>
 
     @if (settingsOpen()) {
-      <div class="px-5 pb-5 pt-1 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-5"
+      <div class="px-5 pb-5 pt-1 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-6"
            style="border-top:1px solid #F3F4F6;">
 
-        <!-- Printer Name -->
-        <div class="lg:col-span-2">
+        <!-- Printer Selection -->
+        <div class="col-span-2 lg:col-span-2">
           <label class="block text-xs font-bold uppercase tracking-wide mb-1" style="color:#374151;">
-            Printer Name
+            Printer
           </label>
-          <input type="text"
-            class="w-full h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
-            style="border-color:#D1D5DB;color:#111827;"
-            [value]="printSettings().printerName"
-            (input)="updateSetting('printerName', $any($event.target).value)"
-            placeholder="e.g. TSC TTP-244 Pro" />
+          <div class="flex gap-2">
+            @if (availablePrinters().length > 0) {
+              <select
+                class="flex-1 h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+                style="border-color:#D1D5DB;color:#111827;background:white;"
+                (change)="updateSetting('printerName', $any($event.target).value)">
+                <option value="">— Select printer —</option>
+                @for (printer of availablePrinters(); track printer) {
+                  <option [value]="printer" [selected]="printSettings().printerName === printer">
+                    {{ printer }}
+                  </option>
+                }
+              </select>
+            } @else {
+              <input type="text"
+                class="flex-1 h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+                style="border-color:#D1D5DB;color:#111827;"
+                [value]="printSettings().printerName"
+                (input)="updateSetting('printerName', $any($event.target).value)"
+                placeholder="e.g. TSC TTP-244 Pro" />
+            }
+            <button
+              class="h-9 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 flex-shrink-0 transition-all"
+              style="background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;"
+              [disabled]="detectingPrinters()"
+              [style.opacity]="detectingPrinters() ? '0.5' : '1'"
+              (click)="detectPrinters()"
+              title="Detect connected printers">
+              @if (detectingPrinters()) {
+                <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                </svg>
+              } @else {
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+              }
+              Detect
+            </button>
+          </div>
+          @if (printerDetectError()) {
+            <p class="text-xs mt-1" style="color:#EF4444;">{{ printerDetectError() }}</p>
+          }
+          @if (availablePrinters().length > 0 && !printerDetectError()) {
+            <p class="text-xs mt-1" style="color:#6B7280;">
+              {{ availablePrinters().length }} printer(s) detected
+            </p>
+          }
         </div>
 
         <!-- Mfg Date -->
@@ -176,6 +220,30 @@
             (input)="updateSetting('gapMm', +$any($event.target).value)" />
         </div>
 
+        <!-- Label Width -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wide mb-1" style="color:#374151;">
+            Label Width (mm)
+          </label>
+          <input type="number" min="20" max="200" step="1"
+            class="w-full h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+            style="border-color:#D1D5DB;color:#111827;"
+            [value]="printSettings().labelWidthMm"
+            (input)="updateSetting('labelWidthMm', +$any($event.target).value)" />
+        </div>
+
+        <!-- Label Height -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wide mb-1" style="color:#374151;">
+            Label Height (mm)
+          </label>
+          <input type="number" min="10" max="200" step="1"
+            class="w-full h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+            style="border-color:#D1D5DB;color:#111827;"
+            [value]="printSettings().labelHeightMm"
+            (input)="updateSetting('labelHeightMm', +$any($event.target).value)" />
+        </div>
+
       </div>
     }
   </div>
@@ -191,22 +259,24 @@
            style="border-bottom:1px solid #F3F4F6;">
         <h3 class="text-sm font-bold" style="color:#1B2F6E;">Label Preview</h3>
         <span class="text-xs px-2.5 py-1 rounded-full font-semibold"
-              style="background:#F0FDF4;color:#166534;border:1px solid #BBF7D0;">
-          9 cm × 4.4 cm
+              [style]="isNonStandardSize()
+                ? 'background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;'
+                : 'background:#F0FDF4;color:#166534;border:1px solid #BBF7D0;'">
+          {{ printSettings().labelWidthMm }} mm × {{ printSettings().labelHeightMm }} mm
         </span>
       </div>
 
       @if (previewItem(); as item) {
         <!-- Outer wrapper — scales the label up 1.8× for readability -->
-        <div class="px-4 py-5 flex justify-center">
-          <div style="width:612px;height:356px;overflow:hidden;flex-shrink:0;">
-            <!-- Inner label at 9cm × 4.4cm scaled 1.8× (340×198 px content area) -->
-            <div style="
-              width:340px; height:198px;
-              transform:scale(1.8); transform-origin:top left;
-              background:white; border:1px solid #9CA3AF;
-              font-family:'Courier New',Courier,monospace;
-              position:relative; box-sizing:border-box; overflow:hidden;">
+        <div class="px-4 py-5 flex justify-center overflow-auto">
+          <div [style.width.px]="previewOuterWidthPx()" [style.height.px]="previewOuterHeightPx()"
+               style="overflow:hidden;flex-shrink:0;">
+            <!-- Inner label scaled 1.8× for readability; content layout optimised for 90×44 mm -->
+            <div [style.width.px]="previewInnerWidthPx()" [style.height.px]="previewInnerHeightPx()"
+                 style="transform:scale(1.8); transform-origin:top left;
+                        background:white; border:1px solid #9CA3AF;
+                        font-family:'Courier New',Courier,monospace;
+                        position:relative; box-sizing:border-box; overflow:hidden;">
 
               <!-- Barcode area -->
               <div style="padding:2px 4px 0 4px;height:76px;overflow:hidden;line-height:0;background:white;">
@@ -264,10 +334,15 @@
         </div>
 
         <!-- Preview item info bar -->
-        <div class="px-4 pb-3 text-xs" style="color:#6B7280;">
+        <div class="px-4 pb-1 text-xs" style="color:#6B7280;">
           Previewing: <strong style="color:#111827;">{{ item.skuCode }}</strong>
           — {{ item.itemName || item.pickListName }}
         </div>
+        @if (isNonStandardSize()) {
+          <div class="px-4 pb-3 text-xs" style="color:#92400E;">
+            Preview layout is optimised for 90×44 mm. TSPL will use your configured size.
+          </div>
+        }
       } @else {
         <div class="px-4 py-12 text-center text-sm" style="color:#9CA3AF;">
           No items to preview
