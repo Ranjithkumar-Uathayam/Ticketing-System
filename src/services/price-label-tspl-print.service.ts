@@ -158,8 +158,8 @@ export class PriceLabelTsplPrintService {
                     year: '2-digit'
                 }).replace(' ', '-');
 
-    const maxChars = Math.floor((settings.labelWidthMm * 8 - 16) / 8);
-    const unitLines = this.splitUnitLine(tpl.unitLine || '', maxChars);
+    const unitLines: string[] = [tpl.unitLine || ''];
+    if (tpl.unitLine2) unitLines.push(tpl.unitLine2);
     const footerShift = (unitLines.length - 1) * 18;
 
     const lines = [
@@ -208,15 +208,6 @@ export class PriceLabelTsplPrintService {
     ];
 
     return lines.join('\r\n') + '\r\n';
-  }
-
-  private splitUnitLine(text: string, maxChars: number): string[] {
-    if (!text || text.length <= maxChars) return [text || ''];
-    let cut = text.lastIndexOf(',', maxChars - 1);
-    if (cut <= 0) cut = maxChars;
-    const line1 = text.slice(0, cut + 1).trimEnd();
-    const line2 = text.slice(cut + 1).trimStart();
-    return line2 ? [line1, line2] : [line1];
   }
 
   // ── QZ Tray ──────────────────────────────────────────────────────────────────

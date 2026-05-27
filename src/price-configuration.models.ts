@@ -3,6 +3,7 @@ export type PriceMatchStatus = 'Matched' | 'Unmatched';
 export interface PriceLabelTemplate {
   companyName: string;
   unitLine: string;
+  unitLine2: string;
   website: string;
   email: string;
   customerCare: string;

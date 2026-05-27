@@ -7,7 +7,8 @@ const path = require('path');
 
 const LABEL_TEMPLATE_FALLBACK = {
   companyName: 'B AND B TEXTILE (A Unit of ENES Textile Mills)',
-  unitLine: 'RSF.NO.14/1,2,4A1,15/1,NH Road,Attayampalayam,Gangapuram,Chithode,Erode-638102',
+  unitLine: 'RSF.NO.14/1,2,4A1,15/1,NH Road,Attayampalayam',
+  unitLine2: 'Gangapuram,Chithode,Erode-638102',
   website: 'www.uathayam.in',
   email: 'online@uathayam.com',
   customerCare: '9942677757',
@@ -94,6 +95,7 @@ const withDerivedFields = (items = []) =>
 const sanitizeLabelTemplate = (template = {}) => ({
   companyName: cleanText(template.companyName || LABEL_TEMPLATE_FALLBACK.companyName),
   unitLine: cleanText(template.unitLine || LABEL_TEMPLATE_FALLBACK.unitLine),
+  unitLine2: cleanText(template.unitLine2 ?? LABEL_TEMPLATE_FALLBACK.unitLine2),
   website: cleanText(template.website || LABEL_TEMPLATE_FALLBACK.website),
   email: cleanText(template.email || LABEL_TEMPLATE_FALLBACK.email),
   customerCare: cleanText(template.customerCare || LABEL_TEMPLATE_FALLBACK.customerCare),

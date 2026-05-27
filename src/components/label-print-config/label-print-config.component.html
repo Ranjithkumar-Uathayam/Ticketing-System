@@ -323,6 +323,9 @@
               <div style="padding:1px 3px;font-size:4.5px;line-height:1.45;color:#111827;overflow:hidden;">
                 <div>Mfg &amp; Mktd by : {{ preview()!.labelTemplate.companyName }}</div>
                 <div style="overflow-wrap:anywhere;word-break:break-all;">{{ preview()!.labelTemplate.unitLine }}</div>
+                @if(preview()!.labelTemplate.unitLine2) {
+                  <div style="overflow-wrap:anywhere;word-break:break-all;">{{ preview()!.labelTemplate.unitLine2 }}</div>
+                }
                 <div style="display:flex;justify-content:space-between;">
                   <span>website : {{ preview()!.labelTemplate.website }}</span>
                   <span>Email : {{ preview()!.labelTemplate.email }}</span>
@@ -540,6 +543,9 @@
       <div>
         <p class="font-bold uppercase tracking-wide mb-0.5" style="color:#6B7280;">Address / Unit Line</p>
         <p style="color:#111827;word-break:break-word;">{{ preview()!.labelTemplate.unitLine || '—' }}</p>
+        @if(preview()!.labelTemplate.unitLine2) {
+          <p style="color:#111827;word-break:break-word;">{{ preview()!.labelTemplate.unitLine2 }}</p>
+        }
       </div>
       <div>
         <p class="font-bold uppercase tracking-wide mb-0.5" style="color:#6B7280;">Website</p>

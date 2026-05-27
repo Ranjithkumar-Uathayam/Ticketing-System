@@ -536,6 +536,9 @@
                 <div class="mt-4 text-[10px] leading-relaxed" style="color:rgba(255,255,255,0.84);">
                   <p>{{ preview()!.labelTemplate.companyName }}</p>
                   <p style="overflow-wrap:anywhere;word-break:break-all;">{{ preview()!.labelTemplate.unitLine }}</p>
+                  @if(preview()!.labelTemplate.unitLine2) {
+                    <p style="overflow-wrap:anywhere;word-break:break-all;">{{ preview()!.labelTemplate.unitLine2 }}</p>
+                  }
                   <p>{{ preview()!.labelTemplate.website }} | {{ preview()!.labelTemplate.email }}</p>
                   <p>Customer Care: {{ preview()!.labelTemplate.customerCare }}</p>
                 </div>

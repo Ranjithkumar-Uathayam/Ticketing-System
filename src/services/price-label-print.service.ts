@@ -62,6 +62,7 @@ export class PriceLabelPrintService {
         <div class="footer-lines">
           <div>Mfg & Mktd by: ${this.escape(preview.labelTemplate.companyName)}</div>
           <div>${this.escape(preview.labelTemplate.unitLine)}</div>
+          ${preview.labelTemplate.unitLine2 ? `<div>${this.escape(preview.labelTemplate.unitLine2)}</div>` : ''}
           <div>${this.escape(preview.labelTemplate.website)} | ${this.escape(preview.labelTemplate.email)}</div>
           <div>Customer Care: ${this.escape(preview.labelTemplate.customerCare)}</div>
           <div>Country Of Origin: ${this.escape(preview.labelTemplate.countryOfOrigin)}</div>
