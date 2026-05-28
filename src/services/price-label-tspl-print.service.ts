@@ -158,11 +158,6 @@ export class PriceLabelTsplPrintService {
                     year: '2-digit'
                 }).replace(' ', '-');
 
-    // Combine both address lines into one line separated by comma
-    const addressLine = tpl.unitLine2
-      ? `${tpl.unitLine || ''},${tpl.unitLine2}`
-      : (tpl.unitLine || '');
-
     const lines = [
       `SIZE ${settings.labelWidthMm} mm,${settings.labelHeightMm} mm`,
       `GAP ${settings.gapMm} mm,0 mm`,
@@ -181,13 +176,13 @@ export class PriceLabelTsplPrintService {
       // ── Vertical separator between left / right columns (x=430 = 53.75 mm) ─
       `BAR 430,86,1,162`,
 
-      // ── Left column ─────────────────────────────────────────────────────────
-      `TEXT 8,90,"2",0,1,1,"${esc(item.skuCode || item.ean || '-')}"`,
-      `TEXT 8,118,"3",0,1,1,"MRP :${mrp}"`,
-      `TEXT 8,152,"1",0,1,1,"(Incl.of all Taxes)"`,
-      `TEXT 8,170,"2",0,1,1,"Category : ${esc(item.category || '-')}"`,
-      `TEXT 8,196,"2",0,1,1,"Brand : ${esc(item.brand || '-')}"`,
-      `TEXT 8,222,"2",0,1,1,"Mkg Dt : ${mfgDate}"`,
+      // ── Left column (x=20 to avoid physical left-edge clipping) ─────────────
+      `TEXT 20,90,"2",0,1,1,"${esc(item.skuCode || item.ean || '-')}"`,
+      `TEXT 20,118,"3",0,1,1,"MRP :${mrp}"`,
+      `TEXT 20,152,"1",0,1,1,"(Incl.of all Taxes)"`,
+      `TEXT 20,170,"2",0,0.8,0.8,"Category : ${esc(item.category || '-')}"`,
+      `TEXT 20,196,"2",0,1,1,"Brand : ${esc(item.brand || '-')}"`,
+      `TEXT 20,222,"2",0,1,1,"Mkg Dt : ${mfgDate}"`,
 
       // ── Right column ─────────────────────────────────────────────────────────
       `TEXT 434,90,"2",0,1,1,"SIZE : ${esc(item.size || '-')}"`,
@@ -198,12 +193,18 @@ export class PriceLabelTsplPrintService {
       // ── Footer separator ─────────────────────────────────────────────────────
       `BAR 0,248,720,1`,
 
-      // ── Footer: 5 fixed lines (font "1", x=20 gives margin from physical edge) ─
+      // ── Footer: 5 lines ───────────────────────────────────────────────────────
+      // Line 1: company name
       `TEXT 20,252,"1",0,1,1,"Mfg & Mktd by : ${esc(tpl.companyName)}"`,
-      `TEXT 20,270,"1",0,1,1,"${esc(addressLine)}"`,
-      `TEXT 20,288,"1",0,1,1,"website : ${esc(tpl.website)}"`,
-      `TEXT 20,306,"1",0,1,1,"Customer Care No: ${esc(tpl.customerCare)}"`,
-      `TEXT 20,324,"1",0,1,1,"Email : ${esc(tpl.email)}"`,
+      // Line 2: unitLine (address part 1)
+      `TEXT 20,270,"1",0,1,1,"${esc(tpl.unitLine || '')}"`,
+      // Line 3: unitLine2 (address part 2)
+      ...(tpl.unitLine2 ? [`TEXT 20,288,"1",0,1,1,"${esc(tpl.unitLine2)}"`] : []),
+      // Line 4: website (left) + Customer Care (right) on same line
+      `TEXT 20,${tpl.unitLine2 ? 306 : 288},"1",0,1,1,"website : ${esc(tpl.website)}"`,
+      `TEXT 300,${tpl.unitLine2 ? 306 : 288},"1",0,1,1,"Customer Care No: ${esc(tpl.customerCare)}"`,
+      // Line 5: email
+      `TEXT 20,${tpl.unitLine2 ? 324 : 306},"1",0,1,1,"Email : ${esc(tpl.email)}"`,
 
       `PRINT 1,1`,
     ];
