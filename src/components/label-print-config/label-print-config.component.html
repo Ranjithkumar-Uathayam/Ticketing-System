@@ -279,8 +279,8 @@
                         position:relative; box-sizing:border-box; overflow:hidden;">
 
               <!-- Barcode area -->
-              <div style="padding:2px 4px 0 4px;height:76px;overflow:hidden;line-height:0;background:white;">
-                <div style="display:flex;align-items:flex-end;height:72px;gap:0;overflow:hidden;"
+              <div style="padding:2px 4px 0 4px;height:62px;overflow:hidden;line-height:0;background:white;">
+                <div style="display:flex;align-items:flex-end;height:58px;gap:0;overflow:hidden;"
                      [innerHTML]="renderBarcode(item.ean || item.skuCode)"></div>
               </div>
               <div style="font-size:6px;letter-spacing:0.1em;text-align:center;padding:1px 4px 1px;font-family:'Courier New',monospace;color:#111827;line-height:1;font-weight:700;">
@@ -322,15 +322,12 @@
               <!-- Footer lines -->
               <div style="padding:1px 3px;font-size:4.5px;line-height:1.45;color:#111827;overflow:hidden;">
                 <div>Mfg &amp; Mktd by : {{ preview()!.labelTemplate.companyName }}</div>
-                <div style="overflow-wrap:anywhere;word-break:break-all;">{{ preview()!.labelTemplate.unitLine }}</div>
-                @if(preview()!.labelTemplate.unitLine2) {
-                  <div style="overflow-wrap:anywhere;word-break:break-all;">{{ preview()!.labelTemplate.unitLine2 }}</div>
-                }
-                <div style="display:flex;justify-content:space-between;">
-                  <span>website : {{ preview()!.labelTemplate.website }}</span>
-                  <span>Email : {{ preview()!.labelTemplate.email }}</span>
+                <div style="overflow-wrap:anywhere;word-break:break-all;">
+                  {{ preview()!.labelTemplate.unitLine }}{{ preview()!.labelTemplate.unitLine2 ? ',' + preview()!.labelTemplate.unitLine2 : '' }}
                 </div>
+                <div>website : {{ preview()!.labelTemplate.website }}</div>
                 <div>Customer Care No: {{ preview()!.labelTemplate.customerCare }}</div>
+                <div>Email : {{ preview()!.labelTemplate.email }}</div>
               </div>
             </div>
           </div>

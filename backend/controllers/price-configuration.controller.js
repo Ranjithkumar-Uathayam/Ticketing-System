@@ -148,7 +148,7 @@ const mapRecord = (row) => {
     itemMasterFileName: row.ItemMasterFileName || null,
     itemMasterUploadedAt: row.ItemMasterUploadedAt || null,
     pickListFileName: row.PickListFileName || null,
-    labelTemplate: row.LabelTemplateJson ? JSON.parse(row.LabelTemplateJson) : LABEL_TEMPLATE_FALLBACK,
+    labelTemplate: LABEL_TEMPLATE_FALLBACK,
     createdBy: row.CreatedBy || null,
     createdAt: row.CreatedAt,
     updatedAt: row.UpdatedAt,
@@ -193,6 +193,12 @@ const ensureSchema = async (pool) => {
       BEGIN
           ALTER TABLE PriceConfigurations
           ADD ItemMasterUploadedAt DATETIME2 NULL;
+      END;
+
+      IF COL_LENGTH('dbo.PriceConfigurations', 'LabelTemplateJson') IS NULL
+      BEGIN
+          ALTER TABLE PriceConfigurations
+          ADD LabelTemplateJson NVARCHAR(MAX) NULL;
       END;
 
       IF NOT EXISTS (
@@ -861,7 +867,7 @@ exports.create = async (req, res) => {
   if (!body.pickListNo || items.length === 0) {
     return res.status(400).json({ message: 'pickListNo and at least one pick list row are required.' });
   }
-
+  console.log("body.labelTemplate",body.labelTemplate)
   const labelTemplate = sanitizeLabelTemplate(body.labelTemplate);
   const provisionalConfigurationNo = `TMP-${Date.now()}`;
 
@@ -944,6 +950,7 @@ exports.update = async (req, res) => {
   try {
     const pool = await poolPromise;
     await ensureSchema(pool);
+    console.log("body.labelTemplate",body.labelTemplate)
     const updateResult = await pool.request()
       .input('id', sql.Int, id)
       .input('pickListNo', sql.NVarChar(100), cleanText(body.pickListNo))

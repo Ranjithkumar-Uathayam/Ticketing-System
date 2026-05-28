@@ -158,23 +158,24 @@ export class PriceLabelTsplPrintService {
                     year: '2-digit'
                 }).replace(' ', '-');
 
-    const unitLines: string[] = [tpl.unitLine || ''];
-    if (tpl.unitLine2) unitLines.push(tpl.unitLine2);
-    const footerShift = (unitLines.length - 1) * 18;
+    // Combine both address lines into one line separated by comma
+    const addressLine = tpl.unitLine2
+      ? `${tpl.unitLine || ''},${tpl.unitLine2}`
+      : (tpl.unitLine || '');
 
     const lines = [
       `SIZE ${settings.labelWidthMm} mm,${settings.labelHeightMm} mm`,
       `GAP ${settings.gapMm} mm,0 mm`,
       `DENSITY ${settings.density}`,
       `SPEED ${settings.speed}`,
-      `DIRECTION 0`,
+      `DIRECTION 1`,
       `REFERENCE 0,0`,
       `CLS`,
 
-      // ── Barcode (no HRI – item code printed as TEXT below) ──────────────────
+      // ── Barcode ──────────────────────────────────────────────────────────────
       `BARCODE 8,4,"128",80,0,0,2,2,"${esc(barcode)}"`,
 
-      // ── Separator after barcode (barcode ends at y=84) ──────────────────────
+      // ── Separator after barcode ──────────────────────────────────────────────
       `BAR 0,86,720,1`,
 
       // ── Vertical separator between left / right columns (x=430 = 53.75 mm) ─
@@ -197,12 +198,12 @@ export class PriceLabelTsplPrintService {
       // ── Footer separator ─────────────────────────────────────────────────────
       `BAR 0,248,720,1`,
 
-      // ── Footer (font "1" = 8×16 tiny) ────────────────────────────────────────
-      `TEXT 8,252,"1",0,1,1,"Mfg & Mktd by : ${esc(tpl.companyName)}"`,
-      ...unitLines.map((line: string, i: number) => `TEXT 8,${270 + i * 18},"1",0,1,1,"${esc(line)}"`),
-      `TEXT 8,${288 + footerShift},"1",0,1,1,"website : ${esc(tpl.website)}"`,
-      `TEXT 310,${288 + footerShift},"1",0,1,1,"Email : ${esc(tpl.email)}"`,
-      `TEXT 8,${306 + footerShift},"1",0,1,1,"Customer Care No: ${esc(tpl.customerCare)}"`,
+      // ── Footer: 5 fixed lines (font "1", x=20 gives margin from physical edge) ─
+      `TEXT 20,252,"1",0,1,1,"Mfg & Mktd by : ${esc(tpl.companyName)}"`,
+      `TEXT 20,270,"1",0,1,1,"${esc(addressLine)}"`,
+      `TEXT 20,288,"1",0,1,1,"website : ${esc(tpl.website)}"`,
+      `TEXT 20,306,"1",0,1,1,"Customer Care No: ${esc(tpl.customerCare)}"`,
+      `TEXT 20,324,"1",0,1,1,"Email : ${esc(tpl.email)}"`,
 
       `PRINT 1,1`,
     ];
