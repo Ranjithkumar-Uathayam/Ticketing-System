@@ -110,13 +110,9 @@ export class PriceLabelTsplPrintService {
     preview: PriceConfigPreview,
     settings: PriceLabelPrintSettings,
   ): string {
+    // One TSPL block per item — PRINT qty,1 inside each block handles repetition
     return items
-      .flatMap((item) => {
-        const copies = Math.max(1, item.labelQty || item.qty || 1);
-        return Array.from({ length: copies }, () =>
-          this.buildSingleLabelTspl(item, preview, settings)
-        );
-      })
+      .map((item) => this.buildSingleLabelTspl(item, preview, settings))
       .join('\r\n');
   }
 
@@ -206,7 +202,8 @@ export class PriceLabelTsplPrintService {
       // Line 5: email
       `TEXT 20,${tpl.unitLine2 ? 324 : 306},"1",0,1,1,"Email : ${esc(tpl.email)}"`,
 
-      `PRINT 1,1`,
+      // Print max(labelQty, qty) copies — labelQty can only be >= qty
+      `PRINT ${Math.max(item.labelQty || 0, item.qty || 0, 1)},1`,
     ];
 
     return lines.join('\r\n') + '\r\n';

@@ -79,11 +79,11 @@ export class LabelPrintConfigComponent {
   });
 
   readonly totalLabelCount = computed(() =>
-    this.selectedItems().reduce((s, i) => s + Math.max(1, i.labelQty || i.qty || 1), 0)
+    this.selectedItems().reduce((s, i) => s + Math.max(i.labelQty || 0, i.qty || 0, 1), 0)
   );
 
   readonly allLabelCount = computed(() =>
-    this.items().reduce((s, i) => s + Math.max(1, i.labelQty || i.qty || 1), 0)
+    this.items().reduce((s, i) => s + Math.max(i.labelQty || 0, i.qty || 0, 1), 0)
   );
 
   // Preview dimensions: inner at 3.78 px/mm, outer = inner × 1.8 scale
@@ -302,6 +302,10 @@ export class LabelPrintConfigComponent {
     spans.push(`<span style="height:72px;width:3px;background:#111827;display:inline-block;vertical-align:bottom;"></span>`);
 
     return spans.join('');
+  }
+
+  effectiveLabelQty(item: PriceConfigItem): number {
+    return Math.max(item.labelQty || 0, item.qty || 0, 1);
   }
 
   formatCurrency(value: number): string {

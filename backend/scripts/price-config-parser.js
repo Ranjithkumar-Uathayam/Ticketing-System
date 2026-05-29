@@ -129,56 +129,86 @@ function parseItemMaster(filePath) {
 // ─── Pick List detail-line parser ─────────────────────────────────────────────
 
 function parsePickItem(serialNo, skuCode, detailLines) {
-  const cleaned = detailLines.map(cleanText).filter(Boolean);
-  let summaryIndex = null;
+  // Join ALL detail lines into one string.
+  // CRITICAL: Unicommerce PDFs extract table columns WITHOUT spaces between them,
+  // producing strings like "KANSAS 34-(TR15512)DEFAULT34TR155122" where
+  // "DEFAULT" + size("34") + color("TR15512") + qty("2") are all concatenated.
+  const combined = detailLines.map(cleanText).filter(Boolean).join(' ');
 
-  for (let i = cleaned.length - 1; i >= 0; i--) {
-    if (/\bDEFAULT\b/i.test(cleaned[i]) && /\s\d+\s*$/.test(cleaned[i])) {
-      summaryIndex = i;
-      break;
-    }
-  }
+  let qty = 1, pickListName = '', shelfCode = '', size = '', color = '';
 
-  if (summaryIndex === null && cleaned.length > 0) {
-    summaryIndex = cleaned.length - 1;
-  }
+  // Find "DEFAULT" anywhere in the text. Do NOT use \bDEFAULT\b — that word
+  // boundary fails when DEFAULT is immediately preceded/followed by alphanumeric
+  // chars (the no-space PDF format).
+  const defIdx = combined.search(/DEFAULT/i);
 
-  const summaryLine = summaryIndex !== null ? cleaned[summaryIndex] : '';
-  const nameLines   = summaryIndex !== null ? cleaned.slice(0, summaryIndex) : [...cleaned];
+  if (defIdx !== -1) {
+    // Everything before DEFAULT is the item name
+    pickListName = cleanText(combined.slice(0, defIdx));
+    shelfCode    = 'DEFAULT';
 
-  let leading = '', shelfCode = '', size = '', color = '', qty = 1;
+    // Everything after DEFAULT: "34TR155122" or "XL432042" or "M 22810 1" etc.
+    const afterDef = combined.slice(defIdx + 7).trim(); // 7 = 'DEFAULT'.length
 
-  const m = summaryLine.match(
-    /^(?:(.+?)\s+)?([A-Z0-9_-]+)\s+([A-Z0-9./+-]+)\s+(.+?)\s+(\d+)$/i
-  );
-  if (m) {
-    leading    = cleanText(m[1] || '');
-    shelfCode  = cleanText(m[2] || '');
-    size       = cleanText(m[3] || '');
-    color      = cleanText(m[4] || '');
-    qty        = parseInt(m[5] || '1', 10) || 1;
-  } else if (summaryLine) {
-    const lastSpace = summaryLine.lastIndexOf(' ');
-    if (lastSpace !== -1) {
-      const tail = summaryLine.slice(lastSpace + 1);
-      if (/^\d+$/.test(tail)) {
-        qty     = parseInt(tail, 10) || 1;
-        leading = summaryLine.slice(0, lastSpace).trim();
-      } else {
-        leading = summaryLine.trim();
+    // ── Qty extraction ─────────────────────────────────────────────────────────
+    // In the no-space format the qty is the LAST digit(s) of afterDef:
+    //   qty 1-9  → last character is a non-zero digit  ("2" → qty=2)
+    //   qty 10+  → last two chars are both digits      ("10" → qty=10)
+    // When columns have spaces (normal format) the last space-separated token
+    // that is all-digits is the qty.
+    let sizeColorStr = afterDef;
+
+    const trailingDigits = afterDef.match(/(\d+)\s*$/);
+    if (trailingDigits) {
+      const rawNum  = trailingDigits[1];   // e.g. "155122" from "TR155122"
+      const lastOne = rawNum.slice(-1);    // "2"
+      const lastTwo = rawNum.slice(-2);    // "22" when rawNum has ≥2 chars
+
+      // Only the final 1 digit makes sense as qty when the preceding char
+      // within rawNum is a digit belonging to the color code.
+      // Exception: if the last char is "0" it might be "10", "20", etc.
+      if (/[1-9]/.test(lastOne)) {
+        qty          = parseInt(lastOne, 10);
+        sizeColorStr = afterDef.slice(0, afterDef.length - 1).trim();
+      } else if (lastOne === '0' && rawNum.length >= 2 && parseInt(lastTwo, 10) > 0) {
+        qty          = parseInt(lastTwo, 10);
+        sizeColorStr = afterDef.slice(0, afterDef.length - 2).trim();
       }
+      // else: trailing digit is "0" alone – keep qty=1 and leave sizeColorStr intact
+    }
+
+    // ── Size + Color extraction ────────────────────────────────────────────────
+    // Size is at the very start of sizeColorStr, either:
+    //   - Numeric 2-digit (trouser waist: 28-50)
+    //   - Alpha clothing size (M, L, XL, XXL, XXXL, S, XS)
+    const sizeRe = /^(\d{2}|XXXL|XXL|XL|L|M|S|XS)\s*/i;
+    const sizeMatch = sizeColorStr.match(sizeRe);
+    if (sizeMatch) {
+      size         = sizeMatch[1].toUpperCase();
+      color        = cleanText(sizeColorStr.slice(sizeMatch[0].length));
     } else {
-      leading = summaryLine.trim();
+      // Size not detected (might have spaces) — fall back to space-split
+      const parts  = sizeColorStr.split(/\s+/).filter(Boolean);
+      if (parts.length >= 1) size  = parts[0];
+      if (parts.length >= 2) color = parts.slice(1).join(' ');
+    }
+
+  } else {
+    // No DEFAULT found — use the whole combined text as name.
+    // Try to pick up qty from a trailing space-separated number.
+    const qtyMatch = combined.match(/\s+(\d+)\s*$/);
+    if (qtyMatch) {
+      qty          = parseInt(qtyMatch[1], 10) || 1;
+      pickListName = cleanText(combined.slice(0, combined.length - qtyMatch[0].length));
+    } else {
+      pickListName = combined;
     }
   }
-
-  const nameParts = nameLines.filter(Boolean);
-  if (leading) nameParts.push(leading);
 
   return {
     serialNo,
     skuCode,
-    pickListName: nameParts.join(' ').trim() || skuCode,
+    pickListName : pickListName || skuCode,
     shelfCode,
     size,
     color,
@@ -192,6 +222,10 @@ async function parsePickListPdf(filePath) {
   const buf = fs.readFileSync(filePath);
   const data = await pdfParse(buf);
   const fullText = data.text || '';
+
+  // ── DEBUG: log first 1500 chars so we can see exactly what pdf-parse extracts ─
+  console.log('[PDF-PARSER] Raw text (first 1500 chars):\n', JSON.stringify(fullText.slice(0, 1500)));
+
   const rawLines = fullText.split('\n').map(l => l.trimEnd());
 
   // Extract pick list number — several header label formats
@@ -215,16 +249,44 @@ async function parsePickListPdf(filePath) {
 
   const items = [];
   let currentSerial = null;
-  let currentSku    = '';
-  let detailLines   = [];
+  let pendingLines  = [];   // all lines collected for the current item (before classification)
+
+  // A real SKU code: single alphanumeric token, ≥9 chars, has BOTH letters AND digits.
+  // This distinguishes SKU codes (e.g. "CLNS34TR15512") from shelf codes ("DEFAULT"),
+  // size values ("34", "XL"), color codes ("TR15512", ≤8 chars), and item names (have spaces).
+  function looksLikeSku(s) {
+    return /^[A-Za-z0-9]{9,}$/.test(s) && /[A-Za-z]/.test(s) && /[0-9]/.test(s);
+  }
 
   function flushCurrent() {
-    if (currentSerial === null || !currentSku) {
-      currentSerial = null; currentSku = ''; detailLines = [];
+    if (currentSerial === null || pendingLines.length === 0) {
+      currentSerial = null; pendingLines = [];
       return;
     }
-    items.push(parsePickItem(currentSerial, currentSku, detailLines));
-    currentSerial = null; currentSku = ''; detailLines = [];
+
+    // Classify collected lines: find the SKU (single alphanumeric ≥9 chars with letters+digits),
+    // everything else is a detail line.
+    // This handles Unicommerce PDFs where the barcode text (SKU) is extracted AFTER the
+    // detail row because the barcode image pushes the SKU text lower on the page.
+    let skuLine   = '';
+    const details = [];
+
+    for (const l of pendingLines) {
+      if (!skuLine && looksLikeSku(l)) {
+        skuLine = l;
+      } else {
+        details.push(l);
+      }
+    }
+
+    // Fallback: if no line matched the SKU pattern, use the first line as the SKU
+    if (!skuLine && pendingLines.length > 0) {
+      skuLine = pendingLines[0];
+      details.push(...pendingLines.slice(1));
+    }
+
+    items.push(parsePickItem(currentSerial, skuLine, details));
+    currentSerial = null; pendingLines = [];
   }
 
   for (let i = startLine; i < rawLines.length; i++) {
@@ -234,13 +296,20 @@ async function parsePickListPdf(filePath) {
     if (/\bpage\b/i.test(line)) continue;
 
     // Format 1 — isolated serial number: "1", "1.", "12."
+    // Only accept the EXPECTED NEXT sequential number so that numeric sizes like
+    // "34" or "42" are not misidentified as serial numbers.
     if (/^\d+[.)]?$/.test(line)) {
-      flushCurrent();
-      currentSerial = parseInt(line.replace(/\D/g, ''), 10);
-      continue;
+      const num = parseInt(line.replace(/\D/g, ''), 10);
+      const expectedNext = currentSerial !== null ? currentSerial + 1 : 1;
+      if (num === expectedNext) {
+        flushCurrent();
+        currentSerial = num;
+        continue;
+      }
+      // Not the expected next serial — treat as a size/qty detail line
     }
 
-    // Format 2 — serial + SKU merged on one line by pypdf layout extraction
+    // Format 2 — serial + SKU merged on one line by pdf layout extraction
     // e.g. "1.PROD-SKU-001", "1. PROD-SKU-001", "1 PROD-SKU-001 detail text..."
     const inline = line.match(
       /^(\d{1,5})[.)\s]\s*([A-Za-z0-9][A-Za-z0-9_./-]{2,})(?:\s+(.+))?$/
@@ -248,18 +317,22 @@ async function parsePickListPdf(filePath) {
     if (inline && parseInt(inline[1], 10) > 0) {
       flushCurrent();
       currentSerial = parseInt(inline[1], 10);
-      currentSku    = cleanText(inline[2]);
-      const rem     = cleanText(inline[3] || '');
-      if (rem) detailLines.push(rem);
+      // For Format 2 the SKU is explicit — push it first so classification picks it up
+      pendingLines.push(cleanText(inline[2]));
+      const rem = cleanText(inline[3] || '');
+      if (rem) pendingLines.push(rem);
       continue;
     }
 
     if (currentSerial === null) continue;
-    if (!currentSku)  { currentSku = line; continue; }
-    detailLines.push(line);
+    pendingLines.push(line);
   }
 
   flushCurrent();
+
+  // ── DEBUG: log qty for every parsed item ──────────────────────────────────────
+  console.log('[PDF-PARSER] Parsed items (serialNo → skuCode → qty):');
+  items.forEach(it => console.log(`  #${it.serialNo}  ${it.skuCode}  qty=${it.qty}`));
 
   return {
     pickListNo:       plNoMatch ? plNoMatch[1] : nodePath.parse(filePath).name,

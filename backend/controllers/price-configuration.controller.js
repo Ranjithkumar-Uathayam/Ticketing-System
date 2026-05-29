@@ -66,7 +66,8 @@ const withDerivedFields = (items = []) =>
   items.map((item) => {
     const qty = Math.max(0, normalizeNumeric(item.qty));
     const currentPrice = Math.max(0, normalizeNumeric(item.currentPrice));
-    const labelQty = Math.max(0, normalizeNumeric(item.labelQty || qty));
+    // labelQty must be at least qty — user can increase it, never goes below pick-list qty
+    const labelQty = Math.max(qty, normalizeNumeric(item.labelQty) || 0, 1);
 
     return {
       serialNo: Math.max(0, normalizeNumeric(item.serialNo)),
@@ -137,7 +138,13 @@ const toItemMasterMeta = (row) => ({
 });
 
 const mapRecord = (row) => {
-  const items = JSON.parse(row.ItemsJson || '[]');
+  const rawItems = JSON.parse(row.ItemsJson || '[]');
+  // Ensure labelQty is at least qty for every item (fixes configs saved with wrong labelQty)
+  const items = rawItems.map((item) => {
+    const qty = normalizeNumeric(item.qty) || 1;
+    const labelQty = Math.max(normalizeNumeric(item.labelQty) || 0, qty);
+    return { ...item, qty, labelQty };
+  });
   const summary = buildSummary(items);
 
   return {
@@ -826,6 +833,7 @@ exports.preview = async (req, res) => {
 
     pickListPath = await writeTempFile('pick-list', pickListFileName, decodeBase64File(pickListBase64));
     const pickList = await parsePickList(pickListPath);
+    console.log("*************pickList", pickList)
     const pickListItems = Array.isArray(pickList.items) ? pickList.items : [];
 
     if (!pickListItems.length) {
@@ -838,7 +846,7 @@ exports.preview = async (req, res) => {
       pool,
       pickListItems.map((item) => normalizeSku(item.skuCode))
     );
-
+    console.log("***************buildPreviewItems",pickListItems)
     const items = buildPreviewItems(pickListItems, masterMap);
     res.json({
       pickListNo: cleanText(pickList.pickListNo || path.parse(pickListFileName || 'pick-list').name),

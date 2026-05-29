@@ -60,7 +60,7 @@ export class PriceConfigurationService {
 
   async generatePreview(pickListFile: File): Promise<PriceConfigPreview> {
     const pickListBase64 = await this.fileToBase64(pickListFile);
-
+    console.log("pickListBase64", pickListBase64)
     return await firstValueFrom(
       this.http.post<PriceConfigPreview>(`${API}/preview`, {
         pickListFileName: pickListFile.name,
