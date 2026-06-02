@@ -152,25 +152,28 @@ function parsePickItem(serialNo, skuCode, detailLines) {
 
     // ── Qty extraction ─────────────────────────────────────────────────────────
     // In the no-space format the qty is the LAST digit(s) of afterDef:
-    //   qty 1-9  → last character is a non-zero digit  ("2" → qty=2)
-    //   qty 10+  → last two chars are both digits      ("10" → qty=10)
-    // When columns have spaces (normal format) the last space-separated token
-    // that is all-digits is the qty.
+    //   qty 1-99 with space-separated columns → rawNum is 1-2 digits → use whole rawNum
+    //   qty 1-9  with no-space color-code blend → rawNum is 3+ digits (e.g. "155122")
+    //                                            → last character is the qty digit
+    //   qty 10+  ending in 0 (e.g. "10","20") → rawNum 3+ digits ending in 0 → last two
     let sizeColorStr = afterDef;
 
     const trailingDigits = afterDef.match(/(\d+)\s*$/);
     if (trailingDigits) {
-      const rawNum  = trailingDigits[1];   // e.g. "155122" from "TR155122"
-      const lastOne = rawNum.slice(-1);    // "2"
-      const lastTwo = rawNum.slice(-2);    // "22" when rawNum has ≥2 chars
+      const rawNum  = trailingDigits[1];   // e.g. "18" from "WHITE 18", or "155122" from "TR155122"
+      const lastOne = rawNum.slice(-1);    // "8"
+      const lastTwo = rawNum.slice(-2);    // "18" when rawNum has ≥2 chars
 
-      // Only the final 1 digit makes sense as qty when the preceding char
-      // within rawNum is a digit belonging to the color code.
-      // Exception: if the last char is "0" it might be "10", "20", etc.
-      if (/[1-9]/.test(lastOne)) {
+      if (rawNum.length <= 2) {
+        // Short sequence: the entire rawNum is the qty (handles 1–99 in normal spaced format)
+        qty          = parseInt(rawNum, 10) || 1;
+        sizeColorStr = afterDef.slice(0, afterDef.length - rawNum.length).trim();
+      } else if (/[1-9]/.test(lastOne)) {
+        // Long sequence: color-code digits blended with a 1-digit qty (no-space format)
         qty          = parseInt(lastOne, 10);
         sizeColorStr = afterDef.slice(0, afterDef.length - 1).trim();
-      } else if (lastOne === '0' && rawNum.length >= 2 && parseInt(lastTwo, 10) > 0) {
+      } else if (lastOne === '0' && parseInt(lastTwo, 10) > 0) {
+        // Long sequence ending in 0: qty is "10", "20", etc.
         qty          = parseInt(lastTwo, 10);
         sizeColorStr = afterDef.slice(0, afterDef.length - 2).trim();
       }
