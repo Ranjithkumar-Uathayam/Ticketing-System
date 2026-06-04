@@ -117,22 +117,9 @@ export class PriceLabelTsplPrintService {
   }
 
   /**
-   * Builds TSPL for one label using configured size (default 90 mm × 44 mm, 203 DPI = 8 dots/mm).
-   *
-   * Layout (dots, optimised for 90×44 mm):
-   *   y=4   – CODE128 barcode, height 80 dots (~10 mm)
-   *   y=86  – horizontal separator
-   *   y=90  – left col: SKU / right col: SIZE
-   *   y=118 – left: MRP (large) / right: Color
-   *   y=152 – left: (Incl. taxes) / right: Net Qty
-   *   y=170 – left: Category / right: Country of Origin
-   *   y=196 – left: Brand
-   *   y=222 – left: Mkg Dt
-   *   y=248 – footer separator
-   *   y=252 – footer: Mfg & Mktd by
-   *   y=270 – footer: unit/address line
-   *   y=288 – website | email
-   *   y=306 – customer care  (bottom ≈ 322 dots = 40.25 mm < 44 mm ✓)
+   * Builds TSPL for one label scaled to the configured size.
+   * Reference design: 90 mm × 44 mm = 720 × 352 dots at 203 DPI (8 dots/mm).
+   * All coordinates are scaled proportionally when the label size differs.
    */
   buildSingleLabelTspl(
     item: PriceConfigItem,
@@ -154,6 +141,38 @@ export class PriceLabelTsplPrintService {
                     year: '2-digit'
                 }).replace(' ', '-');
 
+    // Dots per mm at 203 DPI
+    const DPM = 8;
+    const W = Math.round(settings.labelWidthMm  * DPM);  // total width in dots
+    const H = Math.round(settings.labelHeightMm * DPM);  // total height in dots
+
+    // Scale helpers — reference design was 90 mm × 44 mm (720 × 352 dots)
+    const sx = (x: number) => Math.round(x * W / 720);
+    const sy = (y: number) => Math.round(y * H / 352);
+
+    // Key x positions
+    const xLeft  = sx(20);
+    const divX   = sx(430);   // vertical divider
+    const xRight = divX + sx(4);
+
+    // Key y positions
+    const yBarcode  = sy(4);
+    const barcodeH  = sy(80);
+    const yHSep1    = sy(86);
+    const yHSep2    = sy(248);
+    const ySku      = sy(90);
+    const yMrp      = sy(118);
+    const yTaxes    = sy(152);
+    const yCategory = sy(170);
+    const yBrand    = sy(196);
+    const yMkgDt    = sy(222);
+    const yNetQty   = sy(144);
+    const yFooter1  = sy(252);
+    const yFooter2  = sy(270);
+    const yFooter3  = sy(288);
+    const yFooter4  = sy(tpl.unitLine2 ? 306 : 288);
+    const yFooter5  = sy(tpl.unitLine2 ? 324 : 306);
+
     const lines = [
       `SIZE ${settings.labelWidthMm} mm,${settings.labelHeightMm} mm`,
       `GAP ${settings.gapMm} mm,0 mm`,
@@ -163,44 +182,39 @@ export class PriceLabelTsplPrintService {
       `REFERENCE 0,0`,
       `CLS`,
 
-      // ── Barcode ──────────────────────────────────────────────────────────────
-      `BARCODE 8,4,"128",80,0,0,2,2,"${esc(barcode)}"`,
+      // ── Barcode (full label width) ────────────────────────────────────────────
+      `BARCODE ${sx(8)},${yBarcode},"128",${barcodeH},0,0,2,2,"${esc(barcode)}"`,
 
       // ── Separator after barcode ──────────────────────────────────────────────
-      `BAR 0,86,720,1`,
+      `BAR 0,${yHSep1},${W},1`,
 
-      // ── Vertical separator between left / right columns (x=430 = 53.75 mm) ─
-      `BAR 430,86,1,162`,
+      // ── Vertical separator between left / right columns ───────────────────────
+      `BAR ${divX},${yHSep1},1,${yHSep2 - yHSep1}`,
 
-      // ── Left column (x=20 to avoid physical left-edge clipping) ─────────────
-      `TEXT 20,90,"2",0,1,1,"${esc(item.skuCode || item.ean || '-')}"`,
-      `TEXT 20,118,"3",0,1,1,"MRP :${mrp}"`,
-      `TEXT 20,152,"1",0,1,1,"(Incl.of all Taxes)"`,
-      `TEXT 20,170,"2",0,0.8,0.8,"Category : ${esc(item.category || '-')}"`,
-      `TEXT 20,196,"2",0,1,1,"Brand : ${esc(item.brand || '-')}"`,
-      `TEXT 20,222,"2",0,1,1,"Mkg Dt : ${mfgDate}"`,
+      // ── Left column ──────────────────────────────────────────────────────────
+      `TEXT ${xLeft},${ySku},"2",0,1,1,"${esc(item.skuCode || item.ean || '-')}"`,
+      `TEXT ${xLeft},${yMrp},"3",0,1,1,"MRP :${mrp}"`,
+      `TEXT ${xLeft},${yTaxes},"1",0,1,1,"(Incl.of all Taxes)"`,
+      `TEXT ${xLeft},${yCategory},"2",0,0.8,0.8,"Category : ${esc(item.category || '-')}"`,
+      `TEXT ${xLeft},${yBrand},"2",0,1,1,"Brand : ${esc(item.brand || '-')}"`,
+      `TEXT ${xLeft},${yMkgDt},"2",0,1,1,"Mkg Dt : ${mfgDate}"`,
 
       // ── Right column ─────────────────────────────────────────────────────────
-      `TEXT 434,90,"2",0,1,1,"SIZE : ${esc(item.size || '-')}"`,
-      `TEXT 434,118,"2",0,1,1,"Color : ${esc(item.color || '-')}"`,
-      `TEXT 434,144,"2",0,1,1,"Net Qty : ${esc(netQty)}"`,
-      `TEXT 434,170,"1",0,1,1,"Country Of Origin : ${esc(tpl.countryOfOrigin || 'India')}"`,
+      `TEXT ${xRight},${ySku},"2",0,1,1,"SIZE : ${esc(item.size || '-')}"`,
+      `TEXT ${xRight},${yMrp},"2",0,1,1,"Color : ${esc(item.color || '-')}"`,
+      `TEXT ${xRight},${yNetQty},"2",0,1,1,"Net Qty : ${esc(netQty)}"`,
+      `TEXT ${xRight},${yBrand},"1",0,1,1,"Country Of Origin : ${esc(tpl.countryOfOrigin || 'India')}"`,
 
       // ── Footer separator ─────────────────────────────────────────────────────
-      `BAR 0,248,720,1`,
+      `BAR 0,${yHSep2},${W},1`,
 
-      // ── Footer: 5 lines ───────────────────────────────────────────────────────
-      // Line 1: company name
-      `TEXT 20,252,"1",0,1,1,"Mfg & Mktd by : ${esc(tpl.companyName)}"`,
-      // Line 2: unitLine (address part 1)
-      `TEXT 20,270,"1",0,1,1,"${esc(tpl.unitLine || '')}"`,
-      // Line 3: unitLine2 (address part 2)
-      ...(tpl.unitLine2 ? [`TEXT 20,288,"1",0,1,1,"${esc(tpl.unitLine2)}"`] : []),
-      // Line 4: website (left) + Customer Care (right) on same line
-      `TEXT 20,${tpl.unitLine2 ? 306 : 288},"1",0,1,1,"website : ${esc(tpl.website)}"`,
-      `TEXT 300,${tpl.unitLine2 ? 306 : 288},"1",0,1,1,"Customer Care No: ${esc(tpl.customerCare)}"`,
-      // Line 5: email
-      `TEXT 20,${tpl.unitLine2 ? 324 : 306},"1",0,1,1,"Email : ${esc(tpl.email)}"`,
+      // ── Footer lines ─────────────────────────────────────────────────────────
+      `TEXT ${xLeft},${yFooter1},"1",0,1,1,"Mfg & Mktd by : ${esc(tpl.companyName)}"`,
+      `TEXT ${xLeft},${yFooter2},"1",0,1,1,"${esc(tpl.unitLine || '')}"`,
+      ...(tpl.unitLine2 ? [`TEXT ${xLeft},${yFooter3},"1",0,1,1,"${esc(tpl.unitLine2)}"`] : []),
+      `TEXT ${xLeft},${yFooter4},"1",0,1,1,"website : ${esc(tpl.website)}"`,
+      `TEXT ${sx(300)},${yFooter4},"1",0,1,1,"Customer Care No: ${esc(tpl.customerCare)}"`,
+      `TEXT ${xLeft},${yFooter5},"1",0,1,1,"Email : ${esc(tpl.email)}"`,
 
       // Print max(labelQty, qty) copies — labelQty can only be >= qty
       `PRINT ${Math.max(item.labelQty || 0, item.qty || 0, 1)},1`,
