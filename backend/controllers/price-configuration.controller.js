@@ -833,7 +833,7 @@ exports.preview = async (req, res) => {
 
     pickListPath = await writeTempFile('pick-list', pickListFileName, decodeBase64File(pickListBase64));
     const pickList = await parsePickList(pickListPath);
-    console.log("*************pickList", pickList)
+
     const pickListItems = Array.isArray(pickList.items) ? pickList.items : [];
 
     if (!pickListItems.length) {
@@ -846,7 +846,7 @@ exports.preview = async (req, res) => {
       pool,
       pickListItems.map((item) => normalizeSku(item.skuCode))
     );
-    console.log("***************buildPreviewItems",pickListItems)
+
     const items = buildPreviewItems(pickListItems, masterMap);
     res.json({
       pickListNo: cleanText(pickList.pickListNo || path.parse(pickListFileName || 'pick-list').name),
@@ -875,7 +875,7 @@ exports.create = async (req, res) => {
   if (!body.pickListNo || items.length === 0) {
     return res.status(400).json({ message: 'pickListNo and at least one pick list row are required.' });
   }
-  console.log("body.labelTemplate",body.labelTemplate)
+  
   const labelTemplate = sanitizeLabelTemplate(body.labelTemplate);
   const provisionalConfigurationNo = `TMP-${Date.now()}`;
 
@@ -958,7 +958,7 @@ exports.update = async (req, res) => {
   try {
     const pool = await poolPromise;
     await ensureSchema(pool);
-    console.log("body.labelTemplate",body.labelTemplate)
+    
     const updateResult = await pool.request()
       .input('id', sql.Int, id)
       .input('pickListNo', sql.NVarChar(100), cleanText(body.pickListNo))
