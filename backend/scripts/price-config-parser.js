@@ -295,7 +295,7 @@ async function parsePickListPdf(filePath) {
   for (let i = startLine; i < rawLines.length; i++) {
     const line = cleanText(rawLines[i]);
     if (!line) continue;
-    if (/powered\s+by/i.test(line)) break;
+    if (/powered\s+by/i.test(line)) continue;  // footer on every page — skip, don't break
     if (/\bpage\b/i.test(line)) continue;
 
     // Format 1 — isolated serial number: "1", "1.", "12."
@@ -318,8 +318,16 @@ async function parsePickListPdf(filePath) {
       /^(\d{1,5})[.)\s]\s*([A-Za-z0-9][A-Za-z0-9_./-]{2,})(?:\s+(.+))?$/
     );
     if (inline && parseInt(inline[1], 10) > 0) {
+      const inlineNum = parseInt(inline[1], 10);
+      const expectedNextInline = currentSerial !== null ? currentSerial + 1 : 1;
+      if (inlineNum !== expectedNextInline) {
+        // Number in the line is not the expected next serial (e.g. "4010 TOWEL..." from an
+        // item name starting with 4010). Treat the whole line as a detail line instead.
+        if (currentSerial !== null) pendingLines.push(line);
+        continue;
+      }
       flushCurrent();
-      currentSerial = parseInt(inline[1], 10);
+      currentSerial = inlineNum;
       // For Format 2 the SKU is explicit — push it first so classification picks it up
       pendingLines.push(cleanText(inline[2]));
       const rem = cleanText(inline[3] || '');
