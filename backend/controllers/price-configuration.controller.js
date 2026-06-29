@@ -155,7 +155,7 @@ const mapRecord = (row) => {
     itemMasterFileName: row.ItemMasterFileName || null,
     itemMasterUploadedAt: row.ItemMasterUploadedAt || null,
     pickListFileName: row.PickListFileName || null,
-    labelTemplate: LABEL_TEMPLATE_FALLBACK,
+    labelTemplate: sanitizeLabelTemplate(JSON.parse(row.LabelTemplateJson || 'null') || {}),
     createdBy: row.CreatedBy || null,
     createdAt: row.CreatedAt,
     updatedAt: row.UpdatedAt,

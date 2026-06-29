@@ -130,8 +130,10 @@ export class PriceLabelTsplPrintService {
       String(v).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 
     const tpl  = preview.labelTemplate;
-    const barcode = (item.ean || item.skuCode || 'N/A')
-      .replace(/[^A-Za-z0-9\-\.\/\+\s]/g, '');
+    // Use SKU first (matches the text shown on label), fall back to EAN.
+    // Strip characters not valid in Code 128 and ensure result is non-empty.
+    const sanitize = (v: string) => String(v).replace(/[^A-Za-z0-9\-\.\/\+\s]/g, '').trim();
+    const barcode = sanitize(item.skuCode) || sanitize(item.ean) || 'N/A';
     const mrp  = item.currentPrice > 0
       ? `Rs.${item.currentPrice.toFixed(2)}`
       : 'Rs.0.00';
