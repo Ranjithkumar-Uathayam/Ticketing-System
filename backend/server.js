@@ -13,6 +13,7 @@ const dispatchRoutes      = require('./routes/dispatch.routes');
 const customerEntryRoutes = require('./routes/customer-entry.routes');
 const hwInventoryRoutes   = require('./routes/hw-inventory.routes');
 const priceConfigurationRoutes = require('./routes/price-configuration.routes');
+const labelPrintLogRoutes = require('./routes/label-print-log.routes');
 
 const app = express();
 
@@ -62,6 +63,7 @@ app.use('/api/dispatch',         dispatchRoutes);
 app.use('/api/customer-entries', customerEntryRoutes);
 app.use('/api/hw-inventory',     hwInventoryRoutes);
 app.use('/api/price-configurations', priceConfigurationRoutes);
+app.use('/api/label-print-log', labelPrintLogRoutes);
 
 app.get('/', (_req, res) =>
   res.json({ message: 'Uathayam Ticketing & Dispatch API' })

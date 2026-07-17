@@ -34,6 +34,7 @@ export class LayoutComponent {
   canViewCustomerEntry;
   canViewPriceConfiguration;
   canViewLabelPrintConfig;
+  canViewLabelPrint;
   canViewHwInventory;
 
   constructor(
@@ -69,6 +70,11 @@ export class LayoutComponent {
       this.authService.isManager()
     );
     this.canViewLabelPrintConfig = computed(() =>
+      this.authService.hasPermission('Price Configuration') ||
+      this.authService.isAdmin() ||
+      this.authService.isManager()
+    );
+    this.canViewLabelPrint = computed(() =>
       this.authService.hasPermission('Price Configuration') ||
       this.authService.isAdmin() ||
       this.authService.isManager()

@@ -1,0 +1,387 @@
+<!-- Toast ─────────────────────────────────────────────────────────────────── -->
+@if (toast()) {
+  <div class="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl text-sm font-semibold transition-all"
+       [style]="toast()!.type === 'success'
+         ? 'background:#DCFCE7;color:#166534;border:1.5px solid #86EFAC;'
+         : 'background:#FEE2E2;color:#991B1B;border:1.5px solid #FCA5A5;'">
+    @if (toast()!.type === 'success') {
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+    } @else {
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+    }
+    {{ toast()!.msg }}
+  </div>
+}
+
+<!-- Page header ──────────────────────────────────────────────────────────── -->
+<div class="flex items-start justify-between mb-6 gap-4 flex-wrap">
+  <div>
+    <h1 class="text-xl font-bold" style="color:#1B2F6E;">Label Print</h1>
+    <p class="text-sm mt-0.5" style="color:#6B7280;">
+      Upload a PDF of labels, detect each label automatically, and print them one at a time.
+    </p>
+  </div>
+  <div class="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl"
+       style="background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;">
+    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+    </svg>
+    Hardware Print (QZ Tray)
+  </div>
+</div>
+
+<!-- Upload card ──────────────────────────────────────────────────────────── -->
+<div class="rounded-2xl shadow-sm mb-5 px-5 py-4" style="background:white;border:1.5px solid #E5E7EB;">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="min-w-0">
+      <label class="block text-xs font-bold uppercase tracking-wide mb-1.5" style="color:#374151;">
+        Label PDF
+      </label>
+      @if (fileName()) {
+        <p class="text-sm font-semibold truncate" style="color:#111827;">{{ fileName() }}</p>
+        <p class="text-xs mt-0.5" style="color:#6B7280;">
+          {{ totalLabels() }} label(s) detected across {{ pageGroups().length }} page(s)
+        </p>
+      } @else {
+        <p class="text-sm" style="color:#9CA3AF;">No PDF uploaded yet.</p>
+      }
+    </div>
+
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <label class="px-4 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all whitespace-nowrap"
+             style="background:#EEF2FF; color:#3730A3; border:1px solid #C7D2FE;">
+        {{ fileName() ? 'Re-upload PDF' : 'Upload PDF' }}
+        <input type="file" class="hidden" accept=".pdf,application/pdf" (change)="onFileSelected($event)">
+      </label>
+      @if (fileName()) {
+        <button (click)="clearFile()"
+                class="px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap"
+                style="background:#FEF2F2; color:#991B1B; border:1px solid #FECACA;">
+          Clear
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loadingPdf()) {
+    <div class="mt-4 flex items-center gap-2 text-sm font-semibold" style="color:#1D4ED8;">
+      <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+      </svg>
+      Analyzing PDF and detecting labels…
+    </div>
+  }
+
+  @if (loadError()) {
+    <div class="mt-4 px-3 py-2 rounded-xl text-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;">
+      {{ loadError() }}
+    </div>
+  }
+</div>
+
+@if (hasLabels()) {
+
+  <!-- Settings row: Label Size + Printer ────────────────────────────────── -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+
+    <!-- Label Size -->
+    <div class="rounded-2xl shadow-sm px-5 py-4" style="background:white;border:1.5px solid #E5E7EB;">
+      <label class="block text-xs font-bold uppercase tracking-wide mb-2" style="color:#374151;">
+        Label Size
+      </label>
+      <div class="flex flex-wrap gap-2 mb-3">
+        <button (click)="selectSizePreset('4x6in')"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                [style]="printSettings().sizePreset === '4x6in'
+                  ? 'background:#1B2F6E;color:white;'
+                  : 'background:#F3F4F6;color:#374151;'">
+          4 × 6 in
+        </button>
+        <button (click)="selectSizePreset('100x150mm')"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                [style]="printSettings().sizePreset === '100x150mm'
+                  ? 'background:#1B2F6E;color:white;'
+                  : 'background:#F3F4F6;color:#374151;'">
+          100 × 150 mm
+        </button>
+        <button (click)="selectSizePreset('custom')"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+                [style]="printSettings().sizePreset === 'custom'
+                  ? 'background:#1B2F6E;color:white;'
+                  : 'background:#F3F4F6;color:#374151;'">
+          Custom
+        </button>
+      </div>
+
+      @if (printSettings().sizePreset === 'custom') {
+        <div class="flex items-end gap-3">
+          <div class="flex-1">
+            <label class="block text-[10px] font-bold uppercase tracking-wide mb-1" style="color:#9CA3AF;">Width</label>
+            <input type="number" min="1" step="0.1"
+              class="w-full h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+              style="border-color:#D1D5DB;color:#111827;"
+              [value]="customWidthDisplay()"
+              (input)="onCustomWidthInput(+$any($event.target).value)" />
+          </div>
+          <div class="flex-1">
+            <label class="block text-[10px] font-bold uppercase tracking-wide mb-1" style="color:#9CA3AF;">Height</label>
+            <input type="number" min="1" step="0.1"
+              class="w-full h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+              style="border-color:#D1D5DB;color:#111827;"
+              [value]="customHeightDisplay()"
+              (input)="onCustomHeightInput(+$any($event.target).value)" />
+          </div>
+          <button (click)="toggleCustomUnit()"
+                  class="h-9 px-3 rounded-lg text-xs font-bold flex-shrink-0"
+                  style="background:#F3F4F6;color:#374151;">
+            {{ customUnit() === 'mm' ? 'mm' : 'in' }}
+          </button>
+        </div>
+      }
+
+      <p class="text-xs mt-2" style="color:#6B7280;">
+        Printing at {{ printSettings().widthMm }} mm × {{ printSettings().heightMm }} mm
+      </p>
+    </div>
+
+    <!-- Printer -->
+    <div class="rounded-2xl shadow-sm px-5 py-4" style="background:white;border:1.5px solid #E5E7EB;">
+      <label class="block text-xs font-bold uppercase tracking-wide mb-2" style="color:#374151;">
+        Printer
+      </label>
+      <div class="flex gap-2">
+        @if (availablePrinters().length > 0) {
+          <select
+            class="flex-1 h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+            style="border-color:#D1D5DB;color:#111827;background:white;"
+            (change)="updateSetting('printerName', $any($event.target).value)">
+            <option value="">— Select printer —</option>
+            @for (printer of availablePrinters(); track printer) {
+              <option [value]="printer" [selected]="printSettings().printerName === printer">
+                {{ printer }}
+              </option>
+            }
+          </select>
+        } @else {
+          <input type="text"
+            class="flex-1 h-9 px-3 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+            style="border-color:#D1D5DB;color:#111827;"
+            [value]="printSettings().printerName"
+            (input)="updateSetting('printerName', $any($event.target).value)"
+            placeholder="e.g. TSC TTP-244 Pro" />
+        }
+        <button
+          class="h-9 px-3 rounded-lg text-xs font-bold flex items-center gap-1.5 flex-shrink-0 transition-all"
+          style="background:#EFF6FF;color:#1D4ED8;border:1.5px solid #BFDBFE;"
+          [disabled]="detectingPrinters()"
+          [style.opacity]="detectingPrinters() ? '0.5' : '1'"
+          (click)="detectPrinters()"
+          title="Detect connected printers">
+          @if (detectingPrinters()) {
+            <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+            </svg>
+          } @else {
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          }
+          Detect
+        </button>
+      </div>
+      @if (printerDetectError()) {
+        <p class="text-xs mt-1" style="color:#EF4444;">{{ printerDetectError() }}</p>
+      }
+      @if (availablePrinters().length > 0 && !printerDetectError()) {
+        <p class="text-xs mt-1" style="color:#6B7280;">{{ availablePrinters().length }} printer(s) detected</p>
+      }
+    </div>
+  </div>
+
+  <!-- Per-page grid detection / override ─────────────────────────────────── -->
+  <div class="rounded-2xl shadow-sm mb-5 px-5 py-4" style="background:white;border:1.5px solid #E5E7EB;">
+    <p class="text-xs font-bold uppercase tracking-wide mb-3" style="color:#374151;">Detected Pages</p>
+    <div class="flex flex-col gap-2">
+      @for (page of pageGroups(); track page.pageNumber) {
+        <div class="rounded-xl px-3 py-2.5" style="background:#F8FAFF;border:1px solid #E8EDF8;">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="text-sm">
+              <span class="font-bold" style="color:#1B2F6E;">Page {{ page.pageNumber }}</span>
+              <span style="color:#6B7280;">
+                — {{ page.autoDetected ? 'Detected' : 'Manual' }} {{ page.rows }} × {{ page.cols }}
+                ({{ page.labels.length }} label{{ page.labels.length === 1 ? '' : 's' }})
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              @if (!page.autoDetected) {
+                <button (click)="redetectPage(page.pageNumber)"
+                        class="px-2.5 py-1 rounded-lg text-xs font-bold"
+                        style="background:#F3F4F6;color:#374151;">
+                  Re-detect
+                </button>
+              }
+              <button (click)="openOverride(page)"
+                      class="px-2.5 py-1 rounded-lg text-xs font-bold"
+                      style="background:#EFF6FF;color:#1D4ED8;">
+                Adjust Grid
+              </button>
+            </div>
+          </div>
+
+          @if (gridOverrideOpenPage() === page.pageNumber) {
+            <div class="flex flex-wrap items-end gap-3 mt-3 pt-3" style="border-top:1px solid #E8EDF8;">
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wide mb-1" style="color:#9CA3AF;">Rows</label>
+                <input type="number" min="1" step="1"
+                  class="w-20 h-9 px-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  style="border-color:#D1D5DB;color:#111827;"
+                  [value]="overrideRowsDraft()"
+                  (input)="overrideRowsDraft.set(+$any($event.target).value)" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold uppercase tracking-wide mb-1" style="color:#9CA3AF;">Columns</label>
+                <input type="number" min="1" step="1"
+                  class="w-20 h-9 px-2 rounded-lg text-sm border focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  style="border-color:#D1D5DB;color:#111827;"
+                  [value]="overrideColsDraft()"
+                  (input)="overrideColsDraft.set(+$any($event.target).value)" />
+              </div>
+              <button (click)="applyOverride(page.pageNumber, false)"
+                      class="h-9 px-3 rounded-lg text-xs font-bold"
+                      style="background:#1B2F6E;color:white;">
+                Apply to this page
+              </button>
+              <button (click)="applyOverride(page.pageNumber, true)"
+                      class="h-9 px-3 rounded-lg text-xs font-bold"
+                      style="background:#374151;color:white;">
+                Apply to all pages
+              </button>
+              <button (click)="closeOverride()"
+                      class="h-9 px-3 rounded-lg text-xs font-bold"
+                      style="background:#F3F4F6;color:#374151;">
+                Cancel
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Preview + Print controls ─────────────────────────────────────────────── -->
+  <div class="rounded-2xl shadow-sm mb-5 overflow-hidden" style="background:white;border:1.5px solid #E5E7EB;">
+    <div class="px-5 py-3 flex items-center justify-between" style="border-bottom:1px solid #F3F4F6;">
+      <p class="text-sm font-bold" style="color:#1B2F6E;">Preview</p>
+      @if (currentLabel()) {
+        <p class="text-xs font-semibold" style="color:#6B7280;">
+          Label {{ currentIndex() + 1 }} of {{ totalLabels() }} — Page {{ currentLabel()!.pageNumber }}
+        </p>
+      }
+    </div>
+
+    <div class="px-5 py-6 flex flex-col items-center gap-4">
+      <div class="relative flex items-center justify-center rounded-xl"
+           style="background:#F8FAFF;border:1px dashed #C7D2FE;min-height:220px;width:100%;max-width:420px;">
+        @if (previewLoading()) {
+          <svg class="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24" style="color:#1D4ED8;">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+          </svg>
+        } @else if (currentPreviewPng()) {
+          <img [src]="'data:image/png;base64,' + currentPreviewPng()" class="max-w-full max-h-[360px] rounded-lg shadow-sm" alt="Label preview" />
+        } @else {
+          <p class="text-sm" style="color:#9CA3AF;">No label selected.</p>
+        }
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button (click)="goPrev()" [disabled]="currentIndex() === 0"
+                class="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40"
+                style="background:#F3F4F6;color:#374151;">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+        <span class="text-sm font-semibold" style="color:#374151;">
+          Label {{ currentIndex() + 1 }} / {{ totalLabels() }}
+        </span>
+        <button (click)="goNext()" [disabled]="currentIndex() >= totalLabels() - 1"
+                class="w-10 h-10 rounded-xl flex items-center justify-center disabled:opacity-40"
+                style="background:#F3F4F6;color:#374151;">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <button (click)="printCurrent()" [disabled]="printing() || !currentLabel()"
+                class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                style="background:#1B2F6E;color:#FDB515;">
+          Print Current Label
+        </button>
+        <button (click)="printAll()" [disabled]="printing() || !hasLabels()"
+                class="px-5 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+                style="background:#0F766E;color:white;">
+          Print All Labels
+        </button>
+      </div>
+
+      @if (printAllProgress()) {
+        <div class="w-full max-w-md">
+          <div class="flex items-center justify-between text-xs font-semibold mb-1" style="color:#374151;">
+            <span>Printing label {{ printAllProgress()!.current }} of {{ printAllProgress()!.total }}…</span>
+            <span>{{ printAllProgress()!.current }} / {{ printAllProgress()!.total }}</span>
+          </div>
+          <div class="w-full h-2 rounded-full overflow-hidden" style="background:#E5E7EB;">
+            <div class="h-full rounded-full transition-all"
+                 style="background:#0F766E;"
+                 [style.width.%]="(printAllProgress()!.current / printAllProgress()!.total) * 100"></div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Print log ─────────────────────────────────────────────────────────────── -->
+  <div class="rounded-2xl shadow-sm mb-5 overflow-hidden" style="background:white;border:1.5px solid #E5E7EB;">
+    <div class="px-5 py-3" style="border-bottom:1px solid #F3F4F6;">
+      <p class="text-sm font-bold" style="color:#1B2F6E;">Print Log</p>
+    </div>
+    @if (!recentLogs().length) {
+      <p class="text-sm px-5 py-4" style="color:#9CA3AF;">No labels printed yet.</p>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr style="background:#F8FAFF;">
+              <th class="text-left px-4 py-2 text-xs font-bold uppercase" style="color:#6B7280;">Time</th>
+              <th class="text-left px-4 py-2 text-xs font-bold uppercase" style="color:#6B7280;">Label #</th>
+              <th class="text-left px-4 py-2 text-xs font-bold uppercase" style="color:#6B7280;">Page</th>
+              <th class="text-left px-4 py-2 text-xs font-bold uppercase" style="color:#6B7280;">Printer</th>
+              <th class="text-left px-4 py-2 text-xs font-bold uppercase" style="color:#6B7280;">Status</th>
+              <th class="text-left px-4 py-2 text-xs font-bold uppercase" style="color:#6B7280;">Error</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of recentLogs(); track entry.printedAt + '-' + entry.globalIndex) {
+              <tr style="border-top:1px solid #F3F4F6;">
+                <td class="px-4 py-2" style="color:#374151;">{{ formatTime(entry.printedAt) }}</td>
+                <td class="px-4 py-2" style="color:#374151;">{{ entry.globalIndex + 1 }} / {{ entry.totalLabels }}</td>
+                <td class="px-4 py-2" style="color:#374151;">{{ entry.pageNumber }}</td>
+                <td class="px-4 py-2" style="color:#374151;">{{ entry.printerName || '-' }}</td>
+                <td class="px-4 py-2">
+                  <span class="px-2 py-0.5 rounded-md text-xs font-bold"
+                        [style]="entry.status === 'Success' ? 'background:#DCFCE7;color:#166534;' : 'background:#FEE2E2;color:#991B1B;'">
+                    {{ entry.status }}
+                  </span>
+                </td>
+                <td class="px-4 py-2" style="color:#991B1B;">{{ entry.errorMessage || '-' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}
