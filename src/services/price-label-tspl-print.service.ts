@@ -3,8 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../environments/environment';
 import { PriceConfigItem, PriceConfigPreview } from '../price-configuration.models';
-// @ts-ignore – qz-tray ships no TypeScript declarations
-import qz from 'qz-tray';
+import { QzTrayService } from './qz-tray.service';
 
 export interface PriceLabelPrintSettings {
   printerName: string;
@@ -32,7 +31,7 @@ export const DEFAULT_PRICE_LABEL_SETTINGS: PriceLabelPrintSettings = {
 @Injectable({ providedIn: 'root' })
 export class PriceLabelTsplPrintService {
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private qzTray: QzTrayService) {}
 
   // ── Public API ───────────────────────────────────────────────────────────────
 
@@ -72,13 +71,7 @@ export class PriceLabelTsplPrintService {
     const mode = environment.hwLabelPrintMode;
 
     if (mode === 'qz-tray') {
-      await this.initQzTray();
-      try {
-        const found = await qz.printers.find();
-        return Array.isArray(found) ? found : (found ? [found] : []);
-      } catch {
-        throw new Error('QZ Tray could not list printers on this PC.');
-      }
+      return this.qzTray.findPrinters();
     }
 
     if (mode === 'local-agent') {
@@ -227,76 +220,16 @@ export class PriceLabelTsplPrintService {
 
   // ── QZ Tray ──────────────────────────────────────────────────────────────────
 
-  private async initQzTray(): Promise<void> {
-    const cert: string = (environment as any).qzCertificate || '';
-
-    qz.security.setCertificatePromise((resolve: (c: string) => void) => resolve(cert));
-
-    qz.security.setSignaturePromise((toSign: string) =>
-      (resolve: (sig: string) => void, reject: (err: any) => void) => {
-        if (!cert) { resolve(''); return; }
-        firstValueFrom(
-          this.http.post<{ signature: string }>(
-            `${environment.apiUrl}/hw-inventory/qz-sign`,
-            { request: toSign },
-          )
-        ).then(r => resolve(r.signature)).catch(reject);
-      }
-    );
-
-    qz.websocket.setErrorCallbacks((err: any) =>
-      console.error('[QZ price-label]', err)
-    );
-
-    if (qz.websocket.isActive()) {
-      try { await qz.websocket.disconnect(); } catch { /* ignore */ }
-    }
-
-    try {
-      await qz.websocket.connect();
-    } catch {
-      throw new Error(
-        'QZ Tray is not running on this PC. Install and start QZ Tray, then try again.'
-      );
-    }
-  }
-
   private async sendViaQzTray(
     printerName: string,
     content: string,
     jobName: string,
   ): Promise<void> {
-    await this.initQzTray();
-
-    let allPrinters: string[];
-    try {
-      const found = await qz.printers.find();
-      allPrinters = Array.isArray(found) ? found : [found];
-    } catch {
-      throw new Error('QZ Tray could not list printers on this PC.');
-    }
-
-    const target = printerName.trim();
-    const resolved =
-      allPrinters.find(p => p === target) ??
-      allPrinters.find(p => p.toLowerCase() === target.toLowerCase()) ??
-      allPrinters.find(p =>
-        p.toLowerCase().includes(target.toLowerCase()) ||
-        target.toLowerCase().includes(p.toLowerCase())
-      );
-
-    if (!resolved) {
-      throw new Error(
-        `Printer "${target}" not found. Installed: ${allPrinters.join(', ') || '(none)'}`
-      );
-    }
-
-    const config = qz.configs.create(resolved, { jobName });
-    try {
-      await qz.print(config, [{ type: 'raw', format: 'plain', data: content }]);
-    } catch (err: any) {
-      throw new Error(err?.message || 'QZ Tray failed to send the print job to the printer.');
-    }
+    await this.qzTray.print(
+      printerName,
+      [{ type: 'raw', format: 'plain', data: content }],
+      { jobName }
+    );
   }
 
   // ── Local Print Agent ────────────────────────────────────────────────────────

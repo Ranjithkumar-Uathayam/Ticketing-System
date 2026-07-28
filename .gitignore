@@ -16,6 +16,14 @@ dist-ssr
 *.local
 *.exe
 
+# QZ Tray signing keys — never commit the private key or the generated cert
+backend/qz/keys/*.pem
+backend/qz/keys/*.txt
+!backend/qz/keys/.gitkeep
+
+# QZ Tray root CA — root-ca-key.pem can mint certs QZ Tray will silently trust; never commit it
+backend/qz/root-ca/*.pem
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

@@ -3,9 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../environments/environment';
 import { HWAsset } from '../hw-inventory.models';
-
-// @ts-ignore – qz-tray ships no TypeScript declarations
-import qz from 'qz-tray';
+import { QzTrayService } from './qz-tray.service';
 
 interface LabelPrintJob {
   printerName: string;
@@ -21,7 +19,7 @@ interface LocalPrintAgentResponse {
 @Injectable({ providedIn: 'root' })
 export class HwLabelPrintService {
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private qzTray: QzTrayService) {}
 
   // ── Public API ──────────────────────────────────────────────────────────────
 
@@ -93,74 +91,11 @@ export class HwLabelPrintService {
 
     console.log('[QZ] TSPL content:\n', content);
 
-    // ── Security ─────────────────────────────────────────────────────────────
-    const cert: string = (environment as any).qzCertificate || '';
-
-    qz.security.setCertificatePromise((resolve: (c: string) => void) => resolve(cert));
-
-    qz.security.setSignaturePromise((toSign: string) => {
-      return (resolve: (sig: string) => void, reject: (err: any) => void) => {
-        if (!cert) {
-          resolve('');   // no cert → QZ Tray shows Untrusted warning; user clicks Allow
-          return;
-        }
-        firstValueFrom(
-          this.http.post<{ signature: string }>(
-            `${environment.apiUrl}/hw-inventory/qz-sign`,
-            { request: toSign }
-          )
-        ).then(r => resolve(r.signature)).catch(reject);
-      };
-    });
-
-    qz.websocket.setErrorCallbacks((err: any) => {
-      console.error('[QZ] WebSocket async error:', err);
-    });
-
-    // Always force a fresh connection so trust is re-evaluated.
-    if (qz.websocket.isActive()) {
-      try { await qz.websocket.disconnect(); } catch { /* ignore */ }
-    }
-
-    try {
-      await qz.websocket.connect();
-    } catch {
-      throw new Error('QZ Tray is not running on this PC. Install and start QZ Tray, then try again.');
-    }
-
-    // Smart printer name resolution: exact → case-insensitive → substring
-    let allPrinters: string[];
-    try {
-      const found = await qz.printers.find();
-      allPrinters = Array.isArray(found) ? found : [found];
-    } catch {
-      throw new Error('QZ Tray could not list printers on this PC.');
-    }
-
-    const target = printerName.trim();
-    const resolved =
-      allPrinters.find(p => p === target) ??
-      allPrinters.find(p => p.toLowerCase() === target.toLowerCase()) ??
-      allPrinters.find(p =>
-        p.toLowerCase().includes(target.toLowerCase()) ||
-        target.toLowerCase().includes(p.toLowerCase())
-      );
-
-    if (!resolved) {
-      throw new Error(
-        `Printer "${target}" was not found on this PC. ` +
-        `Installed printers: ${allPrinters.join(', ') || '(none)'}`
-      );
-    }
-
-    const config = qz.configs.create(resolved, { jobName: job.jobName });
-    const data   = [{ type: 'raw', format: 'plain', data: job.content }];
-
-    try {
-      await qz.print(config, data);
-    } catch (err: any) {
-      throw new Error(err?.message || 'QZ Tray failed to send the job to the printer.');
-    }
+    await this.qzTray.print(
+      job.printerName,
+      [{ type: 'raw', format: 'plain', data: job.content }],
+      { jobName: job.jobName }
+    );
   }
 
   // ── TSPL builder (mirrors backend buildLabelTspl exactly) ───────────────────

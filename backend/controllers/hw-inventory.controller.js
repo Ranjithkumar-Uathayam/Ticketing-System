@@ -1,7 +1,6 @@
 // backend/controllers/hw-inventory.controller.js
 const { sql, poolPromise } = require('../db');
 const { execFile } = require('child_process');
-const crypto = require('crypto');
 const fs = require('fs/promises');
 const os = require('os');
 const path = require('path');
@@ -351,23 +350,7 @@ exports.getLabelPrintJob = async (req, res) => {
   }
 };
 
-// ── QZ TRAY REQUEST SIGNING ───────────────────────────────────────────────────
-exports.signQzRequest = (req, res) => {
-  const { request } = req.body || {};
-  if (!request) {
-    return res.status(400).json({ message: 'request field is required.' });
-  }
-  const privateKey = (process.env.QZ_PRIVATE_KEY || '').replace(/\\n/g, '\n');
-  if (!privateKey) {
-    return res.status(503).json({ message: 'QZ signing key not configured on server.' });
-  }
-  try {
-    const sign = crypto.createSign('SHA512');
-    sign.update(request);
-    const signature = sign.sign(privateKey, 'base64');
-    res.json({ signature });
-  } catch (err) {
-    console.error('[hw-inventory.signQzRequest]', err);
-    res.status(500).json({ message: 'Failed to sign QZ request', error: err.message });
-  }
-};
+// QZ Tray request signing moved to backend/controllers/qz.controller.js,
+// mounted at GET/POST /api/qz — it's shared infrastructure, not an
+// hw-inventory concern (label-print.service, price-label-tspl-print.service
+// and hw-label-print.service all depend on it).

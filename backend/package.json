@@ -11,7 +11,8 @@
       "node_modules/**/*",
       "routes/**/*",
       "scripts/**/*",
-      "validators/**/*"
+      "validators/**/*",
+      "qz/keys/**/*"
     ]
   },
   "scripts": {
